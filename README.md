@@ -8,7 +8,8 @@ Angular 22 (Syncfusion 32.2.3 Material 3, Tailwind v4) · FastAPI · PostgreSQL 
 
 | เอกสาร | สำหรับ |
 | --- | --- |
-| [docs/user-guide/README.md](docs/user-guide/README.md) | คู่มือผู้ใช้ พร้อมภาพหน้าจอทุกขั้นตอน |
+| [docs/deployment.md](docs/deployment.md) | คู่มือติดตั้งบนเซิร์ฟเวอร์ Linux: Docker, HTTPS, สำรอง/กู้คืน, อัปเดต |
+| [docs/user-guide/README.md](docs/user-guide/README.md) | คู่มือผู้ใช้ พร้อมภาพหน้าจอทุกขั้นตอน (ฉบับ HTML: `docs/user-guide/index.html`) |
 | [docs/architecture.md](docs/architecture.md) | สถาปัตยกรรม, กฎธุรกิจ, API, แนวทางเขียนโค้ดและสไตล์ |
 | `.cursor/rules/`, `.cursor/skills/` | กฎและขั้นตอนงานสำหรับ AI agent ใน Cursor |
 
@@ -30,6 +31,8 @@ docker compose up -d --build
 ```
 
 เปิด `PUBLIC_URL` (ค่าเริ่มต้น http://localhost) แล้วเข้าสู่ระบบด้วย `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`
+
+ติดตั้งบนเซิร์ฟเวอร์จริงให้ทำตาม [docs/deployment.md](docs/deployment.md) และตั้ง `SEED_SAMPLE_DATA=false` ก่อนเริ่มครั้งแรก (ค่า `true` จะสร้างกลุ่มลูกค้าและอุปกรณ์ตัวอย่างซึ่งลบภายหลังไม่ได้)
 
 | บริการ | หน้าที่ |
 |---|---|
