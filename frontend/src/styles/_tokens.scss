@@ -1,0 +1,45 @@
+// Design tokens for SCSS. Colours resolve to the Syncfusion Material 3 CSS variables at runtime,
+// so they follow the brand overrides in styles.scss and switch with `.e-dark-mode`.
+// Syncfusion stores colours as "r, g, b" triplets: use sf() / sf-a() instead of Sass colour functions.
+
+@function sf($name) {
+  @return rgb(var(--color-sf-#{$name}));
+}
+
+@function sf-a($name, $alpha) {
+  @return rgba(var(--color-sf-#{$name}), $alpha);
+}
+
+// ---- typography ----
+$font-primary: 'Sarabun', system-ui, sans-serif;
+$font-mono: ui-monospace, 'Cascadia Mono', monospace;
+
+// ---- colours ----
+$color-primary: sf(primary);
+$color-on-primary: sf(on-primary);
+$color-success: sf(success);
+$color-warning: sf(warning);
+$color-danger: sf(error);
+$color-info: sf(info);
+
+$bg-app: color-mix(in srgb, #{sf(surface)} 95%, #{sf(primary)});
+$bg-surface: sf(surface);
+$text-main: sf(on-surface);
+$text-muted: sf(on-surface-variant);
+$border-color: sf(outline-variant);
+
+// ---- radius (matches Tailwind's rounded-m3-*) ----
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+$radius-xl: 28px;
+
+// ---- spacing ----
+$space-sm: 0.5rem;
+$space-md: 1rem;
+$space-lg: 1.5rem;
+$space-xl: 2rem;
+
+// ---- breakpoints (Tailwind md / lg) ----
+$bp-md: 768px;
+$bp-lg: 1024px;

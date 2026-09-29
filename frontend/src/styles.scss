@@ -1,3 +1,6 @@
+@use 'tokens' as *;
+@use 'mixins' as *;
+
 // Brand: indigo instead of the Material 3 default purple. Every Syncfusion component and every
 // Tailwind colour utility reads these tokens, so this is the single place to re-brand.
 :root {
@@ -69,11 +72,7 @@ body {
 }
 
 .panel {
-  background: rgb(var(--color-sf-surface));
-  border: 1px solid rgb(var(--color-sf-outline-variant));
-  border-radius: 16px;
-  padding: 16px;
-  min-width: 0;
+  @include card($space-md);
 }
 
 // Small tonal badge for grid cells: <span class="tone-chip" data-tone="success">ใช้งาน</span>
@@ -104,6 +103,57 @@ body {
       color: rgb(var(--color-sf-on-#{$tone}-container));
     }
   }
+}
+
+// ---- bento dashboard: 4 / 8 / 12 columns at mobile / md / lg ----
+.bento {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: $space-md;
+
+  @include up($bp-md) {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+  @include up($bp-lg) {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+}
+
+.bento-item {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  grid-column: span 4;
+
+  &--hero {
+    @include up($bp-md) {
+      grid-column: span 8;
+    }
+  }
+
+  &--tall {
+    @include up($bp-lg) {
+      grid-row: span 2;
+    }
+  }
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+  color: $color-primary;
+}
+
+.serial-number {
+  @include mono;
+  font-size: 0.875rem;
+  color: $text-muted;
+  background: sf-a(outline-variant, 0.3);
+  padding: 0.125rem 0.5rem;
+  border-radius: $radius-sm;
 }
 
 // ---- motion ----

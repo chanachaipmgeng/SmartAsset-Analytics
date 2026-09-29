@@ -1,0 +1,54 @@
+@use 'tokens' as *;
+
+@mixin card($padding: $space-lg) {
+  background: $bg-surface;
+  border: 1px solid $border-color;
+  border-radius: $radius-lg;
+  padding: $padding;
+  min-width: 0;
+}
+
+// Hover elevation for clickable cards; same motion as the global `.lift` class.
+@mixin card-hover {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -12px sf-a(primary, 0.45);
+    border-color: sf-a(primary, 0.4);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+// Tonal badge using the M3 container pair so text keeps contrast in both themes.
+// $tone: success | warning | info | error | primary
+@mixin status-badge($tone) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: sf(#{$tone}-container);
+  color: sf(on-#{$tone}-container);
+}
+
+@mixin mono {
+  font-family: $font-mono;
+  font-variant-numeric: tabular-nums;
+}
+
+@mixin up($bp) {
+  @media (min-width: $bp) {
+    @content;
+  }
+}
