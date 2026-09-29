@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Path, Query, status
 
 from app.application import admin, auth, customers, dashboard, inventory
 from app.domain.enums import DeviceStatus
@@ -114,6 +114,13 @@ async def list_devices(
 @router.post("/devices", response_model=s.DeviceOut, status_code=status.HTTP_201_CREATED, tags=["devices"])
 async def create_device(body: s.DeviceIn, actor: ActorDep, uow: UowDep):
     return await inventory.check_in(uow, actor, **body.model_dump())
+
+
+@router.get("/devices/by-serial/{serial_number}", response_model=s.DeviceOut, tags=["devices"])
+async def get_device_by_serial(
+    serial_number: Annotated[str, Path(min_length=1, max_length=100)], actor: ActorDep, uow: UowDep
+):
+    return await inventory.get_device_by_serial(uow, actor, serial_number)
 
 
 @router.get("/devices/{device_id}", response_model=s.DeviceOut, tags=["devices"])

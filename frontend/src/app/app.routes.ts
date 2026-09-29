@@ -31,6 +31,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/devices/devices').then((m) => m.DevicesPage),
       },
       {
+        path: 'scan',
+        title: 'สถานีสแกน',
+        loadComponent: () => import('./pages/scan/scan').then((m) => m.ScanPage),
+      },
+      {
         path: 'transactions',
         title: 'ความเคลื่อนไหวสต็อก',
         loadComponent: () => import('./pages/transactions/transactions').then((m) => m.TransactionsPage),

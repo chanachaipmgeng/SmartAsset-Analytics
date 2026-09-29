@@ -1,0 +1,145 @@
+<div class="page">
+  <app-page-header title="สถานีสแกน" subtitle="ยิงบาร์โค้ดหรือพิมพ์หมายเลขซีเรียล แล้วทำรายการได้ทันที" />
+
+  <div class="scan-layout">
+    <div class="flex min-w-0 flex-col gap-4">
+      <section class="scan-box" [class.busy]="lookup().kind === 'loading'">
+        <div class="pulse" aria-hidden="true"><span class="e-icons e-zoom-in"></span></div>
+        <form class="scan-form" (submit)="$event.preventDefault(); submit()">
+          <label for="scan-input" class="sr-label">หมายเลขซีเรียล</label>
+          <div class="e-input-group e-outline scan-input-group">
+            <input
+              #scanInput
+              id="scan-input"
+              class="e-input"
+              autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+              enterkeyhint="search"
+              placeholder="สแกนหรือพิมพ์ซีเรียล แล้วกด Enter"
+              [value]="text()"
+              (input)="text.set($any($event.target).value)"
+            />
+          </div>
+          <button ejs-button type="submit" [isPrimary]="true" iconCss="e-icons e-search" [disabled]="!text().trim()">ค้นหา</button>
+          @if (cameraSupported) {
+            <button
+              ejs-button
+              type="button"
+              [cssClass]="cameraOn() ? 'e-danger' : 'e-outline'"
+              iconCss="e-icons e-zoom-in"
+              (click)="toggleCamera()"
+            >{{ cameraOn() ? 'ปิดกล้อง' : 'ใช้กล้อง' }}</button>
+          }
+        </form>
+        <p class="hint">รองรับเครื่องยิงบาร์โค้ดแบบคีย์บอร์ด (ยิงแล้วกด Enter อัตโนมัติ){{ cameraSupported ? ' และกล้องของอุปกรณ์' : '' }}</p>
+        @if (cameraError()) {
+          <p class="camera-error">{{ cameraError() }}</p>
+        }
+        <div class="camera" [class.on]="cameraOn()">
+          <video #video playsinline muted></video>
+          <div class="reticle" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <section class="panel result" aria-live="polite">
+        @switch (lookup().kind) {
+          @case ('idle') {
+            <app-empty-state icon="e-icons e-zoom-in" title="พร้อมสแกน" message="ผลการค้นหาและปุ่มทำรายการจะแสดงที่นี่" />
+          }
+          @case ('loading') {
+            <div class="flex flex-col gap-3 p-2">
+              <app-skeleton-block width="40%" height="14px" />
+              <app-skeleton-block width="60%" height="28px" />
+              <app-skeleton-block width="100%" height="40px" />
+            </div>
+          }
+          @case ('found') {
+            @if (device(); as d) {
+              <div class="found">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <div class="text-sm text-on-surface-variant">{{ d.brand }} · {{ d.model_name }}</div>
+                    <div class="serial">{{ d.serial_number }}</div>
+                    <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-on-surface-variant">
+                      <app-status-chip [status]="d.status" />
+                      <span>{{ d.tenant_name ?? 'คลังกลาง' }}</span>
+                    </div>
+                  </div>
+                  <a ejs-button cssClass="e-flat" iconCss="e-icons e-arrow-right" iconPosition="Right" [routerLink]="['/devices', d.id]">รายละเอียด</a>
+                </div>
+                @if (actions().length) {
+                  <div class="actions stagger">
+                    @for (a of actions(); track a.id) {
+                      <button ejs-button [cssClass]="a.danger ? 'e-outline e-danger' : 'e-outline'" [iconCss]="a.iconCss" (click)="runAction(a.id)">
+                        {{ a.text }}
+                      </button>
+                    }
+                  </div>
+                } @else {
+                  <p class="m-0 mt-4 text-sm text-on-surface-variant">ไม่มีรายการที่ทำได้ในสถานะนี้</p>
+                }
+              </div>
+            }
+          }
+          @case ('missing') {
+            <app-empty-state
+              icon="e-icons e-circle-info"
+              [title]="'ไม่พบซีเรียล ' + serial()"
+              message="เครื่องนี้ยังไม่อยู่ในระบบ หรืออยู่ในกลุ่มลูกค้าอื่น"
+            >
+              @if (auth.canWrite()) {
+                <a ejs-button [isPrimary]="true" iconCss="e-icons e-plus" routerLink="/devices" [queryParams]="{ action: 'new', serial: serial() }">
+                  รับเข้าใหม่ด้วยซีเรียลนี้
+                </a>
+              }
+            </app-empty-state>
+          }
+          @case ('error') {
+            <app-empty-state tone="error" icon="e-icons e-warning" title="ค้นหาไม่สำเร็จ" [message]="errorText()">
+              <button ejs-button (click)="scan(serial())">ลองอีกครั้ง</button>
+            </app-empty-state>
+          }
+        }
+      </section>
+    </div>
+
+    <aside class="panel history">
+      <div class="history-head">
+        <div>
+          <h2>ประวัติการสแกน</h2>
+          <div class="text-xs text-on-surface-variant">พบ {{ foundCount() }} / ทั้งหมด {{ history().length }}</div>
+        </div>
+        @if (history().length) {
+          <button ejs-button cssClass="e-flat e-small" (click)="clearHistory()">ล้าง</button>
+        }
+      </div>
+      @if (history().length) {
+        <ul class="history-list">
+          @for (h of history(); track h.at) {
+            <li>
+              <button type="button" class="history-item" (click)="scan(h.serial, false)">
+                <span class="mark" [class.miss]="!h.deviceId">
+                  <span [class]="h.deviceId ? 'e-icons e-check' : 'e-icons e-close'"></span>
+                </span>
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate font-mono text-sm font-semibold">{{ h.serial }}</span>
+                  <span class="block text-xs text-on-surface-variant" [title]="h.at | date: 'd MMM y HH:mm:ss'">{{ relative(h.at) }}</span>
+                </span>
+                @if (h.status) {
+                  <app-status-chip [status]="h.status" />
+                } @else {
+                  <span class="text-xs text-error">ไม่พบ</span>
+                }
+              </button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <app-empty-state icon="e-icons e-history" title="ยังไม่มีการสแกน" message="เก็บไว้จนกว่าจะปิดแท็บนี้" />
+      }
+    </aside>
+  </div>
+</div>
+
+<app-device-action-dialogs (done)="onActionDone()" />

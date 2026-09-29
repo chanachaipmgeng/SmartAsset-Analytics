@@ -190,6 +190,12 @@ async def test_repair_flow(client: httpx.AsyncClient, world: dict) -> None:
     )
     assert install.status_code == 201, install.text
 
+    # Scanner lookup is case-insensitive and respects tenant isolation.
+    found = await client.get(f"/devices/by-serial/r-{world['tag'].lower()}", headers=a)
+    assert found.status_code == 200 and found.json()["id"] == device_id
+    assert (await client.get(f"/devices/by-serial/R-{world['tag']}", headers=b)).status_code == 404
+    assert (await client.get("/devices/by-serial/NO-SUCH-SERIAL", headers=a)).status_code == 404
+
     # Tenant B cannot touch it; tenant A sends it for repair and the installation closes.
     assert (await client.post("/inventory/send-repair", headers=b, json={"device_id": device_id})).status_code == 404
     res = await client.post("/inventory/send-repair", headers=a, json={"device_id": device_id, "note": "จอไม่ติด"})

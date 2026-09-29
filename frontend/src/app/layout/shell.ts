@@ -120,6 +120,7 @@ export class Shell {
         label: 'คลังอุปกรณ์',
         items: [
           { path: '/devices', label: 'อุปกรณ์', icon: 'e-icons e-box' },
+          { path: '/scan', label: 'สถานีสแกน', icon: 'e-icons e-zoom-in' },
           { path: '/transactions', label: 'ความเคลื่อนไหวสต็อก', icon: 'e-icons e-changes-track' },
         ],
       },
@@ -170,7 +171,7 @@ export class Shell {
       );
     }
     actions.push(
-      { id: 'scan', label: 'เปิดสถานีสแกน', group: 'คำสั่งด่วน', icon: 'e-icons e-search', keywords: 'scan barcode qr สแกน', run: go('/scan') },
+      { id: 'scan', label: 'เปิดสถานีสแกน', group: 'คำสั่งด่วน', icon: 'e-icons e-zoom-in', keywords: 'scan barcode qr สแกน', run: go('/scan') },
       {
         id: 'theme',
         label: this.theme.isDark() ? 'เปลี่ยนเป็นธีมสว่าง' : 'เปลี่ยนเป็นธีมมืด',

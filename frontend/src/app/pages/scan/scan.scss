@@ -1,0 +1,243 @@
+.scan-layout {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+
+  @media (min-width: 1024px) {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+}
+
+.scan-box {
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+  border-radius: 28px;
+  background:
+    radial-gradient(90% 120% at 100% 0%, rgb(var(--color-sf-tertiary-container)), transparent 60%),
+    linear-gradient(135deg, rgb(var(--color-sf-primary-container)), color-mix(in srgb, rgb(var(--color-sf-primary-container)) 60%, rgb(var(--color-sf-surface))));
+  color: rgb(var(--color-sf-on-primary-container));
+  animation: fade-up 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.pulse {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 16px;
+  border-radius: 18px;
+  font-size: 26px;
+  background: rgb(var(--color-sf-primary));
+  color: rgb(var(--color-sf-on-primary));
+  box-shadow: 0 0 0 0 rgb(var(--color-sf-primary) / 0.5);
+  animation: scan-pulse 2.2s ease-out infinite;
+}
+
+.busy .pulse {
+  animation-duration: 0.8s;
+}
+
+@keyframes scan-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(var(--color-sf-primary) / 0.45);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 18px rgb(var(--color-sf-primary) / 0);
+  }
+}
+
+.scan-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.scan-input-group {
+  flex: 1 1 260px;
+  margin: 0;
+  background: rgb(var(--color-sf-surface));
+
+  .e-input {
+    height: 52px;
+    font-family: ui-monospace, 'Cascadia Mono', monospace;
+    font-size: 20px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+
+    &::placeholder {
+      font-family: 'Sarabun', system-ui, sans-serif;
+      font-size: 15px;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+  }
+}
+
+.sr-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.hint {
+  margin: 12px 0 0;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.camera-error {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: rgb(var(--color-sf-error));
+}
+
+.camera {
+  position: relative;
+  display: none;
+  overflow: hidden;
+  max-width: 480px;
+  margin-top: 16px;
+  border-radius: 20px;
+  background: #000;
+  aspect-ratio: 4 / 3;
+
+  &.on {
+    display: block;
+    animation: scale-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.reticle {
+  position: absolute;
+  inset: 22% 12%;
+  border: 3px solid rgb(255 255 255 / 0.85);
+  border-radius: 16px;
+  box-shadow: 0 0 0 999px rgb(0 0 0 / 0.35);
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: 50%;
+    height: 2px;
+    background: rgb(var(--color-sf-error));
+    animation: scan-line 1.6s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes scan-line {
+  from {
+    transform: translateY(-40px);
+  }
+  to {
+    transform: translateY(40px);
+  }
+}
+
+.result {
+  min-height: 180px;
+}
+
+.found {
+  padding: 4px;
+  animation: scale-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  .serial {
+    margin-top: 2px;
+    font-family: ui-monospace, 'Cascadia Mono', monospace;
+    font-size: 26px;
+    font-weight: 700;
+    word-break: break-all;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.history {
+  @media (min-width: 1024px) {
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+  }
+}
+
+.history-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
+
+  h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+}
+
+.history-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  animation: fade-up 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  &:hover {
+    background: color-mix(in srgb, rgb(var(--color-sf-surface)) 90%, rgb(var(--color-sf-primary)));
+  }
+}
+
+.mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 12px;
+  background: rgb(var(--color-sf-success-container));
+  color: rgb(var(--color-sf-on-success-container));
+
+  &.miss {
+    background: rgb(var(--color-sf-error-container));
+    color: rgb(var(--color-sf-on-error-container));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse,
+  .reticle::after {
+    animation: none;
+  }
+}

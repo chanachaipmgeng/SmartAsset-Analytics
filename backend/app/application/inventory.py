@@ -82,6 +82,14 @@ async def get_device(uow: UnitOfWork, actor: Actor, device_id: UUID) -> DeviceVi
     return view
 
 
+async def get_device_by_serial(uow: UnitOfWork, actor: Actor, serial_number: str) -> DeviceView:
+    """Scanner lookup. RLS limits it to devices the caller may see, so other tenants' serials read as not found."""
+    device = await uow.devices.get_by_serial(serial_number.strip().upper())
+    if device is None:
+        raise NotFoundError("ไม่พบอุปกรณ์หมายเลขซีเรียลนี้")
+    return await _view(uow, device.id)
+
+
 async def check_in(
     uow: UnitOfWork,
     actor: Actor,
