@@ -124,6 +124,13 @@ Paging ของ `GET /devices`: ไม่ส่ง `take` จะคืนทุ
 - ประวัติ: `0004_edit_audit` (ประเภท EDIT, `customers.is_active`), `0005_loan_qc` (ON_LOAN/UNDER_QC, LOAN/QC_PASS/QC_FAIL, `devices.loan_due_date`), `0006_suppliers` (ตาราง `suppliers`, `inventory_transactions.supplier_id`), `0007_photos` (ตาราง `photos` + policy RLS)
 - container `api` รัน `alembic upgrade head` ทุกครั้งที่เริ่ม
 
+### ข้อมูลตัวอย่าง (demo data)
+
+- `python -m app.infrastructure.demo_data` (ใน container `api`) เรียก `seed()` ก่อน แล้วสร้างข้อมูลสาธิตผ่าน use case ใน `application/` เหมือนผู้ใช้จริง state machine และแถว `inventory_transactions` จึงถูกต้องเสมอ ใช้การเชื่อมต่อ owner (`MIGRATION_DATABASE_URL`) แบบเดียวกับ seed
+- `random.Random(20260929)` ทำให้ DB ใหม่ได้ข้อมูลชุดเดิมทุกครั้ง; รันซ้ำจะเจอผู้ใช้ `warehouse@example.com` แล้วข้าม
+- ประวัติย้อนหลัง 90 วัน: หลังรัน use case ของแต่ละเครื่องจะ `UPDATE` เวลาใน `inventory_transactions.occurred_at`, `devices.created_at`, `installations.created_at/removed_at`, `photos.created_at` ตามแผนเวลา (ช่วง 08:30-17:30 น.) และกระจาย `audit_logs` ของรอบนี้ไปตลอดช่วงโดยคงลำดับ ส่วนวันครบกำหนดยืมในอดีต (use case ไม่ยอมรับ) ตั้งตรงใน `devices.loan_due_date` และ note ของรายการ LOAN
+- รูปทั้งหมดวาดด้วย Pillow ใน `infrastructure/demo_images.py` (รูปรุ่น, avatar, รูปเครื่องบนโต๊ะ/ชำรุด, รูปหน้างาน) แล้วอัปโหลดผ่าน `photos.upload_photo` จึงผ่านการย่อ/แปลง WebP เหมือนรูปจริง
+
 ## Frontend
 
 ### แนวทางคอมโพเนนต์

@@ -45,7 +45,12 @@ docker compose ps                     # สถานะ
 docker compose logs -f api            # ดู log
 docker compose up -d --build          # อัปเดตหลังแก้โค้ด
 docker compose exec db pg_dump -U inventory_owner inventory > backup.sql   # สำรองข้อมูล
+docker compose exec api python -m app.infrastructure.demo_data            # ใส่ข้อมูลตัวอย่าง (รันซ้ำได้)
 ```
+
+### ข้อมูลตัวอย่าง
+
+`python -m app.infrastructure.demo_data` เติมข้อมูลสาธิตต่อจาก seed: กลุ่มลูกค้า TIMETECH และ SIAMSVC พร้อมลูกค้ากลุ่มละ 5-6 ราย, ผู้ใช้ทุกบทบาท (รวมเจ้าหน้าที่คลังกลาง `warehouse@example.com`) พร้อมรูปโปรไฟล์, รุ่น 6 รุ่นพร้อมรูป, ผู้จำหน่าย 4 ราย และอุปกรณ์ราว 70 เครื่องครบทุกสถานะ (ติดตั้ง ~20 เครื่องที่ ~12 จุด, ยืมเกินกำหนด, รอ QC, ซ่อมนานเกิน 14 วัน, ประกันใกล้หมด, ปลดระวาง, สต็อกกลาง) ประวัติย้อนหลัง 90 วันพร้อมรูปประกอบ ผู้ใช้ตัวอย่างทุกคนใช้รหัสผ่านเดียวกับ `SEED_ADMIN_PASSWORD` คำสั่งรันซ้ำได้ (เจอข้อมูลแล้วจะข้าม) และใช้ random seed คงที่ ห้ามรันบนระบบจริง
 
 ## พัฒนาบนเครื่อง
 
