@@ -111,6 +111,15 @@ body {
     background: currentColor;
   }
 
+  // `<span class="tone-chip has-icon"><span class="e-icons e-check"></span>…</span>` swaps the dot for an icon.
+  &.has-icon::before {
+    display: none;
+  }
+
+  .e-icons {
+    font-size: 12px;
+  }
+
   @each $tone in success, warning, info, error {
     &[data-tone='#{$tone}'] {
       background: rgb(var(--color-sf-#{$tone}-container));

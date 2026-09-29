@@ -77,21 +77,21 @@
           <app-status-chip [status]="d.status" />
         </div>
         <div class="flex gap-1">
+          @if (canEdit()) {
+            <button ejs-button cssClass="e-flat e-round" iconCss="e-icons e-edit" title="แก้ไขข้อมูล" aria-label="แก้ไขข้อมูล" (click)="openEdit()"></button>
+          }
           <button ejs-button cssClass="e-flat e-round" iconCss="e-icons e-copy" title="คัดลอกลิงก์" aria-label="คัดลอกลิงก์" (click)="copyLink()"></button>
           <button ejs-button cssClass="e-flat e-round" iconCss="e-icons e-close" title="ปิด" aria-label="ปิด" (click)="closeDetail()"></button>
         </div>
       </header>
 
       <div class="detail-body">
-        @if (actions().length || canEdit()) {
+        @if (actions().length) {
           <div class="actions stagger">
             @for (a of actions(); track a.id) {
               <button ejs-button [cssClass]="a.danger ? 'e-outline e-danger' : 'e-outline'" [iconCss]="a.iconCss" (click)="runAction(a.id)">
                 {{ a.text }}
               </button>
-            }
-            @if (canEdit()) {
-              <button ejs-button cssClass="e-flat" iconCss="e-icons e-edit" (click)="openEdit()">แก้ไข</button>
             }
           </div>
         }

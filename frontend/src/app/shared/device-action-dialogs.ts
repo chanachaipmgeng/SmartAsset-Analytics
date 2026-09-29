@@ -157,7 +157,7 @@ export class DeviceActionDialogs {
     return kind !== null;
   });
   protected readonly transferOptions = computed(() => [
-    { value: CENTRAL_STOCK, text: 'คลังกลาง (แพลตฟอร์ม)' },
+    ...(this.device()?.tenant_id ? [{ value: CENTRAL_STOCK, text: 'คลังกลาง (แพลตฟอร์ม)' }] : []),
     ...this.tenants
       .value()
       .filter((t) => t.id !== this.device()?.tenant_id)

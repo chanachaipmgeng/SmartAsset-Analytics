@@ -131,8 +131,15 @@
       }
       @case (1) {
         <button ejs-button iconCss="e-icons e-chevron-left" (click)="reset()" [disabled]="busy()">เลือกไฟล์ใหม่</button>
-        <button ejs-button [isPrimary]="true" iconCss="e-icons e-import" [disabled]="!canCommit()" (click)="commit()">
-          {{ busy() ? 'กำลังนำเข้า…' : 'นำเข้า ' + (result()?.valid ?? 0) + ' เครื่อง' }}
+        <button
+          ejs-button
+          [isPrimary]="true"
+          iconCss="e-icons e-import"
+          [disabled]="!canCommit()"
+          [attr.title]="result()?.invalid ? 'ระบบนำเข้าเมื่อทุกแถวถูกต้องเท่านั้น' : null"
+          (click)="commit()"
+        >
+          {{ busy() ? 'กำลังนำเข้า…' : result()?.invalid ? 'แก้ไขแถวที่ผิดก่อน' : 'นำเข้า ' + (result()?.valid ?? 0) + ' เครื่อง' }}
         </button>
       }
       @case (2) {

@@ -31,16 +31,18 @@ import { DeviceImport } from './device-import';
 
 type StatusFilter = DeviceStatus | 'ALL';
 
+const WIDE = '(min-width: 768px)';
+
 const COLUMNS: GridColumn[] = [
   { field: 'serial_number', headerText: 'ซีเรียล', width: 150, isPrimaryKey: true },
-  { field: 'brand', headerText: 'ยี่ห้อ', width: 110 },
+  { field: 'brand', headerText: 'ยี่ห้อ', width: 110, hideAtMedia: WIDE },
   { field: 'model_name', headerText: 'รุ่น', width: 150 },
   { field: 'status_label', headerText: 'สถานะ', width: 140 },
-  { field: 'tenant_label', headerText: 'กลุ่มลูกค้า', width: 200 },
-  { field: 'mac_address', headerText: 'MAC', width: 160 },
-  { field: 'purchase_date', headerText: 'วันที่ซื้อ', type: 'date', format: 'dd/MM/yyyy', width: 120 },
-  { field: 'warranty_end', headerText: 'หมดประกัน', type: 'date', format: 'dd/MM/yyyy', width: 120 },
-  { field: 'cost', headerText: 'ต้นทุน', type: 'number', format: 'N2', textAlign: 'Right', width: 120 },
+  { field: 'tenant_label', headerText: 'กลุ่มลูกค้า', width: 200, hideAtMedia: WIDE },
+  { field: 'mac_address', headerText: 'MAC', width: 160, hideAtMedia: WIDE },
+  { field: 'purchase_date', headerText: 'วันที่ซื้อ', type: 'date', format: 'dd/MM/yyyy', width: 120, hideAtMedia: WIDE },
+  { field: 'warranty_end', headerText: 'หมดประกัน', type: 'date', format: 'dd/MM/yyyy', width: 120, hideAtMedia: WIDE },
+  { field: 'cost', headerText: 'ต้นทุน', type: 'number', format: 'N2', textAlign: 'Right', width: 120, hideAtMedia: WIDE },
 ];
 
 const WARRANTY_SOON_DAYS = 60;

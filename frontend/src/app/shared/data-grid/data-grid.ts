@@ -39,6 +39,8 @@ export interface GridColumn {
   textAlign?: 'Left' | 'Right' | 'Center';
   /** Hidden by default; users can still show it from the column chooser. */
   hidden?: boolean;
+  /** Media query the column needs to be shown, e.g. `(min-width: 768px)` for secondary columns. */
+  hideAtMedia?: string;
   isPrimaryKey?: boolean;
 }
 

@@ -106,6 +106,13 @@
   gap: 6px;
   font-size: 13px;
   cursor: pointer;
+
+  input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: rgb(var(--color-sf-primary));
+  }
 }
 
 .preview {

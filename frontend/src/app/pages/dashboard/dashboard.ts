@@ -185,7 +185,16 @@ export class DashboardPage {
   protected readonly activityYAxis = { minimum: 0, labelFormat: '{value}', lineStyle: { width: 0 }, majorTickLines: { width: 0 } };
   protected readonly activityTooltip = { enable: true, shared: true, format: '${series.name}: <b>${point.y}</b>' };
   protected readonly tooltip = { enable: true };
-  protected readonly legend = { visible: true, position: 'Bottom' };
+  // Paging hides statuses behind "1/2" in short panels; let the legend wrap and shrink the donut instead.
+  protected readonly legend = {
+    visible: true,
+    position: 'Bottom',
+    enablePages: false,
+    shapeHeight: 8,
+    shapeWidth: 8,
+    itemPadding: 10,
+    textStyle: { size: '12px' },
+  };
   protected readonly pieLabels = { visible: true, name: 'y', position: 'Inside', font: { color: '#fff', fontWeight: '600' } };
   protected readonly columnLabels = { visible: true, position: 'Top' };
   protected readonly cellSpacing = [16, 16];
