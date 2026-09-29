@@ -7,11 +7,14 @@ import {
   ElementRef,
   afterNextRender,
   computed,
+  effect,
   inject,
+  input,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ButtonModule, CheckBoxModule } from '@syncfusion/ej2-angular-buttons';
 import { firstValueFrom } from 'rxjs';
 import { AuthStore } from '../../core/auth.store';
@@ -19,9 +22,11 @@ import { DeviceActionId, availableActions, commonBulkActions, isBulkAction } fro
 import { relativeTime } from '../../core/labels';
 import { Device, DeviceStatus } from '../../core/models';
 import { errorMessage } from '../../core/notify.service';
+import { parseScanCode } from '../../core/scan-code';
 import { scanMiss, scanSuccess } from '../../core/scan-feedback';
 import { DeviceActionDialogs } from '../../shared/device-action-dialogs';
 import { EmptyState } from '../../shared/empty-state';
+import { LabelPrintDialog } from '../../shared/label-print-dialog';
 import { PageHeader } from '../../shared/page-header';
 import { SkeletonBlock } from '../../shared/skeleton-block';
 import { StatusChip } from '../../shared/status-chip';
@@ -73,7 +78,7 @@ function barcodeDetector(): BarcodeDetectorCtor | null {
 
 @Component({
   selector: 'app-scan',
-  imports: [DatePipe, RouterLink, ButtonModule, CheckBoxModule, PageHeader, StatusChip, EmptyState, SkeletonBlock, DeviceActionDialogs],
+  imports: [DatePipe, RouterLink, ButtonModule, CheckBoxModule, PageHeader, StatusChip, EmptyState, SkeletonBlock, DeviceActionDialogs, LabelPrintDialog],
   templateUrl: './scan.html',
   styleUrl: './scan.scss',
   host: { '(document:keydown)': 'captureWedge($event)' },
@@ -86,6 +91,11 @@ export class ScanPage {
   private readonly input = viewChild.required<ElementRef<HTMLInputElement>>('scanInput');
   private readonly video = viewChild<ElementRef<HTMLVideoElement>>('video');
   private readonly dialogs = viewChild.required(DeviceActionDialogs);
+  protected readonly labels = viewChild.required(LabelPrintDialog);
+  private readonly router = inject(Router);
+
+  /** `?serial=` from a scanned label QR (see core/scan-code.ts); looked up once, then removed from the URL. */
+  readonly serialParam = input<string>(undefined, { alias: 'serial' });
 
   protected readonly text = signal('');
   protected readonly lookup = signal<Lookup>({ kind: 'idle' });
@@ -125,6 +135,15 @@ export class ScanPage {
 
   constructor() {
     afterNextRender(() => this.focusInput());
+
+    effect(() => {
+      const serial = this.serialParam();
+      if (!serial) return;
+      untracked(() => {
+        void this.scan(serial);
+        void this.router.navigate([], { queryParams: { serial: null }, queryParamsHandling: 'merge', replaceUrl: true });
+      });
+    });
     inject(DestroyRef).onDestroy(() => this.stopCamera());
   }
 
@@ -141,7 +160,7 @@ export class ScanPage {
   }
 
   protected async scan(raw: string, record = true): Promise<void> {
-    const serial = raw.trim().toUpperCase();
+    const serial = parseScanCode(raw);
     if (!serial) return;
     this.text.set('');
     this.lookup.set({ kind: 'loading', serial });

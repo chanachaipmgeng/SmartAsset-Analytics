@@ -36,6 +36,7 @@ import { DataGrid, GridCell, GridColumn, GridQuery, GridRowAction, GridRowAction
 import { DeviceActionDialogs } from '../../shared/device-action-dialogs';
 import { FilterChips } from '../../shared/filter-chips';
 import { InstallationMap } from '../../shared/installation-map';
+import { LabelPrintDialog } from '../../shared/label-print-dialog';
 import { PageHeader } from '../../shared/page-header';
 import { PhotoGallery } from '../../shared/photo-gallery';
 import { StatusChip } from '../../shared/status-chip';
@@ -109,6 +110,7 @@ const DAY_MS = 86_400_000;
     DeviceActionDialogs,
     DeviceImport,
     FilterChips,
+    LabelPrintDialog,
     PhotoGallery,
   ],
   templateUrl: './devices.html',
@@ -132,6 +134,7 @@ export class DevicesPage {
 
   private readonly grid = viewChild(DataGrid);
   private readonly dialogs = viewChild.required(DeviceActionDialogs);
+  protected readonly labels = viewChild.required(LabelPrintDialog);
 
   protected readonly columns = COLUMNS;
   protected readonly animation = DIALOG_ANIMATION;
@@ -393,6 +396,11 @@ export class DevicesPage {
     this.devices.reload();
     this.statusCounts.reload();
     this.notify.success(`นำเข้าอุปกรณ์ ${count} เครื่องแล้ว`);
+  }
+
+  protected printLabel(): void {
+    const d = this.selected();
+    if (d) this.labels().open([d]);
   }
 
   protected async copyLink(): Promise<void> {

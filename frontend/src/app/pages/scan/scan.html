@@ -87,6 +87,7 @@
               } @empty {
                 <p class="m-0 text-sm text-on-surface-variant">ไม่มีรายการที่ทำได้กับทุกเครื่องในรายการ</p>
               }
+              <button ejs-button cssClass="e-flat" iconCss="e-icons e-print" (click)="labels().open(batch())">พิมพ์ฉลาก</button>
             </div>
           } @else {
             <p class="m-0 text-sm text-on-surface-variant">สแกนต่อไปเรื่อย ๆ เครื่องที่พบจะถูกเพิ่มในรายการนี้</p>
@@ -195,3 +196,4 @@
 </div>
 
 <app-device-action-dialogs (done)="onActionDone()" (bulkDone)="onBulkDone($event)" />
+<app-label-print-dialog />

@@ -595,3 +595,43 @@ ejs-textarea {
     resize: vertical;
   }
 }
+
+// Label printing (shared/label-print-dialog.ts): only the print root is printed.
+.label-print-root {
+  display: none;
+}
+
+@media print {
+  body.printing-labels {
+    margin: 0;
+    background: #fff;
+
+    > :not(.label-print-root) {
+      display: none !important;
+    }
+
+    .label-print-root {
+      display: block;
+    }
+
+    .label-sheet {
+      display: grid;
+      grid-template-columns: repeat(3, 70mm);
+      grid-template-rows: repeat(8, 37.125mm);
+      width: 210mm;
+      height: 297mm;
+      overflow: hidden;
+      break-after: page;
+    }
+
+    .label-print-root.single app-device-label {
+      display: flex;
+      break-after: page;
+    }
+
+    app-device-label {
+      break-inside: avoid;
+      print-color-adjust: exact;
+    }
+  }
+}

@@ -56,6 +56,7 @@
       } @empty {
         <span class="bulk-empty">ไม่มีรายการที่ทำได้กับทุกเครื่องที่เลือก</span>
       }
+      <button ejs-button iconCss="e-icons e-print" (click)="labels().open(checked())">พิมพ์ฉลาก</button>
       <button ejs-button cssClass="e-flat" iconCss="e-icons e-close" (click)="clearChecked()">ล้าง</button>
     </div>
   }
@@ -87,6 +88,7 @@
           @if (canEdit()) {
             <button ejs-button cssClass="e-flat e-round" iconCss="e-icons e-edit" title="แก้ไขข้อมูล" aria-label="แก้ไขข้อมูล" (click)="openEdit()"></button>
           }
+          <button ejs-button cssClass="e-flat e-round" iconCss="e-icons e-print" title="พิมพ์ฉลาก" aria-label="พิมพ์ฉลาก" (click)="printLabel()"></button>
           <button ejs-button cssClass="e-flat e-round" iconCss="e-icons e-copy" title="คัดลอกลิงก์" aria-label="คัดลอกลิงก์" (click)="copyLink()"></button>
           <button ejs-button cssClass="e-flat e-round" iconCss="e-icons e-close" title="ปิด" aria-label="ปิด" (click)="closeDetail()"></button>
         </div>
@@ -206,6 +208,7 @@
 </ejs-sidebar>
 
 <app-device-action-dialogs (done)="onActionDone()" (bulkDone)="onBulkDone()" />
+<app-label-print-dialog />
 <app-device-import [(open)]="importOpen" (imported)="onImported($event)" />
 
 <ejs-dialog

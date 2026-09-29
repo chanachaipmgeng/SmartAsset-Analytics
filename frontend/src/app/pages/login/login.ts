@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ButtonModule, CheckBoxModule } from '@syncfusion/ej2-angular-buttons';
 import { TextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { MessageModule } from '@syncfusion/ej2-angular-notifications';
 import { AuthStore } from '../../core/auth.store';
+import { safeReturnUrl } from '../../core/guards';
 import { errorMessage } from '../../core/notify.service';
 import { LiveValue } from '../../shared/live-value';
 
@@ -27,6 +28,9 @@ function savedEmail(): string {
 export class LoginPage {
   private readonly auth = inject(AuthStore);
   private readonly router = inject(Router);
+
+  /** Set by `authGuard` when a deep link (e.g. a label QR) needed a login first. */
+  readonly returnUrl = input<string>();
 
   protected readonly features = [
     { icon: 'e-icons e-box', title: 'สต็อกรายเครื่อง', detail: 'รู้สถานะและที่อยู่ของทุกซีเรียลแบบเรียลไทม์' },
@@ -56,7 +60,7 @@ export class LoginPage {
       } catch {
         // Storage unavailable; remembering is best-effort.
       }
-      await this.router.navigateByUrl('/dashboard');
+      await this.router.navigateByUrl(safeReturnUrl(this.returnUrl()));
     } catch (err) {
       this.error.set(errorMessage(err));
     } finally {

@@ -18,6 +18,7 @@
     "@angular/forms": "^22.2.0",
     "@angular/platform-browser": "^22.2.0",
     "@angular/router": "^22.2.0",
+    "@syncfusion/ej2-angular-barcode-generator": "32.2.3",
     "@syncfusion/ej2-angular-base": "32.2.3",
     "@syncfusion/ej2-angular-buttons": "32.2.3",
     "@syncfusion/ej2-angular-calendars": "32.2.3",
@@ -56,6 +57,7 @@
     "vitest": "^5.0.0"
   },
   "overrides": {
+    "@syncfusion/ej2-barcode-generator": "32.2.3",
     "@syncfusion/ej2-base": "32.2.3",
     "@syncfusion/ej2-buttons": "32.2.3",
     "@syncfusion/ej2-calendars": "32.2.3",
