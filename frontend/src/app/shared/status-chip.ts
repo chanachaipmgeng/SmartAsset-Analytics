@@ -7,6 +7,7 @@ const CHIP_CLASSES: Record<StatusTone, string> = {
   success: 'bg-success-container text-on-success-container',
   warning: 'bg-warning-container text-on-warning-container',
   info: 'bg-info-container text-on-info-container',
+  error: 'bg-error-container text-on-error-container',
   neutral: 'bg-surface-variant text-on-surface-variant',
 };
 
@@ -14,6 +15,7 @@ const DOT_CLASSES: Record<StatusTone, string> = {
   success: 'bg-success',
   warning: 'bg-warning',
   info: 'bg-info',
+  error: 'bg-error',
   neutral: 'bg-outline',
 };
 

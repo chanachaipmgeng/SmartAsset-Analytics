@@ -1,6 +1,13 @@
 import { Device } from './models';
 
-export type DeviceActionId = 'transfer' | 'checkout' | 'install' | 'return' | 'retire';
+export type DeviceActionId =
+  | 'transfer'
+  | 'checkout'
+  | 'install'
+  | 'return'
+  | 'send_repair'
+  | 'repair_done'
+  | 'retire';
 
 export interface DeviceAction {
   id: DeviceActionId;
@@ -51,12 +58,26 @@ const RULES: Rule[] = [
     allowed: (d, p) => p.isSuperadmin && d.status === 'IN_STOCK',
   },
   {
+    id: 'send_repair',
+    text: 'ส่งซ่อม',
+    title: 'ส่งอุปกรณ์ซ่อม',
+    iconCss: 'e-icons e-settings',
+    allowed: (d, p) => p.canWrite && ['IN_STOCK', 'CHECKED_OUT', 'INSTALLED'].includes(d.status),
+  },
+  {
+    id: 'repair_done',
+    text: 'ซ่อมเสร็จ / QC',
+    title: 'บันทึกผลซ่อมและ QC',
+    iconCss: 'e-icons e-check',
+    allowed: (d, p) => p.canWrite && d.status === 'IN_REPAIR',
+  },
+  {
     id: 'retire',
     text: 'ปลดระวาง',
     title: 'ปลดระวางอุปกรณ์',
     iconCss: 'e-icons e-close',
     danger: true,
-    allowed: (d, p) => p.canWrite && d.status === 'IN_STOCK',
+    allowed: (d, p) => p.canWrite && (d.status === 'IN_STOCK' || d.status === 'IN_REPAIR'),
   },
 ];
 

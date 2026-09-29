@@ -158,6 +158,11 @@ class TransferIn(MovementIn):
     target_tenant_id: UUID | None = None
 
 
+class RepairDoneIn(BaseModel):
+    device_id: UUID
+    qc_note: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
+
+
 class TransactionOut(Out):
     id: UUID
     device_id: UUID

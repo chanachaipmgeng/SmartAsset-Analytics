@@ -8,6 +8,7 @@ STATUS_LABELS_TH: dict[DeviceStatus, str] = {
     DeviceStatus.IN_STOCK: "อยู่ในคลัง",
     DeviceStatus.CHECKED_OUT: "เบิกออก",
     DeviceStatus.INSTALLED: "ติดตั้งแล้ว",
+    DeviceStatus.IN_REPAIR: "ส่งซ่อม",
     DeviceStatus.RETIRED: "ปลดระวาง",
 }
 
@@ -16,7 +17,13 @@ ALLOWED_TRANSITIONS: dict[TransactionType, tuple[set[DeviceStatus], DeviceStatus
     TransactionType.CHECK_OUT: ({DeviceStatus.IN_STOCK}, DeviceStatus.CHECKED_OUT),
     TransactionType.INSTALL: ({DeviceStatus.CHECKED_OUT}, DeviceStatus.INSTALLED),
     TransactionType.RETURN: ({DeviceStatus.CHECKED_OUT, DeviceStatus.INSTALLED}, DeviceStatus.IN_STOCK),
-    TransactionType.RETIRE: ({DeviceStatus.IN_STOCK}, DeviceStatus.RETIRED),
+    TransactionType.SEND_REPAIR: (
+        {DeviceStatus.IN_STOCK, DeviceStatus.CHECKED_OUT, DeviceStatus.INSTALLED},
+        DeviceStatus.IN_REPAIR,
+    ),
+    TransactionType.REPAIR_DONE: ({DeviceStatus.IN_REPAIR}, DeviceStatus.IN_STOCK),
+    # A device that cannot be repaired may be retired straight from repair.
+    TransactionType.RETIRE: ({DeviceStatus.IN_STOCK, DeviceStatus.IN_REPAIR}, DeviceStatus.RETIRED),
 }
 
 WRITE_ROLES = {Role.SUPERADMIN, Role.TENANT_ADMIN, Role.STAFF}

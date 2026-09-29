@@ -5,15 +5,18 @@ export const STATUS_LABELS: Record<DeviceStatus, string> = {
   IN_STOCK: 'อยู่ในคลัง',
   CHECKED_OUT: 'เบิกออก',
   INSTALLED: 'ติดตั้งแล้ว',
+  IN_REPAIR: 'ส่งซ่อม',
   RETIRED: 'ปลดระวาง',
 };
 
-export type StatusTone = 'success' | 'warning' | 'info' | 'neutral';
+export type StatusTone = 'success' | 'warning' | 'info' | 'error' | 'neutral';
 
 export const STATUS_TONES: Record<DeviceStatus, StatusTone> = {
   IN_STOCK: 'success',
   CHECKED_OUT: 'warning',
   INSTALLED: 'info',
+  // Not `warning`: that is already CHECKED_OUT, and the status donut needs distinct colours.
+  IN_REPAIR: 'error',
   RETIRED: 'neutral',
 };
 
@@ -21,6 +24,7 @@ const TONE_TOKENS: Record<StatusTone, string> = {
   success: '--color-sf-success',
   warning: '--color-sf-warning',
   info: '--color-sf-info',
+  error: '--color-sf-error',
   neutral: '--color-sf-outline',
 };
 
@@ -42,6 +46,8 @@ export const TX_LABELS: Record<TransactionType, string> = {
   CHECK_OUT: 'เบิกออก',
   INSTALL: 'ติดตั้ง',
   RETURN: 'รับคืน',
+  SEND_REPAIR: 'ส่งซ่อม',
+  REPAIR_DONE: 'ซ่อมเสร็จ (QC ผ่าน)',
   RETIRE: 'ปลดระวาง',
 };
 
@@ -51,6 +57,8 @@ export const TX_ICONS: Record<TransactionType, string> = {
   CHECK_OUT: 'e-icons e-export',
   INSTALL: 'e-icons e-location',
   RETURN: 'e-icons e-undo',
+  SEND_REPAIR: 'e-icons e-settings',
+  REPAIR_DONE: 'e-icons e-check',
   RETIRE: 'e-icons e-close',
 };
 
@@ -60,6 +68,8 @@ export const TX_TONES: Record<TransactionType, StatusTone> = {
   CHECK_OUT: 'warning',
   INSTALL: 'info',
   RETURN: 'success',
+  SEND_REPAIR: 'error',
+  REPAIR_DONE: 'success',
   RETIRE: 'neutral',
 };
 

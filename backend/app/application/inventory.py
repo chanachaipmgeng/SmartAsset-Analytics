@@ -179,6 +179,35 @@ async def return_device(uow: UnitOfWork, actor: Actor, device_id: UUID, note: st
     return await _view(uow, device.id)
 
 
+async def send_repair(uow: UnitOfWork, actor: Actor, device_id: UUID, note: str | None) -> DeviceView:
+    """Send for repair from stock, checked-out or installed; an installed device leaves its site."""
+    require_write(actor.role)
+    device = await _load_device(uow, device_id)
+    from_status = device.status
+    device = replace(device, status=next_status(device, TransactionType.SEND_REPAIR))
+    customer_id = None
+    active = await uow.installations.get_active_for_device(device.id)
+    if active is not None:
+        customer_id = active.customer_id
+        await uow.installations.update(replace(active, removed_at=datetime.now(UTC)))
+    await uow.devices.update(device)
+    await _record(uow, actor, device, TransactionType.SEND_REPAIR, from_status, customer_id=customer_id, note=note)
+    return await _view(uow, device.id)
+
+
+async def repair_done(uow: UnitOfWork, actor: Actor, device_id: UUID, qc_note: str) -> DeviceView:
+    """Back to stock after repair; the QC result is mandatory so the audit trail shows what was checked."""
+    require_write(actor.role)
+    if not qc_note.strip():
+        raise ValidationError("ต้องระบุผลการตรวจสอบคุณภาพ (QC)")
+    device = await _load_device(uow, device_id)
+    from_status = device.status
+    device = replace(device, status=next_status(device, TransactionType.REPAIR_DONE))
+    await uow.devices.update(device)
+    await _record(uow, actor, device, TransactionType.REPAIR_DONE, from_status, note=qc_note.strip())
+    return await _view(uow, device.id)
+
+
 async def retire(uow: UnitOfWork, actor: Actor, device_id: UUID, note: str | None) -> DeviceView:
     require_write(actor.role)
     device = await _load_device(uow, device_id)

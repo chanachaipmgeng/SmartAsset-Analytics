@@ -172,6 +172,45 @@ async def test_full_lifecycle_and_tenant_isolation(client: httpx.AsyncClient, wo
     assert all(t["device_id"] != device["id"] for t in b_summary["recent_transactions"])
 
 
+async def test_repair_flow(client: httpx.AsyncClient, world: dict) -> None:
+    a, b, su = world["a"], world["b"], world["su"]
+    res = await client.post(
+        "/inventory/check-in",
+        headers=su,
+        json={"serial_number": f"R-{world['tag']}", "model_id": world["model"]["id"], "tenant_id": world["tenant_a"]["id"]},
+    )
+    assert res.status_code == 201, res.text
+    device_id = res.json()["id"]
+    customer = (await client.post("/customers", headers=a, json={"company_name": f"Repair {world['tag']}"})).json()
+    assert (await client.post("/inventory/check-out", headers=a, json={"device_id": device_id})).status_code == 200
+    install = await client.post(
+        "/installations",
+        headers=a,
+        json={"device_id": device_id, "customer_id": customer["id"], "install_date": "2026-09-01", "latitude": 13.7, "longitude": 100.5},
+    )
+    assert install.status_code == 201, install.text
+
+    # Tenant B cannot touch it; tenant A sends it for repair and the installation closes.
+    assert (await client.post("/inventory/send-repair", headers=b, json={"device_id": device_id})).status_code == 404
+    res = await client.post("/inventory/send-repair", headers=a, json={"device_id": device_id, "note": "จอไม่ติด"})
+    assert res.status_code == 200 and res.json()["status"] == "IN_REPAIR"
+    active = (await client.get("/installations", headers=a)).json()
+    assert all(i["id"] != install.json()["id"] for i in active)
+
+    # Cannot move while in repair, and QC result is required to finish.
+    assert (await client.post("/inventory/check-out", headers=a, json={"device_id": device_id})).status_code == 409
+    assert (await client.post("/inventory/send-repair", headers=a, json={"device_id": device_id})).status_code == 409
+    empty_qc = await client.post("/inventory/repair-done", headers=a, json={"device_id": device_id, "qc_note": "   "})
+    assert empty_qc.status_code == 422
+    res = await client.post("/inventory/repair-done", headers=a, json={"device_id": device_id, "qc_note": "เปลี่ยนจอ ทดสอบผ่าน"})
+    assert res.status_code == 200 and res.json()["status"] == "IN_STOCK"
+
+    history = (await client.get("/inventory/transactions", headers=a, params={"device_id": device_id})).json()
+    assert [t["transaction_type"] for t in history[:2]] == ["REPAIR_DONE", "SEND_REPAIR"]
+    assert history[0]["note"] == "เปลี่ยนจอ ทดสอบผ่าน"
+    assert history[1]["customer_name"] == customer["company_name"]
+
+
 async def test_change_own_password(client: httpx.AsyncClient, world: dict) -> None:
     email = f"pw.{world['tag'].lower()}@example.com"
     old, new = "old-password-123", "new-password-456"

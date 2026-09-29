@@ -41,8 +41,15 @@ export class ApiService {
   returnDevice(deviceId: string, note?: string | null) {
     return this.post<Device>('/inventory/return', { device_id: deviceId, note });
   }
-  retireDevice(deviceId: string) {
-    return this.delete<Device>(`/devices/${deviceId}`);
+  sendRepair(deviceId: string, note?: string | null) {
+    return this.post<Device>('/inventory/send-repair', { device_id: deviceId, note });
+  }
+  repairDone(deviceId: string, qcNote: string) {
+    return this.post<Device>('/inventory/repair-done', { device_id: deviceId, qc_note: qcNote });
+  }
+  retireDevice(deviceId: string, note?: string | null) {
+    const query = note ? `?note=${encodeURIComponent(note)}` : '';
+    return this.delete<Device>(`/devices/${deviceId}${query}`);
   }
 
   createCustomer(body: Record<string, unknown>) {

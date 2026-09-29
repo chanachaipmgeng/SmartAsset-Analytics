@@ -153,6 +153,16 @@ async def return_device(body: s.MovementIn, actor: ActorDep, uow: UowDep):
     return await inventory.return_device(uow, actor, body.device_id, body.note)
 
 
+@router.post("/inventory/send-repair", response_model=s.DeviceOut, tags=["inventory"])
+async def send_repair(body: s.MovementIn, actor: ActorDep, uow: UowDep):
+    return await inventory.send_repair(uow, actor, body.device_id, body.note)
+
+
+@router.post("/inventory/repair-done", response_model=s.DeviceOut, tags=["inventory"])
+async def repair_done(body: s.RepairDoneIn, actor: ActorDep, uow: UowDep):
+    return await inventory.repair_done(uow, actor, body.device_id, body.qc_note)
+
+
 @router.get("/inventory/transactions", response_model=list[s.TransactionOut], tags=["inventory"])
 async def list_transactions(
     actor: ActorDep,

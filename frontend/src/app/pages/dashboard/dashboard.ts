@@ -37,6 +37,7 @@ const STATUS_INFLOW: Record<DeviceStatus, TransactionType[]> = {
   IN_STOCK: ['CHECK_IN', 'RETURN'],
   CHECKED_OUT: ['CHECK_OUT'],
   INSTALLED: ['INSTALL'],
+  IN_REPAIR: ['SEND_REPAIR'],
   RETIRED: ['RETIRE'],
 };
 
@@ -44,6 +45,7 @@ const STATUS_CARD: Record<DeviceStatus, { icon: string; variant: StatVariant }> 
   IN_STOCK: { icon: 'e-icons e-box', variant: 'success' },
   CHECKED_OUT: { icon: 'e-icons e-export', variant: 'warning' },
   INSTALLED: { icon: 'e-icons e-location', variant: 'info' },
+  IN_REPAIR: { icon: 'e-icons e-settings', variant: 'error' },
   RETIRED: { icon: 'e-icons e-close', variant: 'neutral' },
 };
 
@@ -52,6 +54,7 @@ const ACTIVITY_SERIES: { name: string; types: TransactionType[]; token: string }
   { name: 'รับเข้า / รับคืน', types: ['CHECK_IN', 'RETURN'], token: '--color-sf-success' },
   { name: 'เบิกออก / โอน', types: ['CHECK_OUT', 'TRANSFER'], token: '--color-sf-warning' },
   { name: 'ติดตั้ง', types: ['INSTALL'], token: '--color-sf-info' },
+  { name: 'ซ่อม', types: ['SEND_REPAIR', 'REPAIR_DONE'], token: '--color-sf-error' },
   { name: 'ปลดระวาง', types: ['RETIRE'], token: '--color-sf-outline' },
 ];
 

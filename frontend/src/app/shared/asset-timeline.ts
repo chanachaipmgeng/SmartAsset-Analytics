@@ -78,7 +78,7 @@ import { SkeletonBlock } from './skeleton-block';
         background: rgb(var(--color-sf-outline-variant));
       }
     }
-    @each $tone in success, warning, info {
+    @each $tone in success, warning, info, error {
       .item[data-tone='#{$tone}'] {
         --tone-container: var(--color-sf-#{$tone}-container);
         --on-tone-container: var(--color-sf-on-#{$tone}-container);

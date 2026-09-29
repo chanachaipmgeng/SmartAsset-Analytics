@@ -1,6 +1,14 @@
 export type Role = 'superadmin' | 'tenant_admin' | 'staff' | 'viewer';
-export type DeviceStatus = 'IN_STOCK' | 'CHECKED_OUT' | 'INSTALLED' | 'RETIRED';
-export type TransactionType = 'CHECK_IN' | 'TRANSFER' | 'CHECK_OUT' | 'INSTALL' | 'RETURN' | 'RETIRE';
+export type DeviceStatus = 'IN_STOCK' | 'CHECKED_OUT' | 'INSTALLED' | 'IN_REPAIR' | 'RETIRED';
+export type TransactionType =
+  | 'CHECK_IN'
+  | 'TRANSFER'
+  | 'CHECK_OUT'
+  | 'INSTALL'
+  | 'RETURN'
+  | 'SEND_REPAIR'
+  | 'REPAIR_DONE'
+  | 'RETIRE';
 export type ServiceLevel = 'BASIC' | 'STANDARD' | 'PREMIUM';
 
 export interface User {

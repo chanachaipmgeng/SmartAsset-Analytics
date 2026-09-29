@@ -37,12 +37,19 @@ const CENTRAL_STOCK = '__central__';
           }
           @if (movement() === 'retire') {
             <div class="full muted">อุปกรณ์ที่ปลดระวางจะไม่นับรวมในสต็อก แต่ประวัติยังคงอยู่</div>
-          } @else {
-            <div class="full">
-              <label>หมายเหตุ</label>
-              <ejs-textarea [(value)]="note" [liveValue]="note" rows="2"></ejs-textarea>
-            </div>
           }
+          @if (movement() === 'send_repair' && device()?.status === 'INSTALLED') {
+            <div class="full muted">เครื่องนี้ติดตั้งอยู่ ระบบจะปิดจุดติดตั้งเดิมให้อัตโนมัติ</div>
+          }
+          <div class="full">
+            <label>{{ noteLabel() }}</label>
+            <ejs-textarea
+              [(value)]="note"
+              [liveValue]="note"
+              rows="3"
+              [placeholder]="movement() === 'repair_done' ? 'เช่น เปลี่ยนจอ ทดสอบสแกนหน้า 20 ครั้งผ่าน' : ''"
+            ></ejs-textarea>
+          </div>
         </div>
       </ng-template>
       <ng-template #footerTemplate>
@@ -51,7 +58,7 @@ const CENTRAL_STOCK = '__central__';
           ejs-button
           [isPrimary]="movement() !== 'retire'"
           [cssClass]="movement() === 'retire' ? 'e-danger' : ''"
-          [disabled]="busy() || (movement() === 'transfer' && !transferTarget())"
+          [disabled]="!movementValid() || busy()"
           (click)="confirmMovement()"
         >ยืนยัน</button>
       </ng-template>
@@ -131,6 +138,24 @@ export class DeviceActionDialogs {
   protected readonly movement = signal<Movement | null>(null);
   protected readonly note = signal('');
   protected readonly transferTarget = signal<string | null>(null);
+  protected readonly noteLabel = computed(() => {
+    switch (this.movement()) {
+      case 'send_repair':
+        return 'อาการ / สาเหตุที่ส่งซ่อม';
+      case 'repair_done':
+        return 'ผลการซ่อมและ QC *';
+      case 'retire':
+        return 'เหตุผล';
+      default:
+        return 'หมายเหตุ';
+    }
+  });
+  protected readonly movementValid = computed(() => {
+    const kind = this.movement();
+    if (kind === 'transfer') return !!this.transferTarget();
+    if (kind === 'repair_done') return !!this.note().trim();
+    return kind !== null;
+  });
   protected readonly transferOptions = computed(() => [
     { value: CENTRAL_STOCK, text: 'คลังกลาง (แพลตฟอร์ม)' },
     ...this.tenants
@@ -208,7 +233,9 @@ export class DeviceActionDialogs {
       let updated: Device;
       if (kind === 'checkout') updated = await this.api.checkOut(d.id, note);
       else if (kind === 'return') updated = await this.api.returnDevice(d.id, note);
-      else if (kind === 'retire') updated = await this.api.retireDevice(d.id);
+      else if (kind === 'retire') updated = await this.api.retireDevice(d.id, note);
+      else if (kind === 'send_repair') updated = await this.api.sendRepair(d.id, note);
+      else if (kind === 'repair_done') updated = await this.api.repairDone(d.id, note ?? '');
       else {
         const target = this.transferTarget();
         updated = await this.api.transfer(d.id, target === CENTRAL_STOCK ? null : target, note);

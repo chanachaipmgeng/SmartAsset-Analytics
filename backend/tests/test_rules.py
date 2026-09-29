@@ -27,6 +27,11 @@ def device(status: DeviceStatus, tenant: bool = True) -> Device:
         (DeviceStatus.CHECKED_OUT, TransactionType.RETURN, DeviceStatus.IN_STOCK),
         (DeviceStatus.IN_STOCK, TransactionType.RETIRE, DeviceStatus.RETIRED),
         (DeviceStatus.IN_STOCK, TransactionType.TRANSFER, DeviceStatus.IN_STOCK),
+        (DeviceStatus.IN_STOCK, TransactionType.SEND_REPAIR, DeviceStatus.IN_REPAIR),
+        (DeviceStatus.CHECKED_OUT, TransactionType.SEND_REPAIR, DeviceStatus.IN_REPAIR),
+        (DeviceStatus.INSTALLED, TransactionType.SEND_REPAIR, DeviceStatus.IN_REPAIR),
+        (DeviceStatus.IN_REPAIR, TransactionType.REPAIR_DONE, DeviceStatus.IN_STOCK),
+        (DeviceStatus.IN_REPAIR, TransactionType.RETIRE, DeviceStatus.RETIRED),
     ],
 )
 def test_allowed_transitions(status: DeviceStatus, tx: TransactionType, expected: DeviceStatus) -> None:
@@ -41,6 +46,10 @@ def test_allowed_transitions(status: DeviceStatus, tx: TransactionType, expected
         (DeviceStatus.RETIRED, TransactionType.RETURN),
         (DeviceStatus.INSTALLED, TransactionType.RETIRE),
         (DeviceStatus.CHECKED_OUT, TransactionType.TRANSFER),
+        (DeviceStatus.IN_REPAIR, TransactionType.CHECK_OUT),
+        (DeviceStatus.IN_REPAIR, TransactionType.SEND_REPAIR),
+        (DeviceStatus.RETIRED, TransactionType.SEND_REPAIR),
+        (DeviceStatus.IN_STOCK, TransactionType.REPAIR_DONE),
     ],
 )
 def test_rejected_transitions(status: DeviceStatus, tx: TransactionType) -> None:

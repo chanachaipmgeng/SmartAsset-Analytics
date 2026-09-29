@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { RouterLink } from '@angular/router';
 import { CountUp } from './count-up';
 
-export type StatVariant = 'gradient' | 'success' | 'warning' | 'info' | 'neutral';
+export type StatVariant = 'gradient' | 'success' | 'warning' | 'info' | 'error' | 'neutral';
 
 /** KPI tile: icon, animated number, optional hint and 7-day trend. Clickable when `link` is set. */
 @Component({
@@ -56,7 +56,7 @@ export type StatVariant = 'gradient' | 'success' | 'warning' | 'info' | 'neutral
         pointer-events: none;
       }
     }
-    @each $tone in success, warning, info {
+    @each $tone in success, warning, info, error {
       .card[data-variant='#{$tone}'] {
         --icon-bg: rgb(var(--color-sf-#{$tone}-container));
         --icon-fg: rgb(var(--color-sf-on-#{$tone}-container));
