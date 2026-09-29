@@ -245,9 +245,17 @@ class InstallationOut(Out):
     distance_m: float | None = None
 
 
+class ActivityDayOut(Out):
+    day: date
+    counts: dict[TransactionType, int]
+    total: int
+
+
 class DashboardOut(Out):
     total_devices: int
     by_status: list[CountOut]
     by_model: list[CountOut]
     warranty_expiring: list[DeviceOut]
     installations: list[InstallationOut]
+    activity_30d: list[ActivityDayOut]
+    recent_transactions: list[TransactionOut]

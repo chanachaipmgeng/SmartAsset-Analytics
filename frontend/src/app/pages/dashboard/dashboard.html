@@ -1,6 +1,11 @@
 <div class="page">
-  <app-page-header title="แดชบอร์ด" subtitle="ภาพรวมอุปกรณ์ สถานะ และจุดติดตั้ง">
-    <button ejs-button cssClass="e-outline" iconCss="e-icons e-refresh" (click)="summary.reload()">รีเฟรช</button>
+  <app-page-header title="แดชบอร์ด" subtitle="ภาพรวมอุปกรณ์ สถานะ ความเคลื่อนไหว และจุดติดตั้ง">
+    @if (auth.canWrite()) {
+      <a ejs-button [isPrimary]="true" iconCss="e-icons e-plus" routerLink="/devices" [queryParams]="{ action: 'new' }">รับเข้า</a>
+      <a ejs-button iconCss="e-icons e-upload-1" routerLink="/devices" [queryParams]="{ action: 'import' }">นำเข้า</a>
+    }
+    <a ejs-button iconCss="e-icons e-search" routerLink="/scan">สแกน</a>
+    <button ejs-button cssClass="e-flat" iconCss="e-icons e-refresh" title="รีเฟรช" aria-label="รีเฟรช" (click)="summary.reload()"></button>
   </app-page-header>
 
   @if (summary.error()) {
@@ -11,24 +16,33 @@
     </div>
   }
 
-  <section class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+  <section class="stats stagger">
     @if (data(); as d) {
-      <div class="col-span-2 rounded-m3-lg bg-primary-container p-4 text-on-primary-container md:col-span-1">
-        <div class="flex items-center gap-2 text-sm opacity-80"><span class="e-icons e-box"></span>อุปกรณ์ทั้งหมด</div>
-        <div class="mt-1 text-4xl font-bold leading-tight">{{ d.total_devices }}</div>
-      </div>
+      <app-stat-card
+        class="total"
+        label="อุปกรณ์ทั้งหมด"
+        icon="e-icons e-grid-view"
+        variant="gradient"
+        [value]="d.total_devices"
+        [trend]="totalTrend()"
+        trendLabel="สุทธิใน 7 วัน"
+        link="/devices"
+      />
       @for (s of statusCards(); track s.key) {
-        <div class="rounded-m3-lg border border-outline-variant bg-surface p-4">
-          <div class="flex items-center gap-2 text-sm text-on-surface-variant">
-            <span class="size-2 rounded-full" [style.background]="s.color"></span>{{ s.label }}
-          </div>
-          <div class="mt-1 text-3xl font-bold leading-tight text-on-surface">{{ s.count }}</div>
-          <div class="mt-1 text-xs text-on-surface-variant">{{ s.share }}% ของทั้งหมด</div>
-        </div>
+        <app-stat-card
+          [label]="s.label"
+          [icon]="s.icon"
+          [variant]="s.variant"
+          [value]="s.count"
+          [trend]="s.trend || null"
+          [hint]="s.share + '% ของทั้งหมด'"
+          link="/devices"
+          [query]="{ status: s.key }"
+        />
       }
     } @else if (summary.isLoading()) {
       @for (i of [1, 2, 3, 4, 5]; track i) {
-        <div class="rounded-m3-lg border border-outline-variant bg-surface p-4">
+        <div class="rounded-[20px] border border-outline-variant bg-surface p-4">
           <app-skeleton-block width="60%" height="14px" />
           <app-skeleton-block class="mt-3" width="40%" height="32px" />
         </div>
@@ -40,10 +54,64 @@
     <div class="layout-host">
       <ejs-dashboardlayout [columns]="6" [cellSpacing]="cellSpacing" [cellAspectRatio]="1.4" [allowResizing]="false">
         <e-panels>
-          <e-panel [row]="0" [col]="0" [sizeX]="2" [sizeY]="2">
-            <ng-template #header><div class="panel-title">สัดส่วนตามสถานะ</div></ng-template>
+          <e-panel [row]="0" [col]="0" [sizeX]="4" [sizeY]="2">
+            <ng-template #header>
+              <div class="panel-title">
+                ความเคลื่อนไหว 30 วัน
+                <span class="panel-sub">{{ activityTotal() }} รายการ</span>
+              </div>
+            </ng-template>
             <ng-template #content>
               <!-- Charts cache text colours on first render, so rebuild them when the theme flips. -->
+              @for (chartTheme of [theme.chartTheme()]; track chartTheme) {
+                <ejs-chart
+                  [theme]="chartTheme"
+                  background="transparent"
+                  height="100%"
+                  width="100%"
+                  [primaryXAxis]="activityXAxis"
+                  [primaryYAxis]="activityYAxis"
+                  [tooltip]="activityTooltip"
+                  [legendSettings]="legend"
+                  [chartArea]="{ border: { width: 0 } }"
+                >
+                  <e-series-collection>
+                    @for (s of activitySeries(); track s.name) {
+                      <e-series
+                        [dataSource]="s.points"
+                        type="SplineArea"
+                        xName="x"
+                        yName="y"
+                        [name]="s.name"
+                        [fill]="s.fill"
+                        [opacity]="0.28"
+                        [border]="{ width: 2, color: s.fill }"
+                        [animation]="{ enable: true, duration: 900 }"
+                      ></e-series>
+                    }
+                  </e-series-collection>
+                </ejs-chart>
+              }
+            </ng-template>
+          </e-panel>
+
+          <e-panel [row]="0" [col]="4" [sizeX]="2" [sizeY]="4">
+            <ng-template #header>
+              <div class="panel-title flex items-center justify-between">
+                กิจกรรมล่าสุด
+                <a class="panel-link" routerLink="/transactions">ดูทั้งหมด</a>
+              </div>
+            </ng-template>
+            <ng-template #content>
+              <div class="recent">
+                <app-asset-timeline [items]="recent()" [showDevice]="true" [compact]="true" />
+              </div>
+            </ng-template>
+          </e-panel>
+
+          <e-panel [row]="2" [col]="0" [sizeX]="2" [sizeY]="2">
+            <ng-template #header><div class="panel-title">สัดส่วนตามสถานะ</div></ng-template>
+            <ng-template #content>
               @for (chartTheme of [theme.chartTheme()]; track chartTheme) {
                 <ejs-accumulationchart [theme]="chartTheme" background="transparent" height="100%" width="100%" [legendSettings]="legend" [tooltip]="tooltip">
                   <e-accumulation-series-collection>
@@ -61,8 +129,8 @@
             </ng-template>
           </e-panel>
 
-          <e-panel [row]="0" [col]="2" [sizeX]="4" [sizeY]="2">
-            <ng-template #header><div class="panel-title">จำนวนอุปกรณ์ตามรุ่น (ไม่รวมปลดระวาง)</div></ng-template>
+          <e-panel [row]="2" [col]="2" [sizeX]="2" [sizeY]="2">
+            <ng-template #header><div class="panel-title">จำนวนตามรุ่น (ไม่รวมปลดระวาง)</div></ng-template>
             <ng-template #content>
               @for (chartTheme of [theme.chartTheme()]; track chartTheme) {
                 <ejs-chart [theme]="chartTheme" background="transparent" height="100%" width="100%" [primaryXAxis]="primaryXAxis" [primaryYAxis]="primaryYAxis" [tooltip]="tooltip">
@@ -83,14 +151,14 @@
             </ng-template>
           </e-panel>
 
-          <e-panel [row]="2" [col]="0" [sizeX]="4" [sizeY]="3">
+          <e-panel [row]="4" [col]="0" [sizeX]="4" [sizeY]="3">
             <ng-template #header><div class="panel-title">แผนที่จุดติดตั้ง ({{ installations().length }} จุด)</div></ng-template>
             <ng-template #content>
               <app-installation-map [installations]="installations()" height="100%" />
             </ng-template>
           </e-panel>
 
-          <e-panel [row]="2" [col]="4" [sizeX]="2" [sizeY]="3">
+          <e-panel [row]="4" [col]="4" [sizeX]="2" [sizeY]="3">
             <ng-template #header><div class="panel-title">ประกันใกล้หมด (30 วัน)</div></ng-template>
             <ng-template #content>
               @if (warranty().length) {
@@ -111,8 +179,8 @@
     </div>
   } @else if (summary.isLoading()) {
     <div class="grid gap-4 lg:grid-cols-3">
-      <div class="panel"><app-skeleton-block height="260px" /></div>
       <div class="panel lg:col-span-2"><app-skeleton-block height="260px" /></div>
+      <div class="panel"><app-skeleton-block height="260px" /></div>
     </div>
   }
 </div>

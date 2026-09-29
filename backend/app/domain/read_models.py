@@ -63,3 +63,10 @@ class CountItem:
     key: str
     label: str
     count: int
+
+
+@dataclass(frozen=True)
+class DailyCount:
+    day: date
+    transaction_type: TransactionType
+    count: int

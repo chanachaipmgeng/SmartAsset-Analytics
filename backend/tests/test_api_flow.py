@@ -161,6 +161,16 @@ async def test_full_lifecycle_and_tenant_isolation(client: httpx.AsyncClient, wo
     su_history = (await client.get("/inventory/transactions", headers=su, params={"device_id": device["id"]})).json()
     assert su_history[-1]["transaction_type"] == "CHECK_IN"
 
+    # Dashboard: 30 daily buckets ending today, with today's movements counted; B sees none of A's.
+    summary = (await client.get("/dashboard/summary", headers=a)).json()
+    activity = summary["activity_30d"]
+    assert len(activity) == 30
+    assert activity[-1]["counts"].get("INSTALL", 0) >= 1
+    assert activity[-1]["total"] == sum(activity[-1]["counts"].values())
+    assert summary["recent_transactions"][0]["device_id"] == device["id"]
+    b_summary = (await client.get("/dashboard/summary", headers=b)).json()
+    assert all(t["device_id"] != device["id"] for t in b_summary["recent_transactions"])
+
 
 async def test_change_own_password(client: httpx.AsyncClient, world: dict) -> None:
     email = f"pw.{world['tag'].lower()}@example.com"

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Any, Protocol
 from uuid import UUID
 
@@ -12,7 +12,7 @@ from app.domain.entities import (
     User,
 )
 from app.domain.enums import DeviceStatus
-from app.domain.read_models import CountItem, DeviceView, InstallationView, TransactionView
+from app.domain.read_models import CountItem, DailyCount, DeviceView, InstallationView, TransactionView
 
 
 class TenantRepository(Protocol):
@@ -62,6 +62,7 @@ class DeviceRepository(Protocol):
 class TransactionRepository(Protocol):
     async def add(self, tx: InventoryTransaction) -> None: ...
     async def list_views(self, *, device_id: UUID | None = None, limit: int = 500) -> list[TransactionView]: ...
+    async def daily_counts(self, since: datetime, tz: str) -> list[DailyCount]: ...
 
 
 class CustomerRepository(Protocol):

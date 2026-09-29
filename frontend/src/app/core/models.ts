@@ -99,10 +99,18 @@ export interface CountItem {
   count: number;
 }
 
+export interface ActivityDay {
+  day: string;
+  counts: Partial<Record<TransactionType, number>>;
+  total: number;
+}
+
 export interface DashboardSummary {
   total_devices: number;
   by_status: CountItem[];
   by_model: CountItem[];
   warranty_expiring: Device[];
   installations: Installation[];
+  activity_30d: ActivityDay[];
+  recent_transactions: InventoryTransaction[];
 }

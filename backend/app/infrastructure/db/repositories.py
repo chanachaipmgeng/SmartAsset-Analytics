@@ -1,5 +1,5 @@
 from dataclasses import fields
-from datetime import date
+from datetime import date, datetime
 from typing import Any, TypeVar
 from uuid import UUID
 
@@ -19,7 +19,7 @@ from app.domain.entities import (
 )
 from app.domain.enums import DeviceStatus, Role, ServiceLevel, TransactionType
 from app.domain.errors import ConflictError, PermissionDeniedError
-from app.domain.read_models import CountItem, DeviceView, InstallationView, TransactionView
+from app.domain.read_models import CountItem, DailyCount, DeviceView, InstallationView, TransactionView
 from app.domain.rules import STATUS_LABELS_TH
 from app.infrastructure.db.models import (
     CustomerORM,
@@ -277,6 +277,20 @@ class SqlTransactionRepository(_Repo):
                 )
             )
         return result
+
+    async def daily_counts(self, since: datetime, tz: str) -> list[DailyCount]:
+        tx = InventoryTransactionORM
+        day = func.date(func.timezone(tz, tx.occurred_at)).label("day")
+        stmt = (
+            select(day, tx.transaction_type, func.count())
+            .where(tx.occurred_at >= since)
+            .group_by(day, tx.transaction_type)
+            .order_by(day)
+        )
+        return [
+            DailyCount(day=d, transaction_type=TransactionType(t), count=c)
+            for d, t, c in (await self.s.execute(stmt)).all()
+        ]
 
 
 class SqlCustomerRepository(_Repo):

@@ -78,6 +78,8 @@ export class DevicesPage {
   readonly action = input<string>();
   /** Prefills the serial for `?action=new`. */
   readonly serial = input<string>();
+  /** `?status=IN_STOCK` preselects a status chip (dashboard cards). */
+  readonly status = input<string>();
 
   private readonly grid = viewChild(DataGrid);
   private readonly dialogs = viewChild.required(DeviceActionDialogs);
@@ -183,6 +185,11 @@ export class DevicesPage {
   );
 
   constructor() {
+    effect(() => {
+      const status = this.status();
+      if (status && status in STATUS_LABELS) this.statusFilter.set(status as DeviceStatus);
+    });
+
     effect(() => {
       const action = this.action();
       if (!action) return;
