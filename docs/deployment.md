@@ -1,6 +1,8 @@
 # คู่มือติดตั้ง SmartAsset Analytics บนเซิร์ฟเวอร์ Linux
 
-ติดตั้งแบบ Docker Compose บนเครื่องเดียว มี 4 container: `nginx` (จุดเข้า), `frontend` (หน้าเว็บ Angular), `api` (FastAPI) และ `db` (PostgreSQL 16 + PostGIS) คู่มือนี้ใช้ Ubuntu Server 22.04/24.04 เป็นตัวอย่าง ดิสทริบิวชันอื่นใช้ได้ถ้าติดตั้ง Docker Engine และ Compose v2 ได้
+ติดตั้งแบบ Docker Compose บนเครื่องเดียว มี 4 container: `nginx` (จุดเข้า), `frontend` (หน้าเว็บ Angular), `api` (FastAPI) และ `db` (PostgreSQL 16 + PostGIS) คู่มือนี้มีคำสั่งสำหรับ 2 ตระกูล: **Ubuntu/Debian** (`apt-get`) และ **Rocky Linux / AlmaLinux / RHEL / CentOS Stream 8-9** (`dnf`) ถ้าไม่แน่ใจว่าเครื่องเป็นตระกูลไหน ให้ดูด้วย `cat /etc/os-release` (ถ้าสั่ง `apt-get` แล้วขึ้น `command not found` แสดงว่าเป็นตระกูล RHEL) หัวข้อ 3 เป็นต้นไปใช้คำสั่งเดียวกันทั้งสองตระกูล
+
+ตัวอย่างคำสั่งใช้ `sudo` ถ้า login เป็น `root` อยู่แล้ว (prompt ลงท้ายด้วย `#`) ตัด `sudo` ออกได้
 
 สรุปขั้นตอน
 
@@ -23,13 +25,15 @@
 | CPU | 2 vCPU | 4 vCPU |
 | RAM | 2 GB + swap 2 GB | 4 GB ขึ้นไป |
 | ดิสก์ | 20 GB | 40 GB ขึ้นไป (รูปภาพอุปกรณ์และไฟล์สำรองกินพื้นที่เพิ่มตามการใช้งาน) |
-| ระบบปฏิบัติการ | Ubuntu Server 22.04 LTS | Ubuntu Server 24.04 LTS |
+| ระบบปฏิบัติการ | Ubuntu 22.04 LTS หรือ Rocky/AlmaLinux/RHEL 8 | Ubuntu 24.04 LTS หรือ Rocky/AlmaLinux/RHEL 9 |
 
 - ขั้น build หน้าเว็บ (Angular) ใช้ RAM ราว 2 GB ถ้าเครื่องมี RAM น้อยกว่า 4 GB ให้เปิด swap ก่อน (ดูหัวข้อ 8)
 - ต้องออกอินเทอร์เน็ตได้ตอนติดตั้งและอัปเดต เพื่อดึง Docker image, แพ็กเกจ npm/Python และไลบรารีแผนที่
 - ถ้าจะใช้ HTTPS ให้เตรียมโดเมน (เช่น `asset.example.com`) และตั้ง DNS record แบบ A ชี้มาที่ IP ของเซิร์ฟเวอร์ ฟีเจอร์ **ใช้ตำแหน่งปัจจุบัน** (GPS) และกล้องบนมือถือ ทำงานได้เฉพาะบน HTTPS
 
 อัปเดตระบบ ตั้งเขตเวลา และเปิดไฟร์วอลล์
+
+**Ubuntu/Debian** (ไฟร์วอลล์ `ufw`)
 
 ```bash
 sudo apt-get update && sudo apt-get upgrade -y
@@ -41,11 +45,40 @@ sudo ufw allow 443/tcp
 sudo ufw enable
 ```
 
-> **ข้อควรระวัง:** พอร์ตที่ Docker เปิด (`ports:` ใน compose) **ไม่ผ่านกฎของ ufw** ถ้าไม่ต้องการให้พอร์ตใดเข้าถึงจากภายนอกได้ ต้องผูกไว้ที่ `127.0.0.1` แบบที่หัวข้อ 5 ทำ ส่วน `db` ไม่ได้เปิดพอร์ตออกนอก Docker อยู่แล้ว
+**Rocky/AlmaLinux/RHEL/CentOS Stream** (ไฟร์วอลล์ `firewalld`)
+
+```bash
+sudo dnf -y update
+sudo timedatectl set-timezone Asia/Bangkok
+
+sudo systemctl enable --now firewalld
+sudo firewall-cmd --permanent --add-service=ssh --add-service=http --add-service=https
+sudo firewall-cmd --reload
+getenforce     # Enforcing = เปิด SELinux อยู่ ให้ทำขั้นตอน SELinux ในหัวข้อ 3 ด้วย
+```
+
+> **ข้อควรระวัง:** พอร์ตที่ Docker เปิด (`ports:` ใน compose) **ไม่ผ่านกฎของ ufw/firewalld** ถ้าไม่ต้องการให้พอร์ตใดเข้าถึงจากภายนอกได้ ต้องผูกไว้ที่ `127.0.0.1` แบบที่หัวข้อ 5 ทำ ส่วน `db` ไม่ได้เปิดพอร์ตออกนอก Docker อยู่แล้ว
 
 ## 2. ติดตั้ง Docker
 
-ใช้ repository ทางการของ Docker (แพ็กเกจ `docker.io` ของ Ubuntu มักไม่มี Compose v2)
+ใช้ repository ทางการของ Docker เพราะแพ็กเกจที่มากับระบบ (`docker.io` ของ Ubuntu หรือ `podman-docker` ของ RHEL) ไม่มี Docker Compose v2
+
+**Rocky/AlmaLinux/RHEL/CentOS Stream**
+
+```bash
+sudo dnf -y install dnf-plugins-core git curl tar
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+# --allowerasing ถอด podman/buildah/runc ที่ติดตั้งมากับระบบและชนกับ Docker ออกให้
+sudo dnf -y install --allowerasing docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo systemctl enable --now docker
+
+# ถ้าไม่ได้ใช้ root: ให้ผู้ใช้ปัจจุบันสั่ง docker ได้โดยไม่ต้อง sudo แล้ว logout/login ใหม่หนึ่งครั้ง
+sudo usermod -aG docker "$USER"
+```
+
+(ถ้าเป็น RHEL ที่ลงทะเบียน subscription แล้ว ใช้ repo `https://download.docker.com/linux/rhel/docker-ce.repo` แทนได้)
+
+**Ubuntu/Debian**
 
 ```bash
 sudo apt-get install -y ca-certificates curl git
@@ -61,11 +94,12 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plug
 sudo usermod -aG docker "$USER"
 ```
 
-ตรวจสอบหลัง login ใหม่
+ตรวจสอบ (ถ้าเพิ่งเพิ่มผู้ใช้เข้ากลุ่ม `docker` ให้ login ใหม่ก่อน)
 
 ```bash
 docker --version
 docker compose version    # ต้องเป็น v2.x
+docker run --rm hello-world
 ```
 
 Docker ตั้งให้เริ่มเองเมื่อบูตเครื่องอยู่แล้ว และทุก service ใน compose ตั้ง `restart: unless-stopped` ระบบจึงกลับมาเองหลังรีบูต
@@ -82,6 +116,12 @@ chmod 600 .env
 
 ถ้า repository เป็น private ให้ใช้ SSH deploy key หรือ Personal Access Token ตอน `git clone`
 
+**เฉพาะเครื่องที่เปิด SELinux** (`getenforce` ขึ้น `Enforcing` ซึ่งเป็นค่าเริ่มต้นของตระกูล RHEL) ให้ติดป้ายโฟลเดอร์ `nginx/` ให้ container อ่านได้ ไม่เช่นนั้น container `nginx` จะอ่านไฟล์ตั้งค่าไม่ได้ (`Permission denied`)
+
+```bash
+sudo chcon -Rt container_file_t /opt/smartasset/nginx
+```
+
 สร้างรหัสผ่านและ secret แบบสุ่ม (ได้เป็นตัวอักษร a-f และตัวเลข ซึ่งปลอดภัยสำหรับ URL ของฐานข้อมูล) แล้วเขียนลง `.env`
 
 ```bash
@@ -90,7 +130,7 @@ sed -i \
   -e "s/^APP_DB_PASSWORD=.*/APP_DB_PASSWORD=$(openssl rand -hex 24)/" \
   -e "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/" \
   .env
-nano .env    # แก้ค่าที่เหลือตามตารางด้านล่าง
+nano .env    # แก้ค่าที่เหลือตามตารางด้านล่าง (ตระกูล RHEL ติดตั้งด้วย dnf -y install nano หรือใช้ vi)
 ```
 
 | ตัวแปร | ค่าที่ต้องตั้ง |
@@ -167,11 +207,24 @@ docker compose up -d
 
 **5.2 ติดตั้ง Caddy**
 
+Ubuntu/Debian
+
 ```bash
 sudo apt-get install -y debian-keyring debian-archive-keyring apt-transport-https
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
 sudo apt-get update && sudo apt-get install -y caddy
+```
+
+Rocky/AlmaLinux/RHEL/CentOS Stream
+
+```bash
+sudo dnf -y install 'dnf-command(copr)'
+sudo dnf -y copr enable @caddy/caddy
+sudo dnf -y install caddy
+sudo systemctl enable --now caddy
+# SELinux: อนุญาตให้ Caddy ส่งต่อไปยังพอร์ต 8080 ภายในเครื่อง
+sudo setsebool -P httpd_can_network_connect 1
 ```
 
 **5.3 ตั้งค่า** แทนที่เนื้อหา `/etc/caddy/Caddyfile` ด้วย
@@ -258,6 +311,9 @@ migration เดินหน้าอย่างเดียว ถ้าเว
 | อาการ | สาเหตุและวิธีแก้ |
 | --- | --- |
 | build หน้าเว็บหยุดกลางคัน หรือขึ้น `Killed` / `JavaScript heap out of memory` | RAM ไม่พอ ให้เพิ่ม swap แล้ว build ใหม่: `sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile && echo '/swapfile none swap sw 0 0' \| sudo tee -a /etc/fstab` |
+| `sudo: apt-get: command not found` | เครื่องเป็นตระกูล RHEL (Rocky/AlmaLinux/CentOS) ให้ใช้คำสั่ง `dnf` ในหัวข้อ 1-2 และ 5.2 |
+| `nginx` restart วน และ log ขึ้น `open() "/etc/nginx/conf.d/default.conf" failed (13: Permission denied)` | SELinux บล็อกการอ่านไฟล์ตั้งค่า ให้สั่ง `sudo chcon -Rt container_file_t /opt/smartasset/nginx` แล้ว `docker compose up -d` |
+| HTTPS ขึ้น `502` แต่ `curl http://127.0.0.1:8080/health` ได้ปกติ (ตระกูล RHEL) | SELinux บล็อก Caddy ไม่ให้ต่อพอร์ต 8080 ให้สั่ง `sudo setsebool -P httpd_can_network_connect 1` |
 | `docker compose up` แจ้ง `set POSTGRES_PASSWORD in .env` | ยังไม่ได้สร้าง `.env` หรือไม่ได้สั่งคำสั่งในโฟลเดอร์ `/opt/smartasset` |
 | `Bind for 0.0.0.0:80 failed: port is already allocated` | มีโปรแกรมอื่นใช้พอร์ต 80 อยู่ (เช่น apache2 หรือ nginx ของเครื่อง) ตรวจด้วย `sudo ss -ltnp \| grep :80` แล้วหยุดโปรแกรมนั้น หรือเปลี่ยน `HTTP_PORT` |
 | `api` ขึ้น `password authentication failed` | รหัสผ่านใน `.env` ไม่ตรงกับในฐานข้อมูล (มักเกิดเมื่อแก้ `.env` หลังเริ่มครั้งแรก) ให้ตั้งรหัสในฐานข้อมูลให้ตรง: `docker compose exec db psql -U inventory_owner -d inventory -c "ALTER ROLE inventory_app PASSWORD '<APP_DB_PASSWORD>'"` แล้ว `docker compose restart api` (ถ้าเปลี่ยน `POSTGRES_PASSWORD` ให้ทำแบบเดียวกันกับ role `inventory_owner`) |
