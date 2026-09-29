@@ -72,7 +72,7 @@
     transition: background-color 120ms ease;
   }
 
-  .e-row.e-altrow .e-rowcell:not(.e-selectionbackground) {
+  .e-row.e-altrow:not(:hover) .e-rowcell:not(.e-selectionbackground) {
     background: color-mix(in srgb, rgb(var(--color-sf-surface)) 98%, rgb(var(--color-sf-primary)));
   }
 

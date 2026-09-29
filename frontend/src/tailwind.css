@@ -1,9 +1,30 @@
 /*
  * Tailwind is the layout/spacing layer; Syncfusion Material 3 owns component styling.
  * Preflight is intentionally not imported: its reset strips Syncfusion buttons, inputs and grids.
+ *
+ * Cascade order, lowest first: Syncfusion < Tailwind utilities < unlayered CSS (styles.scss and
+ * component styles). Utilities therefore override Syncfusion regardless of selector specificity.
+ * Caveat: inside layers `!important` flips, so a Syncfusion `!important` beats one in styles.scss.
+ *
+ * ej2-base is compiled from SCSS in styles.scss (into syncfusion.base) so its Roboto @import can be
+ * switched off; the precompiled CSS would leave that @import stranded inside the layer.
  */
-@layer theme, base, components, utilities;
+@layer theme, base, syncfusion, components, utilities;
+@layer syncfusion.base, syncfusion.components;
 @import 'tailwindcss/theme.css' layer(theme);
+
+@import '@syncfusion/ej2-buttons/styles/material3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-inputs/styles/material3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-popups/styles/material3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-lists/styles/material3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-dropdowns/styles/material3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-calendars/styles/material3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-splitbuttons/styles/material3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-navigations/styles/material3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-layouts/styles/material3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-notifications/styles/material3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-grids/styles/material3.css' layer(syncfusion.components);
+
 @import 'tailwindcss/utilities.css' layer(utilities);
 
 /* One class switches both Syncfusion (its .e-dark-mode palette) and Tailwind's dark: variant. */

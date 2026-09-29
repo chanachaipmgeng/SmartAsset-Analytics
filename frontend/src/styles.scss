@@ -1,5 +1,11 @@
+@use 'sass:meta';
 @use 'tokens' as *;
 @use 'mixins' as *;
+
+// Sarabun is loaded in index.html, so skip Syncfusion's Google Fonts Roboto import.
+@layer syncfusion.base {
+  @include meta.load-css('ej2-base/styles/material3', $with: ('is-roboto-loaded': true));
+}
 
 // Brand: indigo instead of the Material 3 default purple. Every Syncfusion component and every
 // Tailwind colour utility reads these tokens, so this is the single place to re-brand.
@@ -42,7 +48,15 @@ body,
 .e-btn,
 .e-input,
 .e-toast,
-.e-dialog {
+.e-dialog,
+.e-panel-header {
+  font-family: 'Sarabun', system-ui, sans-serif !important;
+}
+
+// Charts and maps put Roboto on SVG text (as an attribute or inline style), and Roboto is not loaded.
+.e-chart text,
+.e-accumulationchart text,
+.e-maps text {
   font-family: 'Sarabun', system-ui, sans-serif !important;
 }
 
