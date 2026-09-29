@@ -1,0 +1,28 @@
+.nearby {
+  .title {
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  .fields {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    > div {
+      width: 170px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--app-muted);
+      margin-bottom: 4px;
+    }
+  }
+}
+
+.map {
+  padding: 8px;
+}

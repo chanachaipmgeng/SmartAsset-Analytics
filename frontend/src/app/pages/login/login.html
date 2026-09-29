@@ -1,0 +1,32 @@
+<div class="wrap">
+  <form class="card" (submit)="submit($event)">
+    <div class="logo e-icons e-clock"></div>
+    <h1>ระบบสต็อกและติดตามเครื่องลงเวลา</h1>
+    <p class="muted">เข้าสู่ระบบเพื่อจัดการอุปกรณ์และจุดติดตั้ง</p>
+
+    @if (error(); as message) {
+      <ejs-message severity="Error" [content]="message"></ejs-message>
+    }
+
+    <ejs-textbox
+      type="email"
+      placeholder="อีเมล"
+      floatLabelType="Auto"
+      autocomplete="username"
+      [(value)]="email"
+      [liveValue]="email"
+    ></ejs-textbox>
+    <ejs-textbox
+      type="password"
+      placeholder="รหัสผ่าน"
+      floatLabelType="Auto"
+      autocomplete="current-password"
+      [(value)]="password"
+      [liveValue]="password"
+    ></ejs-textbox>
+
+    <button ejs-button type="submit" [isPrimary]="true" [disabled]="!canSubmit()" cssClass="submit">
+      {{ loading() ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ' }}
+    </button>
+  </form>
+</div>

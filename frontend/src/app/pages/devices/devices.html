@@ -1,0 +1,193 @@
+<div class="page">
+  <div class="page-header">
+    <h1>อุปกรณ์</h1>
+    <div class="actions">
+      @if (auth.canWrite()) {
+        <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">รับเข้าใหม่</button>
+      }
+      <button ejs-button iconCss="e-icons e-edit" [disabled]="!canEdit()" (click)="openEdit()">แก้ไข</button>
+      @if (auth.isSuperadmin()) {
+        <button ejs-button iconCss="e-icons e-transform-right" [disabled]="!canTransfer()" (click)="openMovement('transfer')">โอน</button>
+      }
+      <button ejs-button iconCss="e-icons e-export" [disabled]="!canCheckOut()" (click)="openMovement('checkout')">เบิกออก</button>
+      <button ejs-button iconCss="e-icons e-location" [disabled]="!canInstall()" (click)="openInstall()">ติดตั้ง</button>
+      <button ejs-button iconCss="e-icons e-import" [disabled]="!canReturn()" (click)="openMovement('return')">รับคืน</button>
+      <button ejs-button cssClass="e-danger" iconCss="e-icons e-close" [disabled]="!canRetire()" (click)="openMovement('retire')">ปลดระวาง</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    @if (selected(); as d) {
+      <div class="muted" style="margin-bottom: 8px">เลือก: <b>{{ d.serial_number }}</b> ({{ d.brand }} {{ d.model_name }})</div>
+    } @else {
+      <div class="muted" style="margin-bottom: 8px">เลือกแถวเพื่อทำรายการ</div>
+    }
+    <ejs-grid
+      [dataSource]="rows()"
+      [allowPaging]="true"
+      [allowSorting]="true"
+      [allowFiltering]="true"
+      [allowResizing]="true"
+      [pageSettings]="grid.pageSettings"
+      [filterSettings]="grid.filterSettings"
+      [toolbar]="grid.toolbar"
+      [selectionSettings]="{ type: 'Single' }"
+      (rowSelected)="onRowSelected($event)"
+      (rowDeselected)="selected.set(null)"
+    >
+      <e-columns>
+        <e-column field="serial_number" headerText="ซีเรียล" width="150" [isPrimaryKey]="true"></e-column>
+        <e-column field="brand" headerText="ยี่ห้อ" width="110"></e-column>
+        <e-column field="model_name" headerText="รุ่น" width="150"></e-column>
+        <e-column field="status_label" headerText="สถานะ" width="130">
+          <ng-template #template let-data>
+            <app-status-chip [status]="data.status" />
+          </ng-template>
+        </e-column>
+        <e-column field="tenant_label" headerText="กลุ่มลูกค้า" width="200"></e-column>
+        <e-column field="mac_address" headerText="MAC" width="160"></e-column>
+        <e-column field="purchase_date" headerText="วันที่ซื้อ" type="date" format="dd/MM/yyyy" width="120"></e-column>
+        <e-column field="warranty_end" headerText="หมดประกัน" type="date" format="dd/MM/yyyy" width="120"></e-column>
+        <e-column field="cost" headerText="ต้นทุน" type="number" format="N2" textAlign="Right" width="120"></e-column>
+      </e-columns>
+    </ejs-grid>
+  </div>
+</div>
+
+<ejs-dialog
+  [visible]="formOpen()"
+  (close)="formOpen.set(false)"
+  [header]="editingId() ? 'แก้ไขอุปกรณ์' : 'รับอุปกรณ์เข้าคลัง'"
+  [isModal]="true"
+  [showCloseIcon]="true"
+  [animationSettings]="animation"
+  width="640px"
+  target="body"
+>
+  <ng-template #content>
+    <div class="form-grid">
+      <div>
+        <label>หมายเลขซีเรียล *</label>
+        <ejs-textbox [(value)]="serial" [liveValue]="serial" [readonly]="!!editingId()" placeholder="เช่น ZK-V5L-0003"></ejs-textbox>
+      </div>
+      <div>
+        <label>รุ่นอุปกรณ์ *</label>
+        <ejs-dropdownlist [dataSource]="modelOptions()" [fields]="{ value: 'value', text: 'text' }" [(value)]="modelId" placeholder="เลือกรุ่น"></ejs-dropdownlist>
+      </div>
+      @if (auth.isSuperadmin() && !editingId()) {
+        <div class="full">
+          <label>กลุ่มลูกค้า (เว้นว่าง = คลังกลาง)</label>
+          <ejs-dropdownlist [dataSource]="tenantOptions()" [fields]="{ value: 'value', text: 'text' }" [(value)]="tenantId" [showClearButton]="true" placeholder="คลังกลาง"></ejs-dropdownlist>
+        </div>
+      }
+      <div>
+        <label>MAC Address</label>
+        <ejs-textbox [(value)]="mac" [liveValue]="mac" placeholder="00:11:22:33:44:55"></ejs-textbox>
+      </div>
+      <div>
+        <label>ต้นทุน (บาท)</label>
+        <ejs-numerictextbox [(value)]="cost" [min]="0" format="N2" [showSpinButton]="false"></ejs-numerictextbox>
+      </div>
+      <div>
+        <label>วันที่ซื้อ</label>
+        <ejs-datepicker [(value)]="purchaseDate" format="dd/MM/yyyy"></ejs-datepicker>
+      </div>
+      <div>
+        <label>วันสิ้นสุดประกัน</label>
+        <ejs-datepicker [(value)]="warrantyEnd" format="dd/MM/yyyy"></ejs-datepicker>
+      </div>
+      <div class="full">
+        <label>หมายเหตุ</label>
+        <ejs-textarea [(value)]="notes" [liveValue]="notes" rows="2"></ejs-textarea>
+      </div>
+    </div>
+  </ng-template>
+  <ng-template #footerTemplate>
+    <button ejs-button (click)="formOpen.set(false)">ยกเลิก</button>
+    <button ejs-button [isPrimary]="true" [disabled]="!formValid() || busy()" (click)="saveDevice()">บันทึก</button>
+  </ng-template>
+</ejs-dialog>
+
+<ejs-dialog
+  [visible]="movement() !== null"
+  (close)="movement.set(null)"
+  [header]="movement() ? movementTitles[movement()!] : ''"
+  [isModal]="true"
+  [showCloseIcon]="true"
+  [animationSettings]="animation"
+  width="480px"
+  target="body"
+>
+  <ng-template #content>
+    <div class="form-grid">
+      <div class="full">อุปกรณ์: <b>{{ selected()?.serial_number }}</b></div>
+      @if (movement() === 'transfer') {
+        <div class="full">
+          <label>ปลายทาง *</label>
+          <ejs-dropdownlist [dataSource]="transferOptions()" [fields]="{ value: 'value', text: 'text' }" [(value)]="transferTarget" placeholder="เลือกปลายทาง"></ejs-dropdownlist>
+        </div>
+      }
+      @if (movement() === 'retire') {
+        <div class="full muted">อุปกรณ์ที่ปลดระวางจะไม่นับรวมในสต็อก แต่ประวัติยังคงอยู่</div>
+      } @else {
+        <div class="full">
+          <label>หมายเหตุ</label>
+          <ejs-textarea [(value)]="movementNote" [liveValue]="movementNote" rows="2"></ejs-textarea>
+        </div>
+      }
+    </div>
+  </ng-template>
+  <ng-template #footerTemplate>
+    <button ejs-button (click)="movement.set(null)">ยกเลิก</button>
+    <button
+      ejs-button
+      [isPrimary]="true"
+      [disabled]="busy() || (movement() === 'transfer' && !transferTarget())"
+      (click)="confirmMovement()"
+    >ยืนยัน</button>
+  </ng-template>
+</ejs-dialog>
+
+<ejs-dialog
+  [visible]="installOpen()"
+  (close)="installOpen.set(false)"
+  header="บันทึกการติดตั้ง"
+  [isModal]="true"
+  [showCloseIcon]="true"
+  [animationSettings]="animation"
+  width="620px"
+  target="body"
+>
+  <ng-template #content>
+    <div class="form-grid">
+      <div class="full">อุปกรณ์: <b>{{ selected()?.serial_number }}</b> — {{ selected()?.tenant_name }}</div>
+      <div>
+        <label>ลูกค้า *</label>
+        <ejs-dropdownlist [dataSource]="installCustomerOptions()" [fields]="{ value: 'value', text: 'text' }" [(value)]="installCustomer" placeholder="เลือกลูกค้า"></ejs-dropdownlist>
+      </div>
+      <div>
+        <label>วันที่ติดตั้ง *</label>
+        <ejs-datepicker [(value)]="installDate" format="dd/MM/yyyy"></ejs-datepicker>
+      </div>
+      <div>
+        <label>ละติจูด *</label>
+        <ejs-numerictextbox [(value)]="latitude" [min]="-90" [max]="90" format="N6" [decimals]="6" [showSpinButton]="false"></ejs-numerictextbox>
+      </div>
+      <div>
+        <label>ลองจิจูด *</label>
+        <ejs-numerictextbox [(value)]="longitude" [min]="-180" [max]="180" format="N6" [decimals]="6" [showSpinButton]="false"></ejs-numerictextbox>
+      </div>
+      <div class="full">
+        <button ejs-button cssClass="e-flat" iconCss="e-icons e-location" (click)="useMyLocation()">ใช้ตำแหน่งปัจจุบัน</button>
+      </div>
+      <div class="full">
+        <label>ที่อยู่จุดติดตั้ง</label>
+        <ejs-textarea [(value)]="address" [liveValue]="address" rows="2"></ejs-textarea>
+      </div>
+    </div>
+  </ng-template>
+  <ng-template #footerTemplate>
+    <button ejs-button (click)="installOpen.set(false)">ยกเลิก</button>
+    <button ejs-button [isPrimary]="true" [disabled]="!installValid() || busy()" (click)="confirmInstall()">บันทึก</button>
+  </ng-template>
+</ejs-dialog>

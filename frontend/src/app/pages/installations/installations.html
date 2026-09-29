@@ -1,0 +1,103 @@
+<div class="page">
+  <div class="page-header">
+    <h1>จุดติดตั้ง / แผนที่</h1>
+    <div class="actions">
+      <ejs-checkbox label="แสดงรายการที่ถอนแล้ว" [(checked)]="showRemoved" [disabled]="!!nearbyQuery()"></ejs-checkbox>
+      @if (auth.canWrite()) {
+        <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected() || !!selected()?.removed_at" (click)="openEdit()">แก้ไขพิกัด</button>
+      }
+    </div>
+  </div>
+
+  <div class="panel nearby">
+    <div class="title">ค้นหาอุปกรณ์ในรัศมี (PostGIS ST_DWithin)</div>
+    <div class="fields">
+      <div>
+        <label>ละติจูด</label>
+        <ejs-numerictextbox [(value)]="searchLat" [min]="-90" [max]="90" format="N6" [decimals]="6" [showSpinButton]="false"></ejs-numerictextbox>
+      </div>
+      <div>
+        <label>ลองจิจูด</label>
+        <ejs-numerictextbox [(value)]="searchLng" [min]="-180" [max]="180" format="N6" [decimals]="6" [showSpinButton]="false"></ejs-numerictextbox>
+      </div>
+      <div>
+        <label>รัศมี (กม.)</label>
+        <ejs-numerictextbox [(value)]="searchRadiusKm" [min]="0.1" [max]="500" format="N1"></ejs-numerictextbox>
+      </div>
+      <button ejs-button [isPrimary]="true" iconCss="e-icons e-search" (click)="searchNearby()">ค้นหา</button>
+      @if (nearbyQuery()) {
+        <button ejs-button (click)="clearNearby()">แสดงทั้งหมด</button>
+        <span class="muted">พบ {{ displayed().length }} จุด</span>
+      }
+    </div>
+  </div>
+
+  <div class="panel map">
+    <app-installation-map [installations]="mapPoints()" [focus]="mapFocus()" height="440px" />
+  </div>
+
+  <div class="panel">
+    <ejs-grid
+      [dataSource]="rows()"
+      [allowPaging]="true"
+      [allowSorting]="true"
+      [allowFiltering]="true"
+      [allowResizing]="true"
+      [pageSettings]="grid.pageSettings"
+      [filterSettings]="grid.filterSettings"
+      [toolbar]="grid.toolbar"
+      (rowSelected)="onRowSelected($event)"
+      (rowDeselected)="selected.set(null)"
+    >
+      <e-columns>
+        <e-column field="serial_number" headerText="ซีเรียล" width="150"></e-column>
+        <e-column field="model_name" headerText="รุ่น" width="140"></e-column>
+        <e-column field="customer_name" headerText="ลูกค้า" width="200"></e-column>
+        <e-column field="level_label" headerText="ระดับบริการ" width="110"></e-column>
+        <e-column field="install_date" headerText="วันที่ติดตั้ง" type="date" format="dd/MM/yyyy" width="120"></e-column>
+        <e-column field="latitude" headerText="ละติจูด" type="number" format="N6" width="120"></e-column>
+        <e-column field="longitude" headerText="ลองจิจูด" type="number" format="N6" width="120"></e-column>
+        <e-column field="distance_km" headerText="ระยะ (กม.)" type="number" format="N2" width="110" [visible]="!!nearbyQuery()"></e-column>
+        <e-column field="state_label" headerText="สถานะ" width="140"></e-column>
+        <e-column field="address" headerText="ที่อยู่" width="260"></e-column>
+      </e-columns>
+    </ejs-grid>
+  </div>
+</div>
+
+<ejs-dialog
+  [visible]="editOpen()"
+  (close)="editOpen.set(false)"
+  header="แก้ไขจุดติดตั้ง"
+  [isModal]="true"
+  [showCloseIcon]="true"
+  [animationSettings]="animation"
+  width="560px"
+  target="body"
+>
+  <ng-template #content>
+    <div class="form-grid">
+      <div class="full">อุปกรณ์: <b>{{ selected()?.serial_number }}</b> — {{ selected()?.customer_name }}</div>
+      <div class="full">
+        <label>วันที่ติดตั้ง *</label>
+        <ejs-datepicker [(value)]="editDate" format="dd/MM/yyyy"></ejs-datepicker>
+      </div>
+      <div>
+        <label>ละติจูด *</label>
+        <ejs-numerictextbox [(value)]="editLat" [min]="-90" [max]="90" format="N6" [decimals]="6" [showSpinButton]="false"></ejs-numerictextbox>
+      </div>
+      <div>
+        <label>ลองจิจูด *</label>
+        <ejs-numerictextbox [(value)]="editLng" [min]="-180" [max]="180" format="N6" [decimals]="6" [showSpinButton]="false"></ejs-numerictextbox>
+      </div>
+      <div class="full">
+        <label>ที่อยู่</label>
+        <ejs-textarea [(value)]="editAddress" [liveValue]="editAddress" rows="2"></ejs-textarea>
+      </div>
+    </div>
+  </ng-template>
+  <ng-template #footerTemplate>
+    <button ejs-button (click)="editOpen.set(false)">ยกเลิก</button>
+    <button ejs-button [isPrimary]="true" [disabled]="!editValid() || busy()" (click)="saveEdit()">บันทึก</button>
+  </ng-template>
+</ejs-dialog>

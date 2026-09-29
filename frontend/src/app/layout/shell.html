@@ -1,0 +1,41 @@
+<header class="topbar">
+  <button ejs-button cssClass="e-flat" iconCss="e-icons e-menu" (click)="toggleSidebar()" aria-label="เมนู"></button>
+  <div class="brand">ระบบสต็อกและติดตามเครื่องลงเวลา</div>
+  <div class="spacer"></div>
+  @if (auth.user(); as user) {
+    <div class="user">
+      <div class="name">{{ user.full_name }}</div>
+      <div class="role">{{ roleLabel() }}</div>
+    </div>
+  }
+  <button ejs-button cssClass="e-outline" iconCss="e-icons e-export" (click)="auth.logout()">ออกจากระบบ</button>
+</header>
+
+<div class="body">
+  <ejs-sidebar
+    class="sidebar"
+    type="Push"
+    width="240px"
+    [animate]="false"
+    target=".body"
+    [isOpen]="sidebarOpen()"
+    [enableGestures]="false"
+    [closeOnDocumentClick]="false"
+  >
+    <nav class="menu">
+      @for (item of mainMenu; track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active"><span [class]="item.icon"></span>{{ item.label }}</a>
+      }
+      <div class="section">ผู้ดูแลระบบ</div>
+      @for (item of adminMenu(); track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active"><span [class]="item.icon"></span>{{ item.label }}</a>
+      }
+    </nav>
+  </ejs-sidebar>
+
+  <main class="content" #content>
+    <router-outlet />
+  </main>
+</div>
+
+<ejs-toast #toast [position]="{ X: 'Right', Y: 'Top' }" [timeOut]="3500" [showCloseButton]="true"></ejs-toast>

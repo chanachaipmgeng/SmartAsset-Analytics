@@ -1,0 +1,99 @@
+<div class="page">
+  <div class="page-header">
+    <h1>ลูกค้า</h1>
+    @if (auth.canWrite()) {
+      <div class="actions">
+        <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มลูกค้า</button>
+        <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
+        @if (auth.isAdmin()) {
+          <button ejs-button cssClass="e-danger" iconCss="e-icons e-trash" [disabled]="!selected()" (click)="confirmDelete.set(true)">ลบ</button>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="panel">
+    <ejs-grid
+      [dataSource]="rows()"
+      [allowPaging]="true"
+      [allowSorting]="true"
+      [allowFiltering]="true"
+      [pageSettings]="grid.pageSettings"
+      [filterSettings]="grid.filterSettings"
+      [toolbar]="grid.toolbar"
+      (rowSelected)="onRowSelected($event)"
+      (rowDeselected)="selected.set(null)"
+    >
+      <e-columns>
+        <e-column field="company_name" headerText="ชื่อบริษัท" width="220"></e-column>
+        <e-column field="contact_person" headerText="ผู้ติดต่อ" width="150"></e-column>
+        <e-column field="phone" headerText="โทรศัพท์" width="130"></e-column>
+        <e-column field="email" headerText="อีเมล" width="200"></e-column>
+        <e-column field="level_label" headerText="ระดับบริการ" width="120"></e-column>
+        <e-column field="tenant_name" headerText="กลุ่มลูกค้า" width="200" [visible]="auth.isSuperadmin()"></e-column>
+      </e-columns>
+    </ejs-grid>
+  </div>
+</div>
+
+<ejs-dialog
+  [visible]="formOpen()"
+  (close)="formOpen.set(false)"
+  [header]="editingId() ? 'แก้ไขลูกค้า' : 'เพิ่มลูกค้า'"
+  [isModal]="true"
+  [showCloseIcon]="true"
+  [animationSettings]="animation"
+  width="600px"
+  target="body"
+>
+  <ng-template #content>
+    <div class="form-grid">
+      <div class="full">
+        <label>ชื่อบริษัท *</label>
+        <ejs-textbox [(value)]="companyName" [liveValue]="companyName"></ejs-textbox>
+      </div>
+      @if (auth.isSuperadmin() && !editingId()) {
+        <div class="full">
+          <label>กลุ่มลูกค้า *</label>
+          <ejs-dropdownlist [dataSource]="tenantOptions()" [fields]="{ value: 'value', text: 'text' }" [(value)]="tenantId" placeholder="เลือกกลุ่มลูกค้า"></ejs-dropdownlist>
+        </div>
+      }
+      <div>
+        <label>ผู้ติดต่อ</label>
+        <ejs-textbox [(value)]="contactPerson" [liveValue]="contactPerson"></ejs-textbox>
+      </div>
+      <div>
+        <label>โทรศัพท์</label>
+        <ejs-textbox [(value)]="phone" [liveValue]="phone"></ejs-textbox>
+      </div>
+      <div>
+        <label>อีเมล</label>
+        <ejs-textbox type="email" [(value)]="email" [liveValue]="email"></ejs-textbox>
+      </div>
+      <div>
+        <label>ระดับบริการ</label>
+        <ejs-dropdownlist [dataSource]="levelOptions" [fields]="{ value: 'value', text: 'text' }" [(value)]="serviceLevel"></ejs-dropdownlist>
+      </div>
+    </div>
+  </ng-template>
+  <ng-template #footerTemplate>
+    <button ejs-button (click)="formOpen.set(false)">ยกเลิก</button>
+    <button ejs-button [isPrimary]="true" [disabled]="!formValid() || busy()" (click)="save()">บันทึก</button>
+  </ng-template>
+</ejs-dialog>
+
+<ejs-dialog
+  [visible]="confirmDelete()"
+  (close)="confirmDelete.set(false)"
+  header="ยืนยันการลบ"
+  [isModal]="true"
+  [animationSettings]="animation"
+  width="420px"
+  target="body"
+>
+  <ng-template #content>ต้องการลบลูกค้า <b>{{ selected()?.company_name }}</b> ใช่หรือไม่</ng-template>
+  <ng-template #footerTemplate>
+    <button ejs-button (click)="confirmDelete.set(false)">ยกเลิก</button>
+    <button ejs-button cssClass="e-danger" [disabled]="busy()" (click)="remove()">ลบ</button>
+  </ng-template>
+</ejs-dialog>

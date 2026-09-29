@@ -1,0 +1,91 @@
+<div class="page">
+  <div class="page-header">
+    <h1>แดชบอร์ด</h1>
+    <button class="e-btn e-outline" (click)="summary.reload()"><span class="e-icons e-refresh"></span> รีเฟรช</button>
+  </div>
+
+  @if (summary.error()) {
+    <div class="panel error">โหลดข้อมูลแดชบอร์ดไม่สำเร็จ</div>
+  }
+
+  <section class="cards">
+    <div class="card total">
+      <div class="label">อุปกรณ์ทั้งหมด</div>
+      <div class="value">{{ data()?.total_devices ?? '-' }}</div>
+    </div>
+    @for (s of statusCards(); track s.key) {
+      <div class="card" [style.border-top-color]="s.color">
+        <div class="label">{{ s.label }}</div>
+        <div class="value" [style.color]="s.color">{{ s.count }}</div>
+      </div>
+    }
+  </section>
+
+  @if (data()) {
+    <div class="layout-host">
+      <ejs-dashboardlayout [columns]="6" [cellSpacing]="cellSpacing" [cellAspectRatio]="1.4" [allowResizing]="false">
+        <e-panels>
+          <e-panel [row]="0" [col]="0" [sizeX]="2" [sizeY]="2">
+            <ng-template #header><div class="panel-title">สัดส่วนตามสถานะ</div></ng-template>
+            <ng-template #content>
+              <ejs-accumulationchart theme="Material3" height="100%" width="100%" [legendSettings]="legend" [tooltip]="tooltip">
+                <e-accumulation-series-collection>
+                  <e-accumulation-series
+                    [dataSource]="statusChart()"
+                    xName="x"
+                    yName="y"
+                    pointColorMapping="fill"
+                    innerRadius="45%"
+                    [dataLabel]="pieLabels"
+                  ></e-accumulation-series>
+                </e-accumulation-series-collection>
+              </ejs-accumulationchart>
+            </ng-template>
+          </e-panel>
+
+          <e-panel [row]="0" [col]="2" [sizeX]="4" [sizeY]="2">
+            <ng-template #header><div class="panel-title">จำนวนอุปกรณ์ตามรุ่น (ไม่รวมปลดระวาง)</div></ng-template>
+            <ng-template #content>
+              <ejs-chart theme="Material3" height="100%" width="100%" [primaryXAxis]="primaryXAxis" [primaryYAxis]="primaryYAxis" [tooltip]="tooltip">
+                <e-series-collection>
+                  <e-series
+                    [dataSource]="modelChart()"
+                    type="Column"
+                    xName="x"
+                    yName="y"
+                    name="จำนวน"
+                    fill="#4f46e5"
+                    [cornerRadius]="{ topLeft: 6, topRight: 6 }"
+                    [marker]="{ dataLabel: columnLabels }"
+                  ></e-series>
+                </e-series-collection>
+              </ejs-chart>
+            </ng-template>
+          </e-panel>
+
+          <e-panel [row]="2" [col]="0" [sizeX]="4" [sizeY]="3">
+            <ng-template #header><div class="panel-title">แผนที่จุดติดตั้ง ({{ installations().length }} จุด)</div></ng-template>
+            <ng-template #content>
+              <app-installation-map [installations]="installations()" height="100%" />
+            </ng-template>
+          </e-panel>
+
+          <e-panel [row]="2" [col]="4" [sizeX]="2" [sizeY]="3">
+            <ng-template #header><div class="panel-title">ประกันใกล้หมด (30 วัน)</div></ng-template>
+            <ng-template #content>
+              <ejs-grid [dataSource]="warranty()" height="100%" [allowSorting]="true">
+                <e-columns>
+                  <e-column field="serial_number" headerText="ซีเรียล" width="130"></e-column>
+                  <e-column field="warranty_end" headerText="หมดประกัน" type="date" format="dd/MM/yyyy" width="110"></e-column>
+                  <e-column field="tenant_name" headerText="กลุ่มลูกค้า" width="140"></e-column>
+                </e-columns>
+              </ejs-grid>
+            </ng-template>
+          </e-panel>
+        </e-panels>
+      </ejs-dashboardlayout>
+    </div>
+  } @else if (summary.isLoading()) {
+    <div class="panel muted">กำลังโหลด...</div>
+  }
+</div>

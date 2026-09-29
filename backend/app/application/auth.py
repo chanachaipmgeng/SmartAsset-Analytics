@@ -1,0 +1,56 @@
+from dataclasses import dataclass
+from uuid import UUID
+
+from app.domain.entities import User
+from app.domain.enums import Role
+from app.domain.errors import AuthenticationError
+from app.domain.ports import PasswordHasher, TokenService, UnitOfWork
+
+INVALID_LOGIN = "อีเมลหรือรหัสผ่านไม่ถูกต้อง"
+
+
+@dataclass(frozen=True)
+class TokenPair:
+    access_token: str
+    refresh_token: str
+    user: User
+
+
+def _claims(user: User) -> dict[str, str | None]:
+    return {
+        "sub": str(user.id),
+        "role": user.role.value,
+        "tenant_id": str(user.tenant_id) if user.tenant_id else None,
+    }
+
+
+def _issue(tokens: TokenService, user: User) -> TokenPair:
+    claims = _claims(user)
+    return TokenPair(tokens.issue_access(claims), tokens.issue_refresh({"sub": claims["sub"]}), user)
+
+
+async def login(uow: UnitOfWork, hasher: PasswordHasher, tokens: TokenService, email: str, password: str) -> TokenPair:
+    user = await uow.users.get_by_email(email)
+    if user is None or not hasher.verify(user.password_hash, password):
+        raise AuthenticationError(INVALID_LOGIN)
+    if not user.is_active:
+        raise AuthenticationError("บัญชีนี้ถูกระงับการใช้งาน")
+    if user.tenant_id is not None:
+        tenant = await uow.tenants.get(user.tenant_id)
+        if tenant is None or not tenant.is_active:
+            raise AuthenticationError("กลุ่มลูกค้าของบัญชีนี้ถูกระงับการใช้งาน")
+    return _issue(tokens, user)
+
+
+async def refresh(uow: UnitOfWork, tokens: TokenService, refresh_token: str) -> TokenPair:
+    payload = tokens.decode(refresh_token, expected_type="refresh")
+    user = await uow.users.get(UUID(payload["sub"]))
+    if user is None or not user.is_active:
+        raise AuthenticationError("บัญชีนี้ไม่สามารถใช้งานได้")
+    return _issue(tokens, user)
+
+
+def parse_access_claims(tokens: TokenService, token: str) -> tuple[UUID, Role, UUID | None]:
+    payload = tokens.decode(token, expected_type="access")
+    tenant = payload.get("tenant_id")
+    return UUID(payload["sub"]), Role(payload["role"]), UUID(tenant) if tenant else None

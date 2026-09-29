@@ -1,0 +1,6 @@
+# Local development: expose PostgreSQL so `uv run uvicorn` and `ng serve` can run outside Docker.
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db
+services:
+  db:
+    ports:
+      - "127.0.0.1:5434:5432"

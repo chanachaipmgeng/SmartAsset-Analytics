@@ -1,0 +1,108 @@
+export type Role = 'superadmin' | 'tenant_admin' | 'staff' | 'viewer';
+export type DeviceStatus = 'IN_STOCK' | 'CHECKED_OUT' | 'INSTALLED' | 'RETIRED';
+export type TransactionType = 'CHECK_IN' | 'TRANSFER' | 'CHECK_OUT' | 'INSTALL' | 'RETURN' | 'RETIRE';
+export type ServiceLevel = 'BASIC' | 'STANDARD' | 'PREMIUM';
+
+export interface User {
+  id: string;
+  email: string;
+  full_name: string;
+  role: Role;
+  tenant_id: string | null;
+  is_active: boolean;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  refresh_token: string;
+  user: User;
+}
+
+export interface Tenant {
+  id: string;
+  name: string;
+  code: string;
+  is_active: boolean;
+}
+
+export interface DeviceModel {
+  id: string;
+  brand: string;
+  name: string;
+  device_type: string;
+  firmware_version: string | null;
+  description: string | null;
+}
+
+export interface Device {
+  id: string;
+  serial_number: string;
+  mac_address: string | null;
+  model_id: string;
+  model_name: string;
+  brand: string;
+  tenant_id: string | null;
+  tenant_name: string | null;
+  status: DeviceStatus;
+  purchase_date: string | null;
+  cost: string | null;
+  warranty_end: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface InventoryTransaction {
+  id: string;
+  device_id: string;
+  serial_number: string;
+  transaction_type: TransactionType;
+  from_status: DeviceStatus | null;
+  to_status: DeviceStatus;
+  tenant_id: string | null;
+  tenant_name: string | null;
+  customer_name: string | null;
+  user_name: string;
+  note: string | null;
+  occurred_at: string;
+}
+
+export interface Customer {
+  id: string;
+  tenant_id: string;
+  company_name: string;
+  contact_person: string | null;
+  phone: string | null;
+  email: string | null;
+  service_level: ServiceLevel;
+}
+
+export interface Installation {
+  id: string;
+  device_id: string;
+  serial_number: string;
+  model_name: string;
+  tenant_id: string;
+  customer_id: string;
+  customer_name: string;
+  service_level: ServiceLevel;
+  install_date: string;
+  latitude: number;
+  longitude: number;
+  address: string | null;
+  removed_at: string | null;
+  distance_m: number | null;
+}
+
+export interface CountItem {
+  key: string;
+  label: string;
+  count: number;
+}
+
+export interface DashboardSummary {
+  total_devices: number;
+  by_status: CountItem[];
+  by_model: CountItem[];
+  warranty_expiring: Device[];
+  installations: Installation[];
+}

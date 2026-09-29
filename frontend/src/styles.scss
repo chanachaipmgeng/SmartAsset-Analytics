@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap');
+
+:root {
+  --app-bg: #f5f7fb;
+  --app-surface: #ffffff;
+  --app-border: #e5e7eb;
+  --app-text: #111827;
+  --app-muted: #6b7280;
+  --app-primary: #4f46e5;
+  --status-in-stock: #16a34a;
+  --status-checked-out: #d97706;
+  --status-installed: #2563eb;
+  --status-retired: #6b7280;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body,
+.e-control,
+.e-css,
+.e-grid,
+.e-btn,
+.e-input,
+.e-toast,
+.e-dialog {
+  font-family: 'Sarabun', system-ui, sans-serif !important;
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+.page {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+  }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+.panel {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+  padding-top: 4px;
+
+  .full {
+    grid-column: 1 / -1;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--app-muted);
+    margin-bottom: 4px;
+  }
+}
+
+.status-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+
+  &.IN_STOCK { background: var(--status-in-stock); }
+  &.CHECKED_OUT { background: var(--status-checked-out); }
+  &.INSTALLED { background: var(--status-installed); }
+  &.RETIRED { background: var(--status-retired); }
+}
+
+.muted {
+  color: var(--app-muted);
+}
