@@ -158,6 +158,27 @@ class TransferIn(MovementIn):
     target_tenant_id: UUID | None = None
 
 
+class ImportRowOut(Out):
+    row: int
+    serial_number: str | None
+    model: str | None
+    mac_address: str | None
+    purchase_date: date | None
+    cost: Decimal | None
+    warranty_end: date | None
+    notes: str | None
+    tenant_code: str | None
+    errors: list[str]
+
+
+class ImportResultOut(Out):
+    total: int
+    valid: int
+    invalid: int
+    committed: bool
+    rows: list[ImportRowOut]
+
+
 class RepairDoneIn(BaseModel):
     device_id: UUID
     qc_note: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]

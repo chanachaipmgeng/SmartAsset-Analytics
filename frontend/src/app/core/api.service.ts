@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { Customer, Device, DeviceModel, Installation, Tenant, User } from './models';
+import { Customer, Device, DeviceModel, ImportResult, Installation, Tenant, User } from './models';
 
 const API = '/api/v1';
 
@@ -41,6 +41,15 @@ export class ApiService {
   returnDevice(deviceId: string, note?: string | null) {
     return this.post<Device>('/inventory/return', { device_id: deviceId, note });
   }
+  importDevices(file: File, dryRun: boolean) {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.post<ImportResult>(`/inventory/import?dry_run=${dryRun}`, form);
+  }
+  importTemplate() {
+    return firstValueFrom(this.http.get(`${API}/inventory/import/template`, { responseType: 'blob' }));
+  }
+
   sendRepair(deviceId: string, note?: string | null) {
     return this.post<Device>('/inventory/send-repair', { device_id: deviceId, note });
   }

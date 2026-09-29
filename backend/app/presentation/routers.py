@@ -1,11 +1,12 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Path, Query, status
+from fastapi import APIRouter, File, Path, Query, Response, UploadFile, status
 
-from app.application import admin, auth, customers, dashboard, inventory
+from app.application import admin, auth, customers, dashboard, device_import, inventory
 from app.domain.enums import DeviceStatus
-from app.domain.errors import NotFoundError
+from app.domain.errors import NotFoundError, ValidationError
+from app.infrastructure import spreadsheet
 from app.presentation import schemas as s
 from app.presentation.deps import ActorDep, ContainerDep, SystemUowDep, UowDep
 
@@ -158,6 +159,37 @@ async def transfer(body: s.TransferIn, actor: ActorDep, uow: UowDep):
 @router.post("/inventory/return", response_model=s.DeviceOut, tags=["inventory"])
 async def return_device(body: s.MovementIn, actor: ActorDep, uow: UowDep):
     return await inventory.return_device(uow, actor, body.device_id, body.note)
+
+
+MAX_IMPORT_BYTES = 2 * 1024 * 1024
+XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+@router.post("/inventory/import", response_model=s.ImportResultOut, tags=["inventory"])
+async def import_devices(
+    actor: ActorDep,
+    uow: UowDep,
+    file: Annotated[UploadFile, File(description=".xlsx หรือ .csv ตามไฟล์แม่แบบ")],
+    dry_run: bool = True,
+):
+    content = await file.read(MAX_IMPORT_BYTES + 1)
+    if len(content) > MAX_IMPORT_BYTES:
+        raise ValidationError("ไฟล์ต้องมีขนาดไม่เกิน 2 MB")
+    table = spreadsheet.read_table(content, file.filename or "")
+    return await device_import.import_devices(uow, actor, table, dry_run=dry_run)
+
+
+@router.get("/inventory/import/template", tags=["inventory"])
+async def import_template(actor: ActorDep, uow: UowDep):
+    models = [f"{m.brand} {m.name}" for m in await uow.device_models.list()]
+    headers = device_import.template_headers(include_tenant=actor.is_superadmin)
+    example = ["SN-0001", models[0] if models else "", "00:11:22:33:44:55", "2026-09-29", 12500, "2027-09-29", "ตัวอย่าง"]
+    content = spreadsheet.build_template(headers, example[: len(headers)], models)
+    return Response(
+        content,
+        media_type=XLSX_TYPE,
+        headers={"Content-Disposition": 'attachment; filename="device-import-template.xlsx"'},
+    )
 
 
 @router.post("/inventory/send-repair", response_model=s.DeviceOut, tags=["inventory"])

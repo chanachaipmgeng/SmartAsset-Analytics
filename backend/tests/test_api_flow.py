@@ -1,10 +1,12 @@
 """End-to-end API flow against the dev PostGIS database (requires `docker compose up` + migrations + seed)."""
 
+import io
 import secrets
 from collections.abc import AsyncIterator
 
 import httpx
 import pytest
+from openpyxl import Workbook, load_workbook
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -12,6 +14,8 @@ from app.core.config import get_settings
 from app.main import app
 
 pytestmark = pytest.mark.asyncio(loop_scope="session")
+
+XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
 @pytest.fixture(scope="session")
@@ -215,6 +219,66 @@ async def test_repair_flow(client: httpx.AsyncClient, world: dict) -> None:
     assert [t["transaction_type"] for t in history[:2]] == ["REPAIR_DONE", "SEND_REPAIR"]
     assert history[0]["note"] == "เปลี่ยนจอ ทดสอบผ่าน"
     assert history[1]["customer_name"] == customer["company_name"]
+
+
+def _xlsx(rows: list[list[object]]) -> bytes:
+    book = Workbook()
+    for row in rows:
+        book.active.append(row)
+    out = io.BytesIO()
+    book.save(out)
+    return out.getvalue()
+
+
+async def test_import_devices(client: httpx.AsyncClient, world: dict) -> None:
+    a, tag = world["a"], world["tag"]
+    model = f"Test {world['model']['name']}"
+    header = ["ซีเรียล", "รุ่น", "MAC", "วันที่ซื้อ", "ต้นทุน", "หมดประกัน", "หมายเหตุ"]
+    bad = _xlsx(
+        [
+            header,
+            [f"imp-{tag}-1", model, "00:11:22:33:44:55", "29/09/2569", "12,500", "2027-09-29", "ok"],
+            [f"IMP-{tag}-1", model, None, None, None, None, None],
+            [f"IMP-{tag}-2", "No Such Model", "zz", None, -5, None, None],
+            [None, None, None, None, None, None, None],
+        ]
+    )
+    files = {"file": ("devices.xlsx", bad, XLSX)}
+
+    assert (await client.post("/inventory/import", headers=world["viewer"], files=files)).status_code == 403
+
+    res = await client.post("/inventory/import", headers=a, files=files, params={"dry_run": "true"})
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert (body["total"], body["valid"], body["invalid"], body["committed"]) == (3, 1, 2, False)
+    first, dup, broken = body["rows"]
+    assert first["serial_number"] == f"IMP-{tag}-1" and first["purchase_date"] == "2026-09-29" and first["cost"] == "12500.00"
+    assert dup["row"] == 3 and "ซ้ำกับแถว 2" in dup["errors"][0]
+    assert len(broken["errors"]) == 3
+
+    # Commit refuses while any row is invalid, and nothing is written.
+    res = await client.post("/inventory/import", headers=a, files=files, params={"dry_run": "false"})
+    assert res.status_code == 422
+    assert (await client.get(f"/devices/by-serial/IMP-{tag}-1", headers=a)).status_code == 404
+
+    csv_body = "\n".join([",".join(header), f"IMP-{tag}-1,{model},,,,,", f"IMP-{tag}-2,{world['model']['name']},,,,,"])
+    files = {"file": ("devices.csv", csv_body.encode("utf-8-sig"), "text/csv")}
+    res = await client.post("/inventory/import", headers=a, files=files, params={"dry_run": "false"})
+    assert res.status_code == 200, res.text
+    assert res.json()["committed"] is True and res.json()["valid"] == 2
+    device = (await client.get(f"/devices/by-serial/IMP-{tag}-2", headers=a)).json()
+    assert device["tenant_id"] == world["tenant_a"]["id"] and device["status"] == "IN_STOCK"
+    history = (await client.get("/inventory/transactions", headers=a, params={"device_id": device["id"]})).json()
+    assert [t["transaction_type"] for t in history] == ["CHECK_IN"]
+
+    # Re-importing the same file now fails validation on existing serials.
+    res = await client.post("/inventory/import", headers=a, files=files)
+    assert res.json()["invalid"] == 2
+
+    template = await client.get("/inventory/import/template", headers=a)
+    assert template.status_code == 200 and template.headers["content-type"] == XLSX
+    sheet = load_workbook(io.BytesIO(template.content)).worksheets[0]
+    assert [c.value for c in sheet[1]] == header
 
 
 async def test_change_own_password(client: httpx.AsyncClient, world: dict) -> None:

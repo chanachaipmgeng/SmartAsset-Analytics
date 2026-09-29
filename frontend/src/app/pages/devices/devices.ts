@@ -27,6 +27,7 @@ import { InstallationMap } from '../../shared/installation-map';
 import { PageHeader } from '../../shared/page-header';
 import { StatusChip } from '../../shared/status-chip';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
+import { DeviceImport } from './device-import';
 
 type StatusFilter = DeviceStatus | 'ALL';
 
@@ -61,6 +62,7 @@ const DAY_MS = 86_400_000;
     AssetTimeline,
     InstallationMap,
     DeviceActionDialogs,
+    DeviceImport,
   ],
   templateUrl: './devices.html',
   styleUrl: './devices.scss',
@@ -164,6 +166,8 @@ export class DevicesPage {
     return { tone: 'success', text: 'อยู่ในประกัน' };
   });
 
+  protected readonly importOpen = signal(false);
+
   // ---- device form ----
   protected readonly busy = signal(false);
   protected readonly formOpen = signal(false);
@@ -195,6 +199,7 @@ export class DevicesPage {
       if (!action) return;
       untracked(() => {
         if (action === 'new' && this.auth.canWrite()) this.openCreate(this.serial() ?? '');
+        if (action === 'import' && this.auth.canWrite()) this.importOpen.set(true);
         void this.router.navigate([], {
           queryParams: { action: null, serial: null },
           queryParamsHandling: 'merge',
@@ -238,6 +243,12 @@ export class DevicesPage {
     this.devices.reload();
     this.history.reload();
     this.installations.reload();
+  }
+
+  protected onImported(count: number): void {
+    this.statusFilter.set('ALL');
+    this.devices.reload();
+    this.notify.success(`นำเข้าอุปกรณ์ ${count} เครื่องแล้ว`);
   }
 
   protected async copyLink(): Promise<void> {

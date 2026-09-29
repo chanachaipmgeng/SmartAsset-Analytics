@@ -2,6 +2,7 @@
   <app-page-header title="อุปกรณ์" subtitle="รับเข้า เบิกออก ติดตั้ง และติดตามสถานะอุปกรณ์รายเครื่อง">
     @if (auth.canWrite()) {
       <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">รับเข้าใหม่</button>
+      <button ejs-button iconCss="e-icons e-upload-1" (click)="importOpen.set(true)">นำเข้า</button>
     }
     <button ejs-button iconCss="e-icons e-zoom-in" routerLink="/scan">สแกน</button>
     <button
@@ -162,6 +163,7 @@
 </ejs-sidebar>
 
 <app-device-action-dialogs (done)="onActionDone()" />
+<app-device-import [(open)]="importOpen" (imported)="onImported($event)" />
 
 <ejs-dialog
   [visible]="formOpen()"

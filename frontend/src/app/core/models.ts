@@ -107,6 +107,27 @@ export interface CountItem {
   count: number;
 }
 
+export interface ImportRow {
+  row: number;
+  serial_number: string | null;
+  model: string | null;
+  mac_address: string | null;
+  purchase_date: string | null;
+  cost: string | null;
+  warranty_end: string | null;
+  notes: string | null;
+  tenant_code: string | null;
+  errors: string[];
+}
+
+export interface ImportResult {
+  total: number;
+  valid: number;
+  invalid: number;
+  committed: boolean;
+  rows: ImportRow[];
+}
+
 export interface ActivityDay {
   day: string;
   counts: Partial<Record<TransactionType, number>>;
