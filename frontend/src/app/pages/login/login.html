@@ -1,32 +1,85 @@
-<div class="wrap">
-  <form class="card" (submit)="submit($event)">
-    <div class="logo e-icons e-clock"></div>
-    <h1>ระบบสต็อกและติดตามเครื่องลงเวลา</h1>
-    <p class="muted">เข้าสู่ระบบเพื่อจัดการอุปกรณ์และจุดติดตั้ง</p>
+<div class="grid min-h-dvh bg-surface-dim lg:grid-cols-[1.1fr_1fr]">
+  <aside class="hidden flex-col justify-between bg-primary-container p-12 text-on-primary-container lg:flex">
+    <div class="flex items-center gap-3">
+      <span class="grid size-11 place-items-center rounded-m3-md bg-primary text-xl text-on-primary"><span class="e-icons e-clock"></span></span>
+      <span class="text-xl font-semibold">myAssets</span>
+    </div>
 
-    @if (error(); as message) {
-      <ejs-message severity="Error" [content]="message"></ejs-message>
-    }
+    <div class="max-w-lg">
+      <h2 class="m-0 text-4xl font-bold leading-tight">ติดตามเครื่องลงเวลาทุกเครื่อง ตั้งแต่รับเข้าจนติดตั้งที่ลูกค้า</h2>
+      <ul class="m-0 mt-8 flex list-none flex-col gap-5 p-0">
+        @for (f of features; track f.title) {
+          <li class="flex gap-4">
+            <span class="grid size-10 shrink-0 place-items-center rounded-full bg-surface text-primary"><span [class]="f.icon"></span></span>
+            <span>
+              <span class="block font-semibold">{{ f.title }}</span>
+              <span class="block text-sm opacity-80">{{ f.detail }}</span>
+            </span>
+          </li>
+        }
+      </ul>
+    </div>
 
-    <ejs-textbox
-      type="email"
-      placeholder="อีเมล"
-      floatLabelType="Auto"
-      autocomplete="username"
-      [(value)]="email"
-      [liveValue]="email"
-    ></ejs-textbox>
-    <ejs-textbox
-      type="password"
-      placeholder="รหัสผ่าน"
-      floatLabelType="Auto"
-      autocomplete="current-password"
-      [(value)]="password"
-      [liveValue]="password"
-    ></ejs-textbox>
+    <p class="m-0 text-sm opacity-70">ระบบสต็อกและติดตามเครื่องลงเวลา</p>
+  </aside>
 
-    <button ejs-button type="submit" [isPrimary]="true" [disabled]="!canSubmit()" cssClass="submit">
-      {{ loading() ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ' }}
-    </button>
-  </form>
+  <main class="flex items-center justify-center p-4 sm:p-8">
+    <form
+      class="flex w-full max-w-sm flex-col gap-4 rounded-m3-xl border border-outline-variant bg-surface p-6 sm:p-8"
+      (submit)="submit($event)"
+    >
+      <div class="flex items-center gap-3 lg:hidden">
+        <span class="grid size-10 place-items-center rounded-m3-md bg-primary text-lg text-on-primary"><span class="e-icons e-clock"></span></span>
+        <span class="text-lg font-semibold text-on-surface">myAssets</span>
+      </div>
+
+      <div>
+        <h1 class="m-0 text-2xl font-semibold text-on-surface">เข้าสู่ระบบ</h1>
+        <p class="m-0 mt-1 text-sm text-on-surface-variant">ใช้อีเมลและรหัสผ่านที่ผู้ดูแลระบบสร้างให้</p>
+      </div>
+
+      @if (error(); as message) {
+        <ejs-message severity="Error" [content]="message"></ejs-message>
+      }
+
+      <ejs-textbox
+        type="email"
+        placeholder="อีเมล"
+        floatLabelType="Auto"
+        autocomplete="username"
+        [(value)]="email"
+        [liveValue]="email"
+      ></ejs-textbox>
+
+      <div class="relative">
+        <ejs-textbox
+          [type]="showPassword() ? 'text' : 'password'"
+          placeholder="รหัสผ่าน"
+          floatLabelType="Auto"
+          autocomplete="current-password"
+          [(value)]="password"
+          [liveValue]="password"
+        ></ejs-textbox>
+        <button
+          ejs-button
+          type="button"
+          cssClass="e-flat e-round e-small password-toggle"
+          [iconCss]="showPassword() ? 'e-icons e-eye-slash' : 'e-icons e-eye'"
+          [attr.aria-label]="showPassword() ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'"
+          (click)="showPassword.set(!showPassword())"
+        ></button>
+      </div>
+
+      <ejs-checkbox label="จดจำอีเมลบนเครื่องนี้" [(checked)]="remember"></ejs-checkbox>
+
+      <button ejs-button type="submit" [isPrimary]="true" [disabled]="!canSubmit()" cssClass="submit">
+        @if (loading()) {
+          <span class="e-icons e-refresh inline-block animate-spin"></span>
+          กำลังเข้าสู่ระบบ...
+        } @else {
+          เข้าสู่ระบบ
+        }
+      </button>
+    </form>
+  </main>
 </div>

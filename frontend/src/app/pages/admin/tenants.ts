@@ -3,21 +3,19 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { ApiService } from '../../core/api.service';
 import { Tenant } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
+import { PageHeader } from '../../shared/page-header';
 import { DIALOG_ANIMATION, FORM_IMPORTS, GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
 
 @Component({
   selector: 'app-tenants',
-  imports: [...GRID_IMPORTS, ...FORM_IMPORTS],
+  imports: [...GRID_IMPORTS, ...FORM_IMPORTS, PageHeader],
   providers: [...GRID_PROVIDERS],
   template: `
     <div class="page">
-      <div class="page-header">
-        <h1>กลุ่มลูกค้า (Tenant)</h1>
-        <div class="actions">
-          <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มกลุ่มลูกค้า</button>
-          <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
-        </div>
-      </div>
+      <app-page-header title="กลุ่มลูกค้า (Tenant)" subtitle="องค์กรที่แยกข้อมูลกันด้วย Row-Level Security">
+        <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มกลุ่มลูกค้า</button>
+        <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
+      </app-page-header>
       <div class="panel">
         <ejs-grid
           [dataSource]="rows()"

@@ -1,39 +1,86 @@
-<header class="topbar">
-  <button ejs-button cssClass="e-flat" iconCss="e-icons e-menu" (click)="toggleSidebar()" aria-label="เมนู"></button>
-  <div class="brand">ระบบสต็อกและติดตามเครื่องลงเวลา</div>
-  <div class="spacer"></div>
+<ejs-appbar colorMode="Inherit" cssClass="app-bar">
+  <button
+    ejs-button
+    cssClass="e-flat e-round"
+    iconCss="e-icons e-menu"
+    (click)="toggleSidebar()"
+    [attr.aria-label]="sidebarOpen() ? 'ย่อเมนู' : 'ขยายเมนู'"
+  ></button>
+
+  <a routerLink="/dashboard" class="ml-1 flex min-w-0 items-center gap-2 text-on-surface no-underline">
+    <span class="grid size-8 shrink-0 place-items-center rounded-m3-sm bg-primary text-on-primary">
+      <span class="e-icons e-clock"></span>
+    </span>
+    <span class="hidden truncate text-base font-semibold sm:inline">myAssets</span>
+  </a>
+
+  <div class="ml-4 hidden min-w-0 md:block">
+    <ejs-breadcrumb [items]="breadcrumb()" [enableNavigation]="false" (itemClick)="onCrumb($event)"></ejs-breadcrumb>
+  </div>
+
+  <div class="e-appbar-spacer"></div>
+
+  <button
+    ejs-button
+    cssClass="e-flat e-round"
+    iconCss="e-icons e-contrast"
+    (click)="theme.toggle()"
+    [attr.aria-label]="theme.isDark() ? 'เปลี่ยนเป็นธีมสว่าง' : 'เปลี่ยนเป็นธีมมืด'"
+    [attr.title]="theme.isDark() ? 'ธีมสว่าง' : 'ธีมมืด'"
+  ></button>
+
   @if (auth.user(); as user) {
-    <div class="user">
-      <div class="name">{{ user.full_name }}</div>
-      <div class="role">{{ roleLabel() }}</div>
-    </div>
+    <button
+      ejs-dropdownbutton
+      cssClass="e-flat user-menu e-caret-hide"
+      [items]="userMenu()"
+      (select)="onUserMenu($event)"
+      aria-label="เมนูผู้ใช้"
+    >
+      <span class="flex items-center gap-2">
+        <span class="grid size-8 place-items-center rounded-full bg-primary-container text-sm font-semibold text-on-primary-container">
+          {{ initials() }}
+        </span>
+        <span class="hidden text-left leading-tight lg:block">
+          <span class="block text-sm font-medium text-on-surface">{{ user.full_name }}</span>
+          <span class="block text-xs text-on-surface-variant">{{ roleLabel() }}</span>
+        </span>
+      </span>
+    </button>
   }
-  <button ejs-button cssClass="e-outline" iconCss="e-icons e-export" (click)="auth.logout()">ออกจากระบบ</button>
-</header>
+</ejs-appbar>
 
 <div class="body">
   <ejs-sidebar
     class="sidebar"
-    type="Push"
-    width="240px"
+    [type]="isDesktop() ? 'Auto' : 'Over'"
+    width="256px"
+    dockSize="72px"
+    [enableDock]="isDesktop()"
+    [showBackdrop]="!isDesktop()"
+    [closeOnDocumentClick]="!isDesktop()"
+    [enableGestures]="false"
     [animate]="false"
     target=".body"
     [isOpen]="sidebarOpen()"
-    [enableGestures]="false"
-    [closeOnDocumentClick]="false"
+    (close)="onSidebarClose()"
   >
-    <nav class="menu">
-      @for (item of mainMenu; track item.path) {
-        <a [routerLink]="item.path" routerLinkActive="active"><span [class]="item.icon"></span>{{ item.label }}</a>
-      }
-      <div class="section">ผู้ดูแลระบบ</div>
-      @for (item of adminMenu(); track item.path) {
-        <a [routerLink]="item.path" routerLinkActive="active"><span [class]="item.icon"></span>{{ item.label }}</a>
+    <nav class="menu" [class.docked]="docked()" aria-label="เมนูหลัก">
+      @for (group of menu(); track group.label) {
+        @if (group.items.length) {
+          <div class="section">{{ group.label }}</div>
+          @for (item of group.items; track item.path) {
+            <a [routerLink]="item.path" routerLinkActive="active" [attr.title]="docked() ? item.label : null">
+              <span class="icon" [class]="item.icon"></span>
+              <span class="label">{{ item.label }}</span>
+            </a>
+          }
+        }
       }
     </nav>
   </ejs-sidebar>
 
-  <main class="content" #content>
+  <main class="content e-main-content" #content>
     <router-outlet />
   </main>
 </div>

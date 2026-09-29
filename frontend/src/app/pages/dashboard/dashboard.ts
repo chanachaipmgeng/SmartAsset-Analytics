@@ -1,5 +1,5 @@
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, effect, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, viewChild } from '@angular/core';
 import {
   AccumulationChartModule,
   AccumulationDataLabelService,
@@ -12,15 +12,30 @@ import {
   PieSeriesService,
   TooltipService,
 } from '@syncfusion/ej2-angular-charts';
+import { ButtonModule } from '@syncfusion/ej2-angular-buttons';
 import { DashboardLayoutComponent, DashboardLayoutModule } from '@syncfusion/ej2-angular-layouts';
-import { STATUS_COLORS, toDate } from '../../core/labels';
+import { statusColor, toDate } from '../../core/labels';
 import { DashboardSummary, DeviceStatus } from '../../core/models';
+import { ThemeService, cssColor } from '../../core/theme.service';
+import { EmptyState } from '../../shared/empty-state';
 import { InstallationMap } from '../../shared/installation-map';
+import { PageHeader } from '../../shared/page-header';
+import { SkeletonBlock } from '../../shared/skeleton-block';
 import { GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [ChartModule, AccumulationChartModule, DashboardLayoutModule, InstallationMap, ...GRID_IMPORTS],
+  imports: [
+    ChartModule,
+    AccumulationChartModule,
+    DashboardLayoutModule,
+    ButtonModule,
+    InstallationMap,
+    PageHeader,
+    EmptyState,
+    SkeletonBlock,
+    ...GRID_IMPORTS,
+  ],
   providers: [
     PieSeriesService,
     AccumulationLegendService,
@@ -37,13 +52,25 @@ import { GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardPage {
+  protected readonly theme = inject(ThemeService);
   protected readonly summary = httpResource<DashboardSummary>(() => '/api/v1/dashboard/summary');
 
   protected readonly data = computed(() => this.summary.value());
 
-  protected readonly statusCards = computed(() =>
-    (this.data()?.by_status ?? []).map((s) => ({ ...s, color: STATUS_COLORS[s.key as DeviceStatus] })),
-  );
+  protected readonly statusCards = computed(() => {
+    this.theme.isDark();
+    const total = this.data()?.total_devices || 0;
+    return (this.data()?.by_status ?? []).map((s) => ({
+      ...s,
+      color: statusColor(s.key as DeviceStatus),
+      share: total ? Math.round((s.count / total) * 100) : 0,
+    }));
+  });
+
+  protected readonly primaryColor = computed(() => {
+    this.theme.isDark();
+    return cssColor('--color-sf-primary');
+  });
 
   protected readonly statusChart = computed(() =>
     this.statusCards()

@@ -12,12 +12,16 @@
 
     > div {
       width: 170px;
+
+      @media (max-width: 599px) {
+        width: calc(50% - 6px);
+      }
     }
 
     label {
       display: block;
       font-size: 13px;
-      color: var(--app-muted);
+      color: rgb(var(--color-sf-on-surface-variant));
       margin-bottom: 4px;
     }
   }
@@ -25,4 +29,5 @@
 
 .map {
   padding: 8px;
+  overflow: hidden;
 }

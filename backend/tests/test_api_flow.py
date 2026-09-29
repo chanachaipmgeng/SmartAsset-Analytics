@@ -162,6 +162,31 @@ async def test_full_lifecycle_and_tenant_isolation(client: httpx.AsyncClient, wo
     assert su_history[-1]["transaction_type"] == "CHECK_IN"
 
 
+async def test_change_own_password(client: httpx.AsyncClient, world: dict) -> None:
+    email = f"pw.{world['tag'].lower()}@example.com"
+    old, new = "old-password-123", "new-password-456"
+    res = await client.post(
+        "/users",
+        headers=world["su"],
+        json={"email": email, "full_name": "pw", "role": "staff", "password": old, "tenant_id": world["tenant_a"]["id"]},
+    )
+    assert res.status_code == 201, res.text
+    headers = await login(client, email, old)
+
+    res = await client.post("/auth/change-password", headers=headers, json={"current_password": "wrong-pass", "new_password": new})
+    assert res.status_code == 422
+    assert res.json()["detail"] == "รหัสผ่านปัจจุบันไม่ถูกต้อง"
+    res = await client.post("/auth/change-password", headers=headers, json={"current_password": old, "new_password": old})
+    assert res.status_code == 422
+    res = await client.post("/auth/change-password", headers=headers, json={"current_password": old, "new_password": "short"})
+    assert res.status_code == 422
+
+    res = await client.post("/auth/change-password", headers=headers, json={"current_password": old, "new_password": new})
+    assert res.status_code == 204, res.text
+    await login(client, email, new)
+    assert (await client.post("/auth/login", json={"email": email, "password": old})).status_code == 401
+
+
 async def test_tenant_admin_cannot_create_users_in_other_tenant(client: httpx.AsyncClient, world: dict) -> None:
     res = await client.post(
         "/users",

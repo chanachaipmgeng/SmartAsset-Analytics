@@ -1,16 +1,13 @@
 <div class="page">
-  <div class="page-header">
-    <h1>ลูกค้า</h1>
+  <app-page-header title="ลูกค้า" subtitle="บริษัทลูกค้าของแต่ละกลุ่มลูกค้าและระดับบริการ">
     @if (auth.canWrite()) {
-      <div class="actions">
-        <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มลูกค้า</button>
-        <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
-        @if (auth.isAdmin()) {
-          <button ejs-button cssClass="e-danger" iconCss="e-icons e-trash" [disabled]="!selected()" (click)="confirmDelete.set(true)">ลบ</button>
-        }
-      </div>
+      <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มลูกค้า</button>
+      <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
+      @if (auth.isAdmin()) {
+        <button ejs-button cssClass="e-danger" iconCss="e-icons e-trash" [disabled]="!selected()" (click)="confirmDelete.set(true)">ลบ</button>
+      }
     }
-  </div>
+  </app-page-header>
 
   <div class="panel">
     <ejs-grid

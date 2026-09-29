@@ -22,6 +22,10 @@ export class ApiService {
     return firstValueFrom(this.http.delete<T>(`${API}${path}`));
   }
 
+  changePassword(currentPassword: string, newPassword: string) {
+    return this.post<void>('/auth/change-password', { current_password: currentPassword, new_password: newPassword });
+  }
+
   checkIn(body: Record<string, unknown>) {
     return this.post<Device>('/inventory/check-in', body);
   }

@@ -4,26 +4,25 @@ import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
 import { DeviceModel } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
+import { PageHeader } from '../../shared/page-header';
 import { DIALOG_ANIMATION, FORM_IMPORTS, GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
 
 @Component({
   selector: 'app-device-models',
-  imports: [...GRID_IMPORTS, ...FORM_IMPORTS],
+  imports: [...GRID_IMPORTS, ...FORM_IMPORTS, PageHeader],
   providers: [...GRID_PROVIDERS],
   template: `
     <div class="page">
-      <div class="page-header">
-        <h1>รุ่นอุปกรณ์</h1>
+      <app-page-header
+        title="รุ่นอุปกรณ์"
+        [subtitle]="auth.isSuperadmin() ? 'ยี่ห้อ รุ่น และเวอร์ชันเฟิร์มแวร์ที่ใช้ร่วมกันทุกกลุ่มลูกค้า' : 'รุ่นอุปกรณ์จัดการโดยผู้ดูแลแพลตฟอร์มเท่านั้น'"
+      >
         @if (auth.isSuperadmin()) {
-          <div class="actions">
-            <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มรุ่น</button>
-            <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
-            <button ejs-button cssClass="e-danger" iconCss="e-icons e-trash" [disabled]="!selected() || busy()" (click)="remove()">ลบ</button>
-          </div>
-        } @else {
-          <span class="muted">รุ่นอุปกรณ์จัดการโดยผู้ดูแลแพลตฟอร์มเท่านั้น</span>
+          <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มรุ่น</button>
+          <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
+          <button ejs-button cssClass="e-danger" iconCss="e-icons e-trash" [disabled]="!selected() || busy()" (click)="remove()">ลบ</button>
         }
-      </div>
+      </app-page-header>
       <div class="panel">
         <ejs-grid
           [dataSource]="models.value()"

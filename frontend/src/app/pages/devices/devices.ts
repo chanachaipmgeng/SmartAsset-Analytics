@@ -5,6 +5,7 @@ import { AuthStore } from '../../core/auth.store';
 import { STATUS_LABELS, toDate, toIsoDate } from '../../core/labels';
 import { Customer, Device, DeviceModel, Tenant } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
+import { PageHeader } from '../../shared/page-header';
 import { StatusChip } from '../../shared/status-chip';
 import { DIALOG_ANIMATION, FORM_IMPORTS, GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
 
@@ -21,7 +22,7 @@ const CENTRAL_STOCK = '__central__';
 
 @Component({
   selector: 'app-devices',
-  imports: [...GRID_IMPORTS, ...FORM_IMPORTS, StatusChip],
+  imports: [...GRID_IMPORTS, ...FORM_IMPORTS, PageHeader, StatusChip],
   providers: [...GRID_PROVIDERS],
   templateUrl: './devices.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -2,18 +2,19 @@ import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
 import { STATUS_LABELS, TX_LABELS, toDate } from '../../core/labels';
 import { InventoryTransaction } from '../../core/models';
+import { ButtonModule } from '@syncfusion/ej2-angular-buttons';
+import { PageHeader } from '../../shared/page-header';
 import { GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
 
 @Component({
   selector: 'app-transactions',
-  imports: [...GRID_IMPORTS],
+  imports: [...GRID_IMPORTS, ButtonModule, PageHeader],
   providers: [...GRID_PROVIDERS],
   template: `
     <div class="page">
-      <div class="page-header">
-        <h1>ความเคลื่อนไหวสต็อก</h1>
-        <button class="e-btn e-outline" (click)="transactions.reload()"><span class="e-icons e-refresh"></span> รีเฟรช</button>
-      </div>
+      <app-page-header title="ความเคลื่อนไหวสต็อก" subtitle="ประวัติทุกรายการที่เปลี่ยนสถานะหรือย้ายอุปกรณ์">
+        <button ejs-button cssClass="e-outline" iconCss="e-icons e-refresh" (click)="transactions.reload()">รีเฟรช</button>
+      </app-page-header>
       <div class="panel">
         <ejs-grid
           [dataSource]="rows()"

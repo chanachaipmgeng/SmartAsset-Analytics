@@ -1,7 +1,5 @@
 <div class="page">
-  <div class="page-header">
-    <h1>อุปกรณ์</h1>
-    <div class="actions">
+  <app-page-header title="อุปกรณ์" subtitle="รับเข้า เบิกออก ติดตั้ง และติดตามสถานะอุปกรณ์รายเครื่อง">
       @if (auth.canWrite()) {
         <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">รับเข้าใหม่</button>
       }
@@ -13,15 +11,20 @@
       <button ejs-button iconCss="e-icons e-location" [disabled]="!canInstall()" (click)="openInstall()">ติดตั้ง</button>
       <button ejs-button iconCss="e-icons e-import" [disabled]="!canReturn()" (click)="openMovement('return')">รับคืน</button>
       <button ejs-button cssClass="e-danger" iconCss="e-icons e-close" [disabled]="!canRetire()" (click)="openMovement('retire')">ปลดระวาง</button>
-    </div>
-  </div>
+  </app-page-header>
 
   <div class="panel">
-    @if (selected(); as d) {
-      <div class="muted" style="margin-bottom: 8px">เลือก: <b>{{ d.serial_number }}</b> ({{ d.brand }} {{ d.model_name }})</div>
-    } @else {
-      <div class="muted" style="margin-bottom: 8px">เลือกแถวเพื่อทำรายการ</div>
-    }
+    <div class="mb-3 flex min-h-8 flex-wrap items-center gap-2 text-sm text-on-surface-variant">
+      @if (selected(); as d) {
+        <span>เลือก:</span>
+        <b class="text-on-surface">{{ d.serial_number }}</b>
+        <span>({{ d.brand }} {{ d.model_name }})</span>
+        <app-status-chip [status]="d.status" />
+      } @else {
+        <span class="e-icons e-circle-info"></span>
+        <span>เลือกแถวเพื่อทำรายการ</span>
+      }
+    </div>
     <ejs-grid
       [dataSource]="rows()"
       [allowPaging]="true"

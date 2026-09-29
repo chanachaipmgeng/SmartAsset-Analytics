@@ -1,23 +1,38 @@
 <div class="page">
-  <div class="page-header">
-    <h1>แดชบอร์ด</h1>
-    <button class="e-btn e-outline" (click)="summary.reload()"><span class="e-icons e-refresh"></span> รีเฟรช</button>
-  </div>
+  <app-page-header title="แดชบอร์ด" subtitle="ภาพรวมอุปกรณ์ สถานะ และจุดติดตั้ง">
+    <button ejs-button cssClass="e-outline" iconCss="e-icons e-refresh" (click)="summary.reload()">รีเฟรช</button>
+  </app-page-header>
 
   @if (summary.error()) {
-    <div class="panel error">โหลดข้อมูลแดชบอร์ดไม่สำเร็จ</div>
+    <div class="panel">
+      <app-empty-state tone="error" icon="e-icons e-warning" title="โหลดข้อมูลแดชบอร์ดไม่สำเร็จ" message="ตรวจสอบการเชื่อมต่อแล้วลองใหม่อีกครั้ง">
+        <button ejs-button [isPrimary]="true" (click)="summary.reload()">ลองใหม่</button>
+      </app-empty-state>
+    </div>
   }
 
-  <section class="cards">
-    <div class="card total">
-      <div class="label">อุปกรณ์ทั้งหมด</div>
-      <div class="value">{{ data()?.total_devices ?? '-' }}</div>
-    </div>
-    @for (s of statusCards(); track s.key) {
-      <div class="card" [style.border-top-color]="s.color">
-        <div class="label">{{ s.label }}</div>
-        <div class="value" [style.color]="s.color">{{ s.count }}</div>
+  <section class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+    @if (data(); as d) {
+      <div class="col-span-2 rounded-m3-lg bg-primary-container p-4 text-on-primary-container md:col-span-1">
+        <div class="flex items-center gap-2 text-sm opacity-80"><span class="e-icons e-box"></span>อุปกรณ์ทั้งหมด</div>
+        <div class="mt-1 text-4xl font-bold leading-tight">{{ d.total_devices }}</div>
       </div>
+      @for (s of statusCards(); track s.key) {
+        <div class="rounded-m3-lg border border-outline-variant bg-surface p-4">
+          <div class="flex items-center gap-2 text-sm text-on-surface-variant">
+            <span class="size-2 rounded-full" [style.background]="s.color"></span>{{ s.label }}
+          </div>
+          <div class="mt-1 text-3xl font-bold leading-tight text-on-surface">{{ s.count }}</div>
+          <div class="mt-1 text-xs text-on-surface-variant">{{ s.share }}% ของทั้งหมด</div>
+        </div>
+      }
+    } @else if (summary.isLoading()) {
+      @for (i of [1, 2, 3, 4, 5]; track i) {
+        <div class="rounded-m3-lg border border-outline-variant bg-surface p-4">
+          <app-skeleton-block width="60%" height="14px" />
+          <app-skeleton-block class="mt-3" width="40%" height="32px" />
+        </div>
+      }
     }
   </section>
 
@@ -28,38 +43,43 @@
           <e-panel [row]="0" [col]="0" [sizeX]="2" [sizeY]="2">
             <ng-template #header><div class="panel-title">สัดส่วนตามสถานะ</div></ng-template>
             <ng-template #content>
-              <ejs-accumulationchart theme="Material3" height="100%" width="100%" [legendSettings]="legend" [tooltip]="tooltip">
-                <e-accumulation-series-collection>
-                  <e-accumulation-series
-                    [dataSource]="statusChart()"
-                    xName="x"
-                    yName="y"
-                    pointColorMapping="fill"
-                    innerRadius="45%"
-                    [dataLabel]="pieLabels"
-                  ></e-accumulation-series>
-                </e-accumulation-series-collection>
-              </ejs-accumulationchart>
+              <!-- Charts cache text colours on first render, so rebuild them when the theme flips. -->
+              @for (chartTheme of [theme.chartTheme()]; track chartTheme) {
+                <ejs-accumulationchart [theme]="chartTheme" background="transparent" height="100%" width="100%" [legendSettings]="legend" [tooltip]="tooltip">
+                  <e-accumulation-series-collection>
+                    <e-accumulation-series
+                      [dataSource]="statusChart()"
+                      xName="x"
+                      yName="y"
+                      pointColorMapping="fill"
+                      innerRadius="55%"
+                      [dataLabel]="pieLabels"
+                    ></e-accumulation-series>
+                  </e-accumulation-series-collection>
+                </ejs-accumulationchart>
+              }
             </ng-template>
           </e-panel>
 
           <e-panel [row]="0" [col]="2" [sizeX]="4" [sizeY]="2">
             <ng-template #header><div class="panel-title">จำนวนอุปกรณ์ตามรุ่น (ไม่รวมปลดระวาง)</div></ng-template>
             <ng-template #content>
-              <ejs-chart theme="Material3" height="100%" width="100%" [primaryXAxis]="primaryXAxis" [primaryYAxis]="primaryYAxis" [tooltip]="tooltip">
-                <e-series-collection>
-                  <e-series
-                    [dataSource]="modelChart()"
-                    type="Column"
-                    xName="x"
-                    yName="y"
-                    name="จำนวน"
-                    fill="#4f46e5"
-                    [cornerRadius]="{ topLeft: 6, topRight: 6 }"
-                    [marker]="{ dataLabel: columnLabels }"
-                  ></e-series>
-                </e-series-collection>
-              </ejs-chart>
+              @for (chartTheme of [theme.chartTheme()]; track chartTheme) {
+                <ejs-chart [theme]="chartTheme" background="transparent" height="100%" width="100%" [primaryXAxis]="primaryXAxis" [primaryYAxis]="primaryYAxis" [tooltip]="tooltip">
+                  <e-series-collection>
+                    <e-series
+                      [dataSource]="modelChart()"
+                      type="Column"
+                      xName="x"
+                      yName="y"
+                      name="จำนวน"
+                      [fill]="primaryColor()"
+                      [cornerRadius]="{ topLeft: 6, topRight: 6 }"
+                      [marker]="{ dataLabel: columnLabels }"
+                    ></e-series>
+                  </e-series-collection>
+                </ejs-chart>
+              }
             </ng-template>
           </e-panel>
 
@@ -73,19 +93,26 @@
           <e-panel [row]="2" [col]="4" [sizeX]="2" [sizeY]="3">
             <ng-template #header><div class="panel-title">ประกันใกล้หมด (30 วัน)</div></ng-template>
             <ng-template #content>
-              <ejs-grid [dataSource]="warranty()" height="100%" [allowSorting]="true">
-                <e-columns>
-                  <e-column field="serial_number" headerText="ซีเรียล" width="130"></e-column>
-                  <e-column field="warranty_end" headerText="หมดประกัน" type="date" format="dd/MM/yyyy" width="110"></e-column>
-                  <e-column field="tenant_name" headerText="กลุ่มลูกค้า" width="140"></e-column>
-                </e-columns>
-              </ejs-grid>
+              @if (warranty().length) {
+                <ejs-grid [dataSource]="warranty()" height="100%" [allowSorting]="true">
+                  <e-columns>
+                    <e-column field="serial_number" headerText="ซีเรียล" width="130"></e-column>
+                    <e-column field="warranty_end" headerText="หมดประกัน" type="date" format="dd/MM/yyyy" width="110"></e-column>
+                    <e-column field="tenant_name" headerText="กลุ่มลูกค้า" width="140"></e-column>
+                  </e-columns>
+                </ejs-grid>
+              } @else {
+                <app-empty-state icon="e-icons e-circle-check" title="ไม่มีอุปกรณ์ที่ประกันใกล้หมด" />
+              }
             </ng-template>
           </e-panel>
         </e-panels>
       </ejs-dashboardlayout>
     </div>
   } @else if (summary.isLoading()) {
-    <div class="panel muted">กำลังโหลด...</div>
+    <div class="grid gap-4 lg:grid-cols-3">
+      <div class="panel"><app-skeleton-block height="260px" /></div>
+      <div class="panel lg:col-span-2"><app-skeleton-block height="260px" /></div>
+    </div>
   }
 </div>

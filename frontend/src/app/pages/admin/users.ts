@@ -5,21 +5,19 @@ import { AuthStore } from '../../core/auth.store';
 import { ROLE_LABELS, toOptions } from '../../core/labels';
 import { Role, Tenant, User } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
+import { PageHeader } from '../../shared/page-header';
 import { DIALOG_ANIMATION, FORM_IMPORTS, GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
 
 @Component({
   selector: 'app-users',
-  imports: [...GRID_IMPORTS, ...FORM_IMPORTS],
+  imports: [...GRID_IMPORTS, ...FORM_IMPORTS, PageHeader],
   providers: [...GRID_PROVIDERS],
   template: `
     <div class="page">
-      <div class="page-header">
-        <h1>ผู้ใช้งาน</h1>
-        <div class="actions">
-          <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มผู้ใช้</button>
-          <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
-        </div>
-      </div>
+      <app-page-header title="ผู้ใช้งาน" subtitle="บัญชีผู้ใช้ บทบาท และการระงับการใช้งาน">
+        <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มผู้ใช้</button>
+        <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
+      </app-page-header>
       <div class="panel">
         <ejs-grid
           [dataSource]="rows()"

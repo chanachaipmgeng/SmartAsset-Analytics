@@ -1,0 +1,117 @@
+<div class="page">
+  <app-page-header title="โปรไฟล์" subtitle="ข้อมูลบัญชี ความปลอดภัย และการแสดงผล" />
+
+  <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+    <div class="flex flex-col gap-4">
+      <section class="panel flex flex-col gap-4 bg-surface p-5">
+        @if (user(); as u) {
+          <div class="flex items-center gap-4">
+            <span class="grid size-16 shrink-0 place-items-center rounded-full bg-primary-container text-2xl font-semibold text-on-primary-container">
+              {{ initials() }}
+            </span>
+            <div class="min-w-0">
+              <h2 class="m-0 truncate text-lg font-semibold text-on-surface">{{ u.full_name }}</h2>
+              <p class="m-0 truncate text-sm text-on-surface-variant">{{ u.email }}</p>
+            </div>
+          </div>
+          <dl class="m-0 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+            <dt class="text-on-surface-variant">บทบาท</dt>
+            <dd class="m-0 text-on-surface">{{ roleLabel() }}</dd>
+            <dt class="text-on-surface-variant">กลุ่มลูกค้า</dt>
+            <dd class="m-0 text-on-surface">{{ tenantName() }}</dd>
+          </dl>
+          <p class="m-0 text-xs text-on-surface-variant">หากต้องการแก้ไขชื่อ อีเมล หรือบทบาท โปรดติดต่อผู้ดูแลระบบ</p>
+        }
+      </section>
+
+      <section class="panel flex flex-col gap-3 bg-surface p-5">
+        <div>
+          <h2 class="m-0 text-base font-semibold text-on-surface">ธีมการแสดงผล</h2>
+          <p class="m-0 text-sm text-on-surface-variant">บันทึกไว้บนเบราว์เซอร์นี้</p>
+        </div>
+        <div class="grid grid-cols-3 gap-2" role="radiogroup" aria-label="ธีมการแสดงผล">
+          @for (opt of themeOptions; track opt.mode) {
+            <button
+              type="button"
+              role="radio"
+              class="theme-option flex flex-col items-center gap-1 rounded-m3-md border px-2 py-3 text-sm"
+              [class]="
+                theme.mode() === opt.mode
+                  ? 'border-primary bg-primary-container text-on-primary-container'
+                  : 'border-outline-variant bg-surface text-on-surface hover:bg-surface-dim'
+              "
+              [attr.aria-checked]="theme.mode() === opt.mode"
+              (click)="theme.setMode(opt.mode)"
+            >
+              <span class="text-lg" [class]="opt.icon"></span>
+              {{ opt.label }}
+            </button>
+          }
+        </div>
+      </section>
+    </div>
+
+    <section class="panel bg-surface p-5">
+      <form class="flex max-w-md flex-col gap-4" (submit)="changePassword($event)">
+        <div>
+          <h2 class="m-0 text-base font-semibold text-on-surface">เปลี่ยนรหัสผ่าน</h2>
+          <p class="m-0 text-sm text-on-surface-variant">รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร และไม่ซ้ำกับรหัสเดิม</p>
+        </div>
+
+        @if (error(); as message) {
+          <ejs-message severity="Error" [content]="message"></ejs-message>
+        }
+
+        <ejs-textbox
+          type="password"
+          placeholder="รหัสผ่านปัจจุบัน"
+          floatLabelType="Auto"
+          autocomplete="current-password"
+          [(value)]="currentPassword"
+          [liveValue]="currentPassword"
+        ></ejs-textbox>
+
+        <div>
+          <ejs-textbox
+            type="password"
+            placeholder="รหัสผ่านใหม่"
+            floatLabelType="Auto"
+            autocomplete="new-password"
+            [cssClass]="newTooShort() ? 'e-error' : ''"
+            [(value)]="newPassword"
+            [liveValue]="newPassword"
+          ></ejs-textbox>
+          @if (newTooShort()) {
+            <p class="m-0 mt-1 text-xs text-error">ต้องมีอย่างน้อย 8 ตัวอักษร</p>
+          }
+        </div>
+
+        <div>
+          <ejs-textbox
+            type="password"
+            placeholder="ยืนยันรหัสผ่านใหม่"
+            floatLabelType="Auto"
+            autocomplete="new-password"
+            [cssClass]="mismatch() ? 'e-error' : ''"
+            [(value)]="confirmPassword"
+            [liveValue]="confirmPassword"
+          ></ejs-textbox>
+          @if (mismatch()) {
+            <p class="m-0 mt-1 text-xs text-error">รหัสผ่านไม่ตรงกัน</p>
+          }
+        </div>
+
+        <div>
+          <button ejs-button type="submit" [isPrimary]="true" [disabled]="!canSubmit()" cssClass="submit">
+            @if (saving()) {
+              <span class="e-icons e-refresh inline-block animate-spin"></span>
+              กำลังบันทึก...
+            } @else {
+              บันทึกรหัสผ่านใหม่
+            }
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>

@@ -1,16 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap');
-
+// Brand: indigo instead of the Material 3 default purple. Every Syncfusion component and every
+// Tailwind colour utility reads these tokens, so this is the single place to re-brand.
 :root {
-  --app-bg: #f5f7fb;
-  --app-surface: #ffffff;
-  --app-border: #e5e7eb;
-  --app-text: #111827;
-  --app-muted: #6b7280;
-  --app-primary: #4f46e5;
-  --status-in-stock: #16a34a;
-  --status-checked-out: #d97706;
-  --status-installed: #2563eb;
-  --status-retired: #6b7280;
+  --color-sf-primary: 79, 70, 229;
+  --color-sf-on-primary: 255, 255, 255;
+  --color-sf-primary-container: 224, 231, 255;
+  --color-sf-on-primary-container: 30, 27, 75;
+  --color-sf-surface-tint-color: 79, 70, 229;
+  --color-sf-inverse-primary: 165, 180, 252;
+  --color-sf-secondary: 91, 93, 114;
+  --color-sf-secondary-container: 224, 225, 249;
+  --color-sf-on-secondary-container: 24, 26, 44;
+}
+
+// Higher specificity than Syncfusion's own `.e-dark-mode` palette so the brand wins in both themes.
+:root.e-dark-mode {
+  --color-sf-primary: 165, 180, 252;
+  --color-sf-on-primary: 30, 27, 75;
+  --color-sf-primary-container: 55, 48, 163;
+  --color-sf-on-primary-container: 224, 231, 255;
+  --color-sf-surface-tint-color: 165, 180, 252;
+  --color-sf-inverse-primary: 79, 70, 229;
+  --color-sf-secondary: 196, 197, 221;
+  --color-sf-secondary-container: 67, 70, 89;
+  --color-sf-on-secondary-container: 224, 225, 249;
+  color-scheme: dark;
 }
 
 html,
@@ -31,42 +44,36 @@ body,
 }
 
 body {
-  background: var(--app-bg);
-  color: var(--app-text);
+  background: color-mix(in srgb, rgb(var(--color-sf-surface)) 95%, rgb(var(--color-sf-primary)));
+  color: rgb(var(--color-sf-on-surface));
+  -webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 .page {
-  padding: 24px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
+  max-width: 1600px;
+  margin: 0 auto;
 
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-
-  h1 {
-    margin: 0;
-    font-size: 22px;
-    font-weight: 600;
-  }
-
-  .actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+  @media (min-width: 768px) {
+    padding: 24px;
   }
 }
 
 .panel {
-  background: var(--app-surface);
-  border: 1px solid var(--app-border);
-  border-radius: 10px;
+  background: rgb(var(--color-sf-surface));
+  border: 1px solid rgb(var(--color-sf-outline-variant));
+  border-radius: 16px;
   padding: 16px;
+  min-width: 0;
 }
 
 .form-grid {
@@ -75,6 +82,10 @@ body {
   gap: 14px 16px;
   padding-top: 4px;
 
+  @media (max-width: 599px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .full {
     grid-column: 1 / -1;
   }
@@ -82,25 +93,16 @@ body {
   label {
     display: block;
     font-size: 13px;
-    color: var(--app-muted);
+    color: rgb(var(--color-sf-on-surface-variant));
     margin-bottom: 4px;
   }
 }
 
-.status-chip {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #fff;
-
-  &.IN_STOCK { background: var(--status-in-stock); }
-  &.CHECKED_OUT { background: var(--status-checked-out); }
-  &.INSTALLED { background: var(--status-installed); }
-  &.RETIRED { background: var(--status-retired); }
+.muted {
+  color: rgb(var(--color-sf-on-surface-variant));
 }
 
-.muted {
-  color: var(--app-muted);
+// Syncfusion dialogs are fixed-width; keep them inside small screens.
+.e-dialog {
+  max-width: calc(100vw - 24px);
 }

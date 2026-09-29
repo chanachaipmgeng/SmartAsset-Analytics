@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { MapsModule, MapsTooltipService, MarkerService, ZoomService } from '@syncfusion/ej2-angular-maps';
 import { SERVICE_LEVEL_LABELS } from '../core/labels';
 import { Installation } from '../core/models';
+import { ThemeService, cssColor } from '../core/theme.service';
 
 const THAILAND_CENTER = { latitude: 13.2, longitude: 101.0 };
 
@@ -11,18 +12,23 @@ const THAILAND_CENTER = { latitude: 13.2, longitude: 101.0 };
   imports: [MapsModule],
   providers: [MarkerService, ZoomService, MapsTooltipService],
   template: `
-    <ejs-maps
-      theme="Material3"
-      [height]="height()"
-      width="100%"
-      [layers]="layers()"
-      [zoomSettings]="zoomSettings()"
-      [centerPosition]="center()"
-    ></ejs-maps>
+    <!-- Maps cache theme colours on first render, so rebuild when the theme flips. -->
+    @for (mapTheme of [theme.chartTheme()]; track mapTheme) {
+      <ejs-maps
+        [theme]="mapTheme"
+        [height]="height()"
+        width="100%"
+        [layers]="layers()"
+        [zoomSettings]="zoomSettings()"
+        [centerPosition]="center()"
+      ></ejs-maps>
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InstallationMap {
+  protected readonly theme = inject(ThemeService);
+
   readonly installations = input.required<Installation[]>();
   readonly height = input('420px');
   readonly focus = input<{ latitude: number; longitude: number } | null>(null);
@@ -36,6 +42,7 @@ export class InstallationMap {
   }));
 
   protected readonly layers = computed(() => {
+    this.theme.isDark();
     const points = this.installations().map((i) => ({
       latitude: i.latitude,
       longitude: i.longitude,
@@ -51,17 +58,17 @@ export class InstallationMap {
           allowClustering: true,
           allowClusterExpand: true,
           shape: 'Circle',
-          fill: '#4f46e5',
+          fill: cssColor('--color-sf-primary'),
           height: 34,
           width: 34,
-          labelStyle: { color: '#ffffff', size: '13px' },
+          labelStyle: { color: cssColor('--color-sf-on-primary'), size: '13px' },
         },
         markerSettings: [
           {
             visible: true,
             dataSource: points,
             shape: 'Balloon',
-            fill: '#dc2626',
+            fill: cssColor('--color-sf-error'),
             height: 28,
             width: 22,
             latitudeValuePath: 'latitude',

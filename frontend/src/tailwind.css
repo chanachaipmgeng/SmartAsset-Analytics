@@ -1,0 +1,66 @@
+/*
+ * Tailwind is the layout/spacing layer; Syncfusion Material 3 owns component styling.
+ * Preflight is intentionally not imported: its reset strips Syncfusion buttons, inputs and grids.
+ */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/* One class switches both Syncfusion (its .e-dark-mode palette) and Tailwind's dark: variant. */
+@custom-variant dark (&:where(.e-dark-mode, .e-dark-mode *));
+
+/*
+ * `inline` makes utilities emit rgb(var(--color-sf-*)) directly, so each element resolves
+ * the Syncfusion token in its own scope (light or .e-dark-mode) instead of inheriting :root's value.
+ */
+@theme inline {
+  --font-sans: 'Sarabun', system-ui, sans-serif;
+
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-white: #fff;
+  --color-black: #000;
+
+  --color-primary: rgb(var(--color-sf-primary));
+  --color-on-primary: rgb(var(--color-sf-on-primary));
+  --color-primary-container: rgb(var(--color-sf-primary-container));
+  --color-on-primary-container: rgb(var(--color-sf-on-primary-container));
+  --color-secondary: rgb(var(--color-sf-secondary));
+  --color-secondary-container: rgb(var(--color-sf-secondary-container));
+  --color-on-secondary-container: rgb(var(--color-sf-on-secondary-container));
+  --color-tertiary-container: rgb(var(--color-sf-tertiary-container));
+
+  --color-surface: rgb(var(--color-sf-surface));
+  --color-surface-dim: color-mix(in srgb, rgb(var(--color-sf-surface)) 95%, rgb(var(--color-sf-primary)));
+  --color-surface-container: color-mix(in srgb, rgb(var(--color-sf-surface)) 90%, rgb(var(--color-sf-primary)));
+  --color-surface-variant: rgb(var(--color-sf-surface-variant));
+  --color-on-surface: rgb(var(--color-sf-on-surface));
+  --color-on-surface-variant: rgb(var(--color-sf-on-surface-variant));
+  --color-outline: rgb(var(--color-sf-outline));
+  --color-outline-variant: rgb(var(--color-sf-outline-variant));
+  --color-inverse-surface: rgb(var(--color-sf-inverse-surface));
+  --color-inverse-on-surface: rgb(var(--color-sf-inverse-on-surface));
+
+  --color-error: rgb(var(--color-sf-error));
+  --color-on-error: rgb(var(--color-sf-on-error));
+  --color-error-container: rgb(var(--color-sf-error-container));
+  --color-on-error-container: rgb(var(--color-sf-on-error-container));
+  --color-success: rgb(var(--color-sf-success));
+  --color-on-success: rgb(var(--color-sf-on-success));
+  --color-success-container: rgb(var(--color-sf-success-container));
+  --color-on-success-container: rgb(var(--color-sf-on-success-container));
+  --color-warning: rgb(var(--color-sf-warning));
+  --color-on-warning: rgb(var(--color-sf-on-warning));
+  --color-warning-container: rgb(var(--color-sf-warning-container));
+  --color-on-warning-container: rgb(var(--color-sf-on-warning-container));
+  --color-info: rgb(var(--color-sf-info));
+  --color-on-info: rgb(var(--color-sf-on-info));
+  --color-info-container: rgb(var(--color-sf-info-container));
+  --color-on-info-container: rgb(var(--color-sf-on-info-container));
+
+  --radius-m3-sm: 8px;
+  --radius-m3-md: 12px;
+  --radius-m3-lg: 16px;
+  --radius-m3-xl: 28px;
+}

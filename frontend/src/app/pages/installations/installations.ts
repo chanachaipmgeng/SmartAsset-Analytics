@@ -6,6 +6,7 @@ import { SERVICE_LEVEL_LABELS, toDate, toIsoDate } from '../../core/labels';
 import { Installation } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { InstallationMap } from '../../shared/installation-map';
+import { PageHeader } from '../../shared/page-header';
 import { DIALOG_ANIMATION, FORM_IMPORTS, GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
 
 interface NearbyQuery {
@@ -16,7 +17,7 @@ interface NearbyQuery {
 
 @Component({
   selector: 'app-installations',
-  imports: [...GRID_IMPORTS, ...FORM_IMPORTS, InstallationMap],
+  imports: [...GRID_IMPORTS, ...FORM_IMPORTS, InstallationMap, PageHeader],
   providers: [...GRID_PROVIDERS],
   templateUrl: './installations.html',
   styleUrl: './installations.scss',

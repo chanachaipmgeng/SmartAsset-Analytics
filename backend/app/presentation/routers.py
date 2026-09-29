@@ -31,6 +31,11 @@ async def refresh(body: s.RefreshIn, uow: SystemUowDep, c: ContainerDep):
     return _token_out(await auth.refresh(uow, c.tokens, body.refresh_token))
 
 
+@router.post("/auth/change-password", status_code=status.HTTP_204_NO_CONTENT, tags=["auth"])
+async def change_password(body: s.ChangePasswordIn, actor: ActorDep, uow: UowDep, c: ContainerDep):
+    await auth.change_password(uow, c.hasher, actor, body.current_password, body.new_password)
+
+
 @router.get("/auth/me", response_model=s.UserOut, tags=["auth"])
 async def me(actor: ActorDep, uow: UowDep):
     user = await uow.users.get(actor.user_id)

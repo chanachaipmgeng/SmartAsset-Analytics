@@ -1,3 +1,4 @@
+import { cssColor } from './theme.service';
 import { DeviceStatus, Role, ServiceLevel, TransactionType } from './models';
 
 export const STATUS_LABELS: Record<DeviceStatus, string> = {
@@ -7,12 +8,26 @@ export const STATUS_LABELS: Record<DeviceStatus, string> = {
   RETIRED: 'ปลดระวาง',
 };
 
-export const STATUS_COLORS: Record<DeviceStatus, string> = {
-  IN_STOCK: '#16a34a',
-  CHECKED_OUT: '#d97706',
-  INSTALLED: '#2563eb',
-  RETIRED: '#6b7280',
+export type StatusTone = 'success' | 'warning' | 'info' | 'neutral';
+
+export const STATUS_TONES: Record<DeviceStatus, StatusTone> = {
+  IN_STOCK: 'success',
+  CHECKED_OUT: 'warning',
+  INSTALLED: 'info',
+  RETIRED: 'neutral',
 };
+
+const TONE_TOKENS: Record<StatusTone, string> = {
+  success: '--color-sf-success',
+  warning: '--color-sf-warning',
+  info: '--color-sf-info',
+  neutral: '--color-sf-outline',
+};
+
+/** Concrete colour for charts; call again after a theme change. */
+export function statusColor(status: DeviceStatus): string {
+  return cssColor(TONE_TOKENS[STATUS_TONES[status]]);
+}
 
 export const ROLE_LABELS: Record<Role, string> = {
   superadmin: 'ผู้ดูแลแพลตฟอร์ม',

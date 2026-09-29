@@ -37,10 +37,12 @@
                                                                                                      "node_modules/@syncfusion/ej2-lists/styles/material3.css",
                                                                                                      "node_modules/@syncfusion/ej2-dropdowns/styles/material3.css",
                                                                                                      "node_modules/@syncfusion/ej2-calendars/styles/material3.css",
+                                                                                                     "node_modules/@syncfusion/ej2-splitbuttons/styles/material3.css",
                                                                                                      "node_modules/@syncfusion/ej2-navigations/styles/material3.css",
                                                                                                      "node_modules/@syncfusion/ej2-layouts/styles/material3.css",
                                                                                                      "node_modules/@syncfusion/ej2-notifications/styles/material3.css",
                                                                                                      "node_modules/@syncfusion/ej2-grids/styles/material3.css",
+                                                                                                     "src/tailwind.css",
                                                                                                      "src/styles.scss"
                                                                                                  ],
                                                                                       "allowedCommonJsDependencies":  [

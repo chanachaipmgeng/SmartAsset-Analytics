@@ -1,13 +1,10 @@
 <div class="page">
-  <div class="page-header">
-    <h1>จุดติดตั้ง / แผนที่</h1>
-    <div class="actions">
-      <ejs-checkbox label="แสดงรายการที่ถอนแล้ว" [(checked)]="showRemoved" [disabled]="!!nearbyQuery()"></ejs-checkbox>
-      @if (auth.canWrite()) {
-        <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected() || !!selected()?.removed_at" (click)="openEdit()">แก้ไขพิกัด</button>
-      }
-    </div>
-  </div>
+  <app-page-header title="จุดติดตั้ง / แผนที่" subtitle="ตำแหน่งอุปกรณ์ที่ติดตั้งอยู่ และค้นหาในรัศมีที่กำหนด">
+    <ejs-checkbox label="แสดงรายการที่ถอนแล้ว" [(checked)]="showRemoved" [disabled]="!!nearbyQuery()"></ejs-checkbox>
+    @if (auth.canWrite()) {
+      <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected() || !!selected()?.removed_at" (click)="openEdit()">แก้ไขพิกัด</button>
+    }
+  </app-page-header>
 
   <div class="panel nearby">
     <div class="title">ค้นหาอุปกรณ์ในรัศมี (PostGIS ST_DWithin)</div>

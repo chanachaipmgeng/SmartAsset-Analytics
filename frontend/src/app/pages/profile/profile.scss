@@ -1,0 +1,11 @@
+.theme-option {
+  cursor: pointer;
+  font: inherit;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+:host ::ng-deep .submit.e-btn {
+  min-width: 180px;
+  height: 40px;
+  border-radius: 999px;
+}
