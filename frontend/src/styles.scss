@@ -485,6 +485,8 @@ body {
   ::view-transition-new(*) {
     animation-duration: 1ms !important;
     animation-delay: 0ms !important;
+    // Infinite loops at 1ms would strobe; run once and hold the end frame.
+    animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
   }
 }
