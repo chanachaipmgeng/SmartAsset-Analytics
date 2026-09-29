@@ -703,8 +703,25 @@ async def _upload(client: httpx.AsyncClient, headers: dict, owner_type: str, own
     )
 
 
-async def test_photos(client: httpx.AsyncClient, world: dict, tmp_path) -> None:
-    app.state.container.media.root = tmp_path
+@pytest.fixture
+async def temp_media(world: dict, tmp_path) -> AsyncIterator[None]:
+    """Photo files go to a temp dir; their rows are dropped right after the test so later integrity checks
+    (tests/test_integrity.py) don't see rows whose files are gone."""
+    media = app.state.container.media
+    root = media.root
+    media.root = tmp_path
+    yield
+    media.root = root
+    engine = create_async_engine(get_settings().migration_database_url)
+    async with engine.begin() as conn:
+        await conn.execute(
+            text("DELETE FROM photos WHERE tenant_id = ANY(CAST(:tenants AS uuid[])) OR owner_id = CAST(:model AS uuid)"),
+            {"tenants": [world["tenant_a"]["id"], world["tenant_b"]["id"]], "model": world["model"]["id"]},
+        )
+    await engine.dispose()
+
+
+async def test_photos(client: httpx.AsyncClient, world: dict, temp_media: None) -> None:
     a, b, su, tag = world["a"], world["b"], world["su"], world["tag"]
     device = (
         await client.post("/inventory/check-in", headers=a, json={"serial_number": f"PIC-{tag}", "model_id": world["model"]["id"]})

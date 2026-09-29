@@ -233,7 +233,11 @@ def build_plans(rng: random.Random, now: datetime) -> list[Plan]:
                     end = rng.uniform(3, 45)
                 points = sorted((rng.uniform(end, start) for _ in kinds[1:]), reverse=True)
                 offsets = [start, *points[:-1], end] if len(kinds) > 1 else [start]
-                plan.steps = [Step(kind, _moment(off, now)) for kind, off in zip(kinds, offsets, strict=True)]
+                # The seconds keep steps that land on the same minute in order.
+                plan.steps = [
+                    Step(kind, _moment(off, now) + timedelta(seconds=n))
+                    for n, (kind, off) in enumerate(zip(kinds, offsets, strict=True))
+                ]
 
                 if target == DeviceStatus.ON_LOAN:
                     today = now.astimezone(BUSINESS_OFFSET).date()
