@@ -609,8 +609,13 @@ ejs-textarea {
 }
 
 // Label printing (shared/label-print-dialog.ts): only the print root is printed.
+// Kept laid out off-screen, not display: none, because the QR / barcode generators size their SVG from offsetWidth.
 .label-print-root {
-  display: none;
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 @media print {
@@ -623,7 +628,8 @@ ejs-textarea {
     }
 
     .label-print-root {
-      display: block;
+      position: static;
+      visibility: visible;
     }
 
     .label-sheet {

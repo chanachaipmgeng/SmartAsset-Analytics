@@ -16,9 +16,11 @@ export interface LabelDevice {
 export type LabelSize = 'sheet' | 'single';
 
 const SIZES: Record<LabelSize, { qr: number; barWidth: number; barHeight: number }> = {
-  sheet: { qr: 112, barWidth: 150, barHeight: 30 },
-  single: { qr: 88, barWidth: 104, barHeight: 22 },
+  sheet: { qr: 112, barWidth: 124, barHeight: 34 },
+  single: { qr: 88, barWidth: 80, barHeight: 28 },
 };
+// The generator still reserves room for the hidden text, so the default 10px top/bottom margins leave no bars.
+const BAR_MARGIN = { left: 4, right: 4, top: 0, bottom: 0 };
 
 /** Device label: QR with the scan URL, Code128 of the serial, and the readable serial / model / asset tag. */
 @Component({
@@ -31,7 +33,6 @@ const SIZES: Record<LabelSize, { qr: number; barWidth: number; barHeight: number
         [width]="dims().qr"
         [height]="dims().qr"
         mode="SVG"
-        errorCorrectionLevel="Medium"
         [displayText]="{ visibility: false }"
       />
     </div>
@@ -49,6 +50,7 @@ const SIZES: Record<LabelSize, { qr: number; barWidth: number; barHeight: number
         [value]="device().serial_number"
         [width]="dims().barWidth"
         [height]="dims().barHeight"
+        [margin]="barMargin"
         mode="SVG"
         [displayText]="{ visibility: false }"
       />
@@ -125,4 +127,5 @@ export class DeviceLabel {
     [this.device().brand, this.device().model_name].filter(Boolean).join(' '),
   );
   protected readonly dims = computed(() => SIZES[this.size()]);
+  protected readonly barMargin = BAR_MARGIN;
 }

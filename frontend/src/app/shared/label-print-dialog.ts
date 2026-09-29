@@ -27,7 +27,8 @@ const PAGE_RULES: Record<LabelSize, string> = {
   template: `
     <ejs-dialog
       [visible]="devices().length > 0"
-      (close)="devices.set([])"
+      (open)="opened.set(true)"
+      (close)="devices.set([]); opened.set(false)"
       header="พิมพ์ฉลากอุปกรณ์"
       [isModal]="true"
       [showCloseIcon]="true"
@@ -59,8 +60,11 @@ const PAGE_RULES: Record<LabelSize, string> = {
             · สแกน QR ด้วยกล้องมือถือเพื่อเปิดหน้าอุปกรณ์ได้ทันที
           </div>
           <div class="preview">
-            @for (d of preview(); track d.serial_number) {
-              <app-device-label [device]="d" [size]="size()" />
+            <!-- The generators measure their host, so render only once the dialog is visible. -->
+            @if (opened()) {
+              @for (d of preview(); track d.serial_number) {
+                <app-device-label [device]="d" [size]="size()" />
+              }
             }
           </div>
           @if (devices().length > preview().length) {
@@ -125,6 +129,7 @@ export class LabelPrintDialog {
   protected readonly animation = DIALOG_ANIMATION;
   protected readonly devices = signal<LabelDevice[]>([]);
   protected readonly size = signal<LabelSize>('sheet');
+  protected readonly opened = signal(false);
   protected readonly preview = computed(() => this.devices().slice(0, PREVIEW_MAX));
   protected readonly sheets = computed(() => {
     const all = this.devices();
