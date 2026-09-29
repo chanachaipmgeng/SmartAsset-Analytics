@@ -60,13 +60,21 @@ cd backend && uv sync && uv run uvicorn app.main:app --port 8001 --reload
 cd frontend && npm ci && npm run license:generate && npx ng serve --port 4210   # proxy /api → 8001
 ```
 
-`backend/.env` ต้องใช้รหัสผ่านเดียวกับ `POSTGRES_PASSWORD` / `APP_DB_PASSWORD` ใน `.env` ของ Docker
+`backend/.env` ต้องใช้รหัสผ่านเดียวกับ `POSTGRES_PASSWORD` / `APP_DB_PASSWORD` ใน `.env` ของ Docker ถ้าไม่ตรงกัน `uv run pytest` / `uvicorn` บนเครื่องจะต่อ DB ไม่ได้ (password authentication failed) ให้แก้ `backend/.env` หรือรันทดสอบใน container ด้วย `scripts/verify.ps1` แทน
 
-ถ้าเคยรัน `docker compose up` แบบไม่มีไฟล์ dev ภายหลัง DB จะไม่เปิดพอร์ต 5434 ให้รันคำสั่งบรรทัดแรกอีกครั้ง
+ถ้าเคยรัน `docker compose up` แบบไม่มีไฟล์ dev ภายหลัง DB จะไม่เปิดพอร์ต 5434 ให้รันคำสั่งบรรทัดแรกอีกครั้ง (ตรวจด้วย `docker compose port db 5432`)
 
 ## ทดสอบ
 
+```powershell
+./scripts/verify.ps1                 # ruff, pytest ใน container api, prettier, ng build, ng test
+./scripts/verify.ps1 -Skip backend   # ข้ามขั้นที่ไม่ต้องการ: lint, backend, format, build, test
+```
+
+รันทีละส่วน:
+
 ```bash
-cd backend && uv run pytest          # test_api_flow ต้องมี DB ที่ migrate + seed แล้ว
-cd frontend && npx ng build && npx ng test
+cd backend && uv run ruff check && uv run pytest    # pytest ต้องมี DB ที่ migrate + seed แล้ว และ backend/.env ตรงกับ Docker
+cd frontend && npm run format:check && npx ng build && npx ng test --watch=false
+docker compose exec api python -m app.infrastructure.check_integrity   # ตรวจความถูกต้องของข้อมูลใน DB
 ```

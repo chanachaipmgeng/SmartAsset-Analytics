@@ -171,12 +171,15 @@ Paging ของ `GET /devices`: ไม่ส่ง `take` จะคืนทุ
 
 ## การทดสอบ
 
-```bash
-cd backend && uv run pytest               # test_api_flow ต้องมี DB ที่ migrate + seed แล้ว
-cd frontend && npx ng build && npx ng test
+```powershell
+./scripts/verify.ps1          # ruff + pytest (ใน container api) + prettier + ng build + ng test
 ```
 
-`test_api_flow.py` สร้าง tenant/ผู้ใช้/รุ่นชั่วคราวแล้วลบเองเมื่อจบ ครอบคลุมสิทธิ์, RLS ข้ามกลุ่ม, วงจรชีวิต (รวมยืม/QC), ซ่อม, ผู้จำหน่าย, การระงับลูกค้า, ตัวกรองประวัติ, รายงาน, paging, นำเข้าไฟล์ และรูปภาพ (ย่อขนาด, ลายเซ็นลิงก์, RLS, สิทธิ์, การโอน)
+- `test_api_flow.py` สร้าง tenant/ผู้ใช้/รุ่นชั่วคราวแล้วลบเองเมื่อจบ ครอบคลุมสิทธิ์, RLS ข้ามกลุ่ม, วงจรชีวิต (รวมยืม/QC), ซ่อม, ผู้จำหน่าย, การระงับลูกค้า, ตัวกรองประวัติ, รายงาน, paging, นำเข้าไฟล์, รูปภาพ (ย่อขนาด, ลายเซ็นลิงก์, RLS, สิทธิ์, การโอน), ทำรายการหลายเครื่อง, audit log และหน้าลูกค้า
+- `test_consistency.py` ตรวจสิ่งที่ต้องตรงกันข้ามชั้น: `device-actions.ts` (RULES และ `BULK_ACTIONS`) กับ `ALLOWED_TRANSITIONS`/`BulkAction`, union ใน `models.ts` และ key ใน `labels.ts` กับ enum, CHECK constraint ใน DB กับ enum และทุกตารางของแอปเปิด RLS พร้อม policy (อ่านไฟล์ frontend จาก `../frontend/src/app/core`; verify.ps1 mount ให้ใน container)
+- `test_integrity.py` เรียก `app.infrastructure.check_integrity.find_problems()` กับ DB จริง: สถานะเครื่องตรงกับ transaction ล่าสุด, transaction แรกเป็น CHECK_IN, INSTALLED ↔ มี installation active หนึ่งรายการ, `loan_due_date` มีเฉพาะ ON_LOAN, tenant ของ installation/transaction/รูปตรงกับเจ้าของ, รูปไม่มีเจ้าของ และไฟล์รูปมีอยู่จริง (เมื่อมีโฟลเดอร์ media) ใช้เป็นคำสั่งได้ด้วย `python -m app.infrastructure.check_integrity` (exit 1 เมื่อพบปัญหา)
+- Frontend (Vitest ผ่าน `ng test`): `device-actions.spec.ts` (availableActions, ส่วนร่วมของ bulk), `scan-code.spec.ts` (แปลงค่าสแกน/URL ฉลาก, `safeReturnUrl`), `photos.spec.ts` (`checkPhotoFiles`), `labels.spec.ts` (ป้ายครบทุก enum)
+- Lint/format: `uv run ruff check` (ตั้งค่าใน `pyproject.toml`), `npm run format:check` (Prettier ตาม `.prettierrc`)
 
 ## ข้อควรระวัง
 
