@@ -45,6 +45,44 @@ export const TX_LABELS: Record<TransactionType, string> = {
   RETIRE: 'ปลดระวาง',
 };
 
+export const TX_ICONS: Record<TransactionType, string> = {
+  CHECK_IN: 'e-icons e-import',
+  TRANSFER: 'e-icons e-transform-right',
+  CHECK_OUT: 'e-icons e-export',
+  INSTALL: 'e-icons e-location',
+  RETURN: 'e-icons e-undo',
+  RETIRE: 'e-icons e-close',
+};
+
+export const TX_TONES: Record<TransactionType, StatusTone> = {
+  CHECK_IN: 'success',
+  TRANSFER: 'info',
+  CHECK_OUT: 'warning',
+  INSTALL: 'info',
+  RETURN: 'success',
+  RETIRE: 'neutral',
+};
+
+const RELATIVE = new Intl.RelativeTimeFormat('th', { numeric: 'auto' });
+const RELATIVE_STEPS: [Intl.RelativeTimeFormatUnit, number][] = [
+  ['second', 60],
+  ['minute', 60],
+  ['hour', 24],
+  ['day', 30],
+  ['month', 12],
+  ['year', Infinity],
+];
+
+/** "3 ชั่วโมงที่ผ่านมา" style text for an ISO timestamp. */
+export function relativeTime(iso: string, now = Date.now()): string {
+  let value = (new Date(iso).getTime() - now) / 1000;
+  for (const [unit, size] of RELATIVE_STEPS) {
+    if (Math.abs(value) < size) return RELATIVE.format(Math.round(value), unit);
+    value /= size;
+  }
+  return '';
+}
+
 export const SERVICE_LEVEL_LABELS: Record<ServiceLevel, string> = {
   BASIC: 'พื้นฐาน',
   STANDARD: 'มาตรฐาน',

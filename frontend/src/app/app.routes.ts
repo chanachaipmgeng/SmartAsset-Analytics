@@ -1,5 +1,10 @@
-import { Routes } from '@angular/router';
+import { Routes, UrlMatchResult, UrlSegment } from '@angular/router';
 import { adminGuard, authGuard, guestGuard, superadminGuard } from './core/guards';
+
+export function devicesMatcher(segments: UrlSegment[]): UrlMatchResult | null {
+  if (segments[0]?.path !== 'devices' || segments.length > 2) return null;
+  return { consumed: segments, posParams: segments[1] ? { id: segments[1] } : {} };
+}
 
 export const routes: Routes = [
   {
@@ -20,7 +25,8 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.DashboardPage),
       },
       {
-        path: 'devices',
+        // One route for `/devices` and `/devices/:id` so opening a device keeps the list mounted.
+        matcher: devicesMatcher,
         title: 'อุปกรณ์',
         loadComponent: () => import('./pages/devices/devices').then((m) => m.DevicesPage),
       },

@@ -1,25 +1,34 @@
+import { DecimalPipe, DatePipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+  viewChild,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { SidebarModule } from '@syncfusion/ej2-angular-navigations';
+import { DropDownButtonModule, MenuEventArgs } from '@syncfusion/ej2-angular-splitbuttons';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
-import { STATUS_LABELS, toDate, toIsoDate } from '../../core/labels';
-import { Customer, Device, DeviceModel, Tenant } from '../../core/models';
+import { DeviceActionId, availableActions } from '../../core/device-actions';
+import { STATUS_LABELS, SERVICE_LEVEL_LABELS, toDate, toIsoDate } from '../../core/labels';
+import { Device, DeviceModel, DeviceStatus, Installation, InventoryTransaction, Tenant } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
+import { AssetTimeline } from '../../shared/asset-timeline';
+import { DataGrid, GridCell, GridColumn } from '../../shared/data-grid';
+import { DeviceActionDialogs } from '../../shared/device-action-dialogs';
+import { InstallationMap } from '../../shared/installation-map';
 import { PageHeader } from '../../shared/page-header';
 import { StatusChip } from '../../shared/status-chip';
-import { DataGrid, GridCell, GridColumn } from '../../shared/data-grid';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 
-type Movement = 'checkout' | 'return' | 'retire' | 'transfer';
-
-const MOVEMENT_TITLES: Record<Movement, string> = {
-  checkout: 'เบิกอุปกรณ์ออก',
-  return: 'รับคืนเข้าคลัง',
-  retire: 'ปลดระวางอุปกรณ์',
-  transfer: 'โอนอุปกรณ์ให้กลุ่มลูกค้า',
-};
-
-const CENTRAL_STOCK = '__central__';
+type StatusFilter = DeviceStatus | 'ALL';
 
 const COLUMNS: GridColumn[] = [
   { field: 'serial_number', headerText: 'ซีเรียล', width: 150, isPrimaryKey: true },
@@ -33,65 +42,131 @@ const COLUMNS: GridColumn[] = [
   { field: 'cost', headerText: 'ต้นทุน', type: 'number', format: 'N2', textAlign: 'Right', width: 120 },
 ];
 
+const WARRANTY_SOON_DAYS = 60;
+const DAY_MS = 86_400_000;
+
 @Component({
   selector: 'app-devices',
-  imports: [...FORM_IMPORTS, PageHeader, StatusChip, DataGrid, GridCell],
+  imports: [
+    ...FORM_IMPORTS,
+    DatePipe,
+    DecimalPipe,
+    RouterLink,
+    SidebarModule,
+    DropDownButtonModule,
+    PageHeader,
+    StatusChip,
+    DataGrid,
+    GridCell,
+    AssetTimeline,
+    InstallationMap,
+    DeviceActionDialogs,
+  ],
   templateUrl: './devices.html',
+  styleUrl: './devices.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DevicesPage {
   protected readonly auth = inject(AuthStore);
   private readonly api = inject(ApiService);
   private readonly notify = inject(NotifyService);
+  private readonly router = inject(Router);
+
+  /** Route param from `/devices/:id`; the URL is the source of truth for the open detail panel. */
+  readonly id = input<string>();
+  /** `?action=new` opens the check-in form (command palette, scan station). */
+  readonly action = input<string>();
+  /** Prefills the serial for `?action=new`. */
+  readonly serial = input<string>();
+
+  private readonly grid = viewChild(DataGrid);
+  private readonly dialogs = viewChild.required(DeviceActionDialogs);
 
   protected readonly columns = COLUMNS;
   protected readonly animation = DIALOG_ANIMATION;
-  protected readonly movementTitles = MOVEMENT_TITLES;
+  protected readonly statusLabels = STATUS_LABELS;
+  protected readonly levelLabels = SERVICE_LEVEL_LABELS;
+  protected readonly detailWidth = 'min(440px, 100vw)';
 
   protected readonly devices = httpResource<Device[]>(() => '/api/v1/devices', { defaultValue: [] });
   protected readonly models = httpResource<DeviceModel[]>(() => '/api/v1/device-models', { defaultValue: [] });
-  protected readonly tenants = httpResource<Tenant[]>(() => '/api/v1/tenants', { defaultValue: [] });
-  protected readonly customers = httpResource<Customer[]>(() => '/api/v1/customers', { defaultValue: [] });
-
-  protected readonly rows = computed(() =>
-    this.devices.value().map((d) => ({
-      ...d,
-      status_label: STATUS_LABELS[d.status],
-      tenant_label: d.tenant_name ?? 'คลังกลาง',
-      warranty_end: toDate(d.warranty_end),
-      purchase_date: toDate(d.purchase_date),
-      cost: d.cost === null ? null : Number(d.cost),
-    })),
+  protected readonly tenants = httpResource<Tenant[]>(
+    () => (this.auth.isSuperadmin() ? '/api/v1/tenants' : undefined),
+    { defaultValue: [] },
   );
-  protected readonly modelOptions = computed(() =>
-    this.models.value().map((m) => ({ value: m.id, text: `${m.brand} ${m.name}` })),
+
+  // ---- status filter ----
+  protected readonly statusFilter = signal<StatusFilter>('ALL');
+  protected readonly filters = computed(() => {
+    const counts = new Map<DeviceStatus, number>();
+    for (const d of this.devices.value()) counts.set(d.status, (counts.get(d.status) ?? 0) + 1);
+    return [
+      { key: 'ALL' as StatusFilter, label: 'ทั้งหมด', count: this.devices.value().length },
+      ...(Object.keys(STATUS_LABELS) as DeviceStatus[]).map((s) => ({
+        key: s as StatusFilter,
+        label: STATUS_LABELS[s],
+        count: counts.get(s) ?? 0,
+      })),
+    ];
+  });
+
+  protected readonly rows = computed(() => {
+    const filter = this.statusFilter();
+    return this.devices
+      .value()
+      .filter((d) => filter === 'ALL' || d.status === filter)
+      .map((d) => ({
+        ...d,
+        status_label: STATUS_LABELS[d.status],
+        tenant_label: d.tenant_name ?? 'คลังกลาง',
+        warranty_end: toDate(d.warranty_end),
+        purchase_date: toDate(d.purchase_date),
+        cost: d.cost === null ? null : Number(d.cost),
+      }));
+  });
+
+  // ---- selection / detail panel ----
+  protected readonly selected = computed(() => {
+    const id = this.id();
+    return id ? (this.devices.value().find((d) => d.id === id) ?? null) : null;
+  });
+  protected readonly detailOpen = computed(() => !!this.selected());
+
+  protected readonly actions = computed(() =>
+    availableActions(this.selected(), { canWrite: this.auth.canWrite(), isSuperadmin: this.auth.isSuperadmin() }),
   );
-  protected readonly tenantOptions = computed(() => this.tenants.value().map((t) => ({ value: t.id, text: t.name })));
-  protected readonly transferOptions = computed(() => [
-    { value: CENTRAL_STOCK, text: 'คลังกลาง (แพลตฟอร์ม)' },
-    ...this.tenantOptions(),
-  ]);
+  protected readonly actionItems = computed(() =>
+    this.actions().map((a) => ({ id: a.id, text: a.text, iconCss: a.iconCss })),
+  );
+  protected readonly canEdit = computed(() => this.auth.canWrite() && this.selected()?.status !== 'RETIRED');
 
-  protected readonly selected = signal<Device | null>(null);
-  protected readonly busy = signal(false);
+  protected readonly history = httpResource<InventoryTransaction[]>(
+    () => (this.id() ? `/api/v1/inventory/transactions?device_id=${this.id()}&limit=100` : undefined),
+    { defaultValue: [] },
+  );
+  private readonly installations = httpResource<Installation[]>(
+    () => (this.selected()?.status === 'INSTALLED' ? '/api/v1/installations' : undefined),
+    { defaultValue: [] },
+  );
+  protected readonly installation = computed(() => {
+    const id = this.id();
+    return this.installations.value().find((i) => i.device_id === id && !i.removed_at) ?? null;
+  });
 
-  protected readonly canTransfer = computed(() => this.auth.isSuperadmin() && this.selected()?.status === 'IN_STOCK');
-  protected readonly canCheckOut = computed(() => {
-    const d = this.selected();
-    return this.auth.canWrite() && d?.status === 'IN_STOCK' && d.tenant_id !== null;
+  protected readonly warranty = computed(() => {
+    const end = toDate(this.selected()?.warranty_end);
+    if (!end) return null;
+    const days = Math.ceil((end.getTime() - Date.now()) / DAY_MS);
+    if (days < 0) return { tone: 'error', text: 'หมดประกันแล้ว' };
+    if (days <= WARRANTY_SOON_DAYS) return { tone: 'warning', text: `เหลือ ${days} วัน` };
+    return { tone: 'success', text: 'อยู่ในประกัน' };
   });
-  protected readonly canInstall = computed(() => this.auth.canWrite() && this.selected()?.status === 'CHECKED_OUT');
-  protected readonly canReturn = computed(() => {
-    const s = this.selected()?.status;
-    return this.auth.canWrite() && (s === 'CHECKED_OUT' || s === 'INSTALLED');
-  });
-  protected readonly canRetire = computed(() => this.auth.canWrite() && this.selected()?.status === 'IN_STOCK');
-  protected readonly canEdit = computed(() => this.auth.canWrite() && this.selected() !== null);
 
   // ---- device form ----
+  protected readonly busy = signal(false);
   protected readonly formOpen = signal(false);
   protected readonly editingId = signal<string | null>(null);
-  protected readonly serial = signal('');
+  protected readonly formSerial = signal('');
   protected readonly modelId = signal<string | null>(null);
   protected readonly tenantId = signal<string | null>(null);
   protected readonly mac = signal('');
@@ -99,46 +174,77 @@ export class DevicesPage {
   protected readonly cost = signal<number | null>(null);
   protected readonly warrantyEnd = signal<Date | null>(null);
   protected readonly notes = signal('');
+  protected readonly modelOptions = computed(() =>
+    this.models.value().map((m) => ({ value: m.id, text: `${m.brand} ${m.name}` })),
+  );
+  protected readonly tenantOptions = computed(() => this.tenants.value().map((t) => ({ value: t.id, text: t.name })));
   protected readonly formValid = computed(
-    () => (this.editingId() !== null || this.serial().trim().length >= 3) && !!this.modelId(),
+    () => (this.editingId() !== null || this.formSerial().trim().length >= 3) && !!this.modelId(),
   );
 
-  // ---- movement dialog ----
-  protected readonly movement = signal<Movement | null>(null);
-  protected readonly movementNote = signal('');
-  protected readonly transferTarget = signal<string | null>(null);
+  constructor() {
+    effect(() => {
+      const action = this.action();
+      if (!action) return;
+      untracked(() => {
+        if (action === 'new' && this.auth.canWrite()) this.openCreate(this.serial() ?? '');
+        void this.router.navigate([], {
+          queryParams: { action: null, serial: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+      });
+    });
 
-  // ---- install dialog ----
-  protected readonly installOpen = signal(false);
-  protected readonly installCustomer = signal<string | null>(null);
-  protected readonly installDate = signal<Date | null>(new Date());
-  protected readonly latitude = signal<number | null>(null);
-  protected readonly longitude = signal<number | null>(null);
-  protected readonly address = signal('');
-  protected readonly installCustomerOptions = computed(() => {
-    const tenant = this.selected()?.tenant_id;
-    return this.customers
-      .value()
-      .filter((c) => c.tenant_id === tenant)
-      .map((c) => ({ value: c.id, text: c.company_name }));
-  });
-  protected readonly installValid = computed(
-    () =>
-      !!this.installCustomer() &&
-      !!this.installDate() &&
-      this.latitude() !== null &&
-      this.longitude() !== null &&
-      Math.abs(this.latitude()!) <= 90 &&
-      Math.abs(this.longitude()!) <= 180,
-  );
-
-  protected onRowSelected(row: { id: string } | null): void {
-    this.selected.set(row ? (this.devices.value().find((d) => d.id === row.id) ?? null) : null);
+    // A deep link to a device this user cannot see (or that doesn't exist) falls back to the list.
+    effect(() => {
+      const id = this.id();
+      if (!id || this.devices.isLoading() || this.devices.error()) return;
+      if (!this.devices.value().some((d) => d.id === id)) {
+        untracked(() => {
+          this.notify.warning('ไม่พบอุปกรณ์ที่ต้องการ');
+          void this.router.navigate(['/devices'], { replaceUrl: true });
+        });
+      }
+    });
   }
 
-  protected openCreate(): void {
+  protected onRowSelected(row: { id: string } | null): void {
+    if (row && row.id !== this.id()) void this.router.navigate(['/devices', row.id]);
+  }
+
+  protected closeDetail(): void {
+    this.grid()?.clearSelection();
+    if (this.id()) void this.router.navigate(['/devices']);
+  }
+
+  protected onActionSelect(args: MenuEventArgs): void {
+    if (args.item.id) this.runAction(args.item.id as DeviceActionId);
+  }
+
+  protected runAction(action: DeviceActionId): void {
+    const d = this.selected();
+    if (d) this.dialogs().open(action, d);
+  }
+
+  protected onActionDone(): void {
+    this.devices.reload();
+    this.history.reload();
+    this.installations.reload();
+  }
+
+  protected async copyLink(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(location.href);
+      this.notify.info('คัดลอกลิงก์อุปกรณ์แล้ว');
+    } catch {
+      this.notify.warning('คัดลอกลิงก์ไม่สำเร็จ');
+    }
+  }
+
+  protected openCreate(serial = ''): void {
     this.editingId.set(null);
-    this.serial.set('');
+    this.formSerial.set(serial);
     this.modelId.set(null);
     this.tenantId.set(null);
     this.mac.set('');
@@ -153,7 +259,7 @@ export class DevicesPage {
     const d = this.selected();
     if (!d) return;
     this.editingId.set(d.id);
-    this.serial.set(d.serial_number);
+    this.formSerial.set(d.serial_number);
     this.modelId.set(d.model_id);
     this.mac.set(d.mac_address ?? '');
     this.purchaseDate.set(toDate(d.purchase_date));
@@ -174,88 +280,22 @@ export class DevicesPage {
       notes: this.notes().trim() || null,
     };
     const id = this.editingId();
-    await this.run(async () => {
+    this.busy.set(true);
+    try {
       if (id) {
         await this.api.updateDevice(id, body);
         this.notify.success('บันทึกข้อมูลอุปกรณ์แล้ว');
       } else {
-        await this.api.checkIn({
+        const created = await this.api.checkIn({
           ...body,
-          serial_number: this.serial().trim(),
+          serial_number: this.formSerial().trim(),
           tenant_id: this.auth.isSuperadmin() ? this.tenantId() : undefined,
         });
         this.notify.success('รับอุปกรณ์เข้าคลังแล้ว');
+        void this.router.navigate(['/devices', created.id]);
       }
       this.formOpen.set(false);
-    });
-  }
-
-  protected openMovement(kind: Movement): void {
-    this.movementNote.set('');
-    this.transferTarget.set(null);
-    this.movement.set(kind);
-  }
-
-  protected async confirmMovement(): Promise<void> {
-    const d = this.selected();
-    const kind = this.movement();
-    if (!d || !kind) return;
-    const note = this.movementNote().trim() || null;
-    await this.run(async () => {
-      if (kind === 'checkout') await this.api.checkOut(d.id, note);
-      if (kind === 'return') await this.api.returnDevice(d.id, note);
-      if (kind === 'retire') await this.api.retireDevice(d.id);
-      if (kind === 'transfer') {
-        const target = this.transferTarget();
-        await this.api.transfer(d.id, target === CENTRAL_STOCK ? null : target, note);
-      }
-      this.notify.success(`${MOVEMENT_TITLES[kind]} สำเร็จ`);
-      this.movement.set(null);
-    });
-  }
-
-  protected openInstall(): void {
-    this.installCustomer.set(null);
-    this.installDate.set(new Date());
-    this.latitude.set(null);
-    this.longitude.set(null);
-    this.address.set('');
-    this.installOpen.set(true);
-  }
-
-  protected useMyLocation(): void {
-    navigator.geolocation?.getCurrentPosition(
-      (pos) => {
-        this.latitude.set(Number(pos.coords.latitude.toFixed(6)));
-        this.longitude.set(Number(pos.coords.longitude.toFixed(6)));
-      },
-      () => this.notify.error(new Error('ไม่สามารถอ่านตำแหน่งปัจจุบันได้')),
-    );
-  }
-
-  protected async confirmInstall(): Promise<void> {
-    const d = this.selected();
-    if (!d || !this.installValid()) return;
-    await this.run(async () => {
-      await this.api.install({
-        device_id: d.id,
-        customer_id: this.installCustomer(),
-        install_date: toIsoDate(this.installDate()),
-        latitude: this.latitude(),
-        longitude: this.longitude(),
-        address: this.address().trim() || null,
-      });
-      this.notify.success('บันทึกการติดตั้งแล้ว');
-      this.installOpen.set(false);
-    });
-  }
-
-  private async run(action: () => Promise<void>): Promise<void> {
-    this.busy.set(true);
-    try {
-      await action();
-      this.selected.set(null);
-      this.devices.reload();
+      this.onActionDone();
     } catch (err) {
       this.notify.error(err);
     } finally {

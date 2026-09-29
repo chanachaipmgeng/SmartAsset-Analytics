@@ -140,6 +140,10 @@ export class DataGrid<T extends object = Record<string, unknown>> {
     'Search',
   ];
 
+  clearSelection(): void {
+    this.grid()?.clearSelection();
+  }
+
   protected async onToolbar(args: ClickEventArgs): Promise<void> {
     const grid = this.grid();
     if (!grid) return;
