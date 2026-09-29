@@ -1,6 +1,6 @@
 ---
 name: add-crud-feature
-description: Scaffolds a new tenant-scoped entity end-to-end in myAssets - SQLAlchemy model with RLS migration, domain entity and repository port, use cases, FastAPI routes, Angular page with data grid and create/edit dialog, menu entry and route. Use when the user asks to add a new master-data screen or entity (e.g. suppliers, locations, contracts).
+description: Scaffolds a new tenant-scoped entity end-to-end in SmartAsset Analytics - SQLAlchemy model with RLS migration, domain entity and repository port, use cases, FastAPI routes, Angular page with data grid and create/edit dialog, menu entry and route. Use when the user asks to add a new master-data screen or entity (e.g. suppliers, locations, contracts).
 disable-model-invocation: true
 ---
 

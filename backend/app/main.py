@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="ระบบสต็อกและติดตามเครื่องลงเวลา", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="SmartAsset Analytics", version="0.1.0", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=get_settings().cors_origin_list,

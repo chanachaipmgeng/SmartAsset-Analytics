@@ -1,4 +1,4 @@
-# Frontend — myAssets
+# Frontend — SmartAsset Analytics
 
 Angular 22 (standalone, zoneless, signals, OnPush) + Syncfusion 32.2.3 Material 3 + Tailwind CSS v4
 

@@ -1,6 +1,6 @@
 ---
 name: add-device-transition
-description: Adds or changes a device lifecycle status or transaction type end-to-end (domain rules, migration, use case, API, frontend actions, dialogs, labels, tests, user guide) in myAssets. Use when the user asks for a new device action/status such as reserve, lend, calibrate, lost, or changes which statuses an action is allowed from.
+description: Adds or changes a device lifecycle status or transaction type end-to-end (domain rules, migration, use case, API, frontend actions, dialogs, labels, tests, user guide) in SmartAsset Analytics. Use when the user asks for a new device action/status such as reserve, lend, calibrate, lost, or changes which statuses an action is allowed from.
 disable-model-invocation: true
 ---
 

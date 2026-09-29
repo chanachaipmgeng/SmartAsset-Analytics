@@ -1,9 +1,9 @@
 ---
-description: myAssets project map, language and cross-cutting invariants
+description: SmartAsset Analytics project map, language and cross-cutting invariants
 alwaysApply: true
 ---
 
-# myAssets project
+# SmartAsset Analytics project
 
 Device stock and lifecycle tracking (check-in → transfer → check-out → install → repair → retire), multi-tenant.
 Details: `docs/architecture.md`. User guide: `docs/user-guide/README.md`.
