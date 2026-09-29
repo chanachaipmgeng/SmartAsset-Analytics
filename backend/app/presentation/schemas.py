@@ -323,6 +323,12 @@ class ActivityDayOut(Out):
     total: int
 
 
+class AgedDeviceOut(Out):
+    device: DeviceOut
+    since: datetime
+    days: int
+
+
 class DashboardOut(Out):
     total_devices: int
     by_status: list[CountOut]
@@ -331,3 +337,6 @@ class DashboardOut(Out):
     installations: list[InstallationOut]
     activity_30d: list[ActivityDayOut]
     recent_transactions: list[TransactionOut]
+    pending_qc: int
+    loan_overdue: list[DeviceOut]
+    repair_aging: list[AgedDeviceOut]

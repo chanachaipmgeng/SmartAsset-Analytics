@@ -305,6 +305,46 @@ async def test_loan_and_qc_flow(client: httpx.AsyncClient, world: dict) -> None:
     assert history[-2]["note"].startswith("ครบกำหนดคืน 31/12/2099")
 
 
+async def _owner_exec(sql: str, params: dict) -> None:
+    """Backdate rows the API never lets you write (past due dates, old movements)."""
+    engine = create_async_engine(get_settings().migration_database_url)
+    async with engine.begin() as conn:
+        await conn.execute(text(sql), params)
+    await engine.dispose()
+
+
+async def test_dashboard_backlog(client: httpx.AsyncClient, world: dict) -> None:
+    a, b, tag = world["a"], world["b"], world["tag"]
+    ids = {}
+    for key in ("qc", "loan", "repair"):
+        res = await client.post("/inventory/check-in", headers=a, json={"serial_number": f"BL-{tag}-{key}", "model_id": world["model"]["id"]})
+        ids[key] = res.json()["id"]
+    await client.post("/inventory/check-out", headers=a, json={"device_id": ids["qc"]})
+    await client.post("/inventory/return", headers=a, json={"device_id": ids["qc"]})
+    await client.post("/inventory/loan", headers=a, json={"device_id": ids["loan"], "due_date": "2099-01-01"})
+    await client.post("/inventory/send-repair", headers=a, json={"device_id": ids["repair"]})
+
+    await _owner_exec(
+        "UPDATE devices SET loan_due_date = current_date - 3 WHERE id = CAST(:id AS uuid)", {"id": ids["loan"]}
+    )
+    await _owner_exec(
+        "UPDATE inventory_transactions SET occurred_at = occurred_at - interval '20 days' WHERE device_id = CAST(:id AS uuid)",
+        {"id": ids["repair"]},
+    )
+    # An EDIT today must not restart the repair clock.
+    await client.patch(f"/devices/{ids['repair']}", headers=a, json={"notes": "รออะไหล่"})
+
+    summary = (await client.get("/dashboard/summary", headers=a)).json()
+    assert summary["pending_qc"] >= 1
+    assert ids["loan"] in [d["id"] for d in summary["loan_overdue"]]
+    aging = {x["device"]["id"]: x["days"] for x in summary["repair_aging"]}
+    assert aging.get(ids["repair"], 0) >= 20
+
+    other = (await client.get("/dashboard/summary", headers=b)).json()
+    assert ids["loan"] not in [d["id"] for d in other["loan_overdue"]]
+    assert ids["repair"] not in [x["device"]["id"] for x in other["repair_aging"]]
+
+
 def _xlsx(rows: list[list[object]]) -> bytes:
     book = Workbook()
     for row in rows:

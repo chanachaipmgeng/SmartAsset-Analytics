@@ -165,4 +165,13 @@ export interface DashboardSummary {
   installations: Installation[];
   activity_30d: ActivityDay[];
   recent_transactions: InventoryTransaction[];
+  pending_qc: number;
+  loan_overdue: Device[];
+  repair_aging: AgedDevice[];
+}
+
+export interface AgedDevice {
+  device: Device;
+  since: string;
+  days: number;
 }

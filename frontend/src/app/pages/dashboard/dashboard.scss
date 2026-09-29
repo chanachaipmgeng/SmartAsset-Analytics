@@ -61,3 +61,109 @@
     border-radius: 16px 16px 0 0;
   }
 }
+
+// ---- backlog ("งานค้าง"): three follow-up queues, each linking to the filtered device list ----
+.backlog {
+  margin-bottom: 20px;
+}
+
+.backlog-head {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 12px;
+
+  .panel-title {
+    padding: 0;
+  }
+}
+
+.backlog-items {
+  display: grid;
+  gap: 12px;
+
+  @container (min-width: 640px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.backlog-item {
+  --tone: var(--color-sf-warning);
+  --tone-container: var(--color-sf-warning-container);
+  --on-tone-container: var(--color-sf-on-warning-container);
+  padding: 12px;
+  border: 1px solid rgb(var(--color-sf-outline-variant));
+  border-radius: 16px;
+
+  &.clear {
+    --tone: var(--color-sf-success);
+    --tone-container: var(--color-sf-success-container);
+    --on-tone-container: var(--color-sf-on-success-container);
+  }
+}
+
+.backlog-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover .backlog-label {
+    text-decoration: underline;
+  }
+}
+
+.backlog-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgb(var(--tone-container));
+  color: rgb(var(--on-tone-container));
+}
+
+.backlog-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.backlog-count {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--tone));
+}
+
+.backlog-list {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 0;
+    border-top: 1px dashed rgb(var(--color-sf-outline-variant));
+    color: rgb(var(--color-sf-on-surface-variant));
+  }
+
+  a {
+    color: rgb(var(--color-sf-primary));
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+}

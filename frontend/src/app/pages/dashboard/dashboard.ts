@@ -31,6 +31,9 @@ import { SkeletonBlock } from '../../shared/skeleton-block';
 import { StatCard, StatVariant } from '../../shared/stat-card';
 
 const TREND_DAYS = 7;
+const BACKLOG_PREVIEW = 3;
+// Mirrors REPAIR_AGING_DAYS in backend/app/application/dashboard.py.
+const REPAIR_AGING_DAYS = 14;
 
 /** Movements that feed each status card's "+n in 7 days". */
 const STATUS_INFLOW: Record<DeviceStatus, TransactionType[]> = {
@@ -170,6 +173,48 @@ export class DashboardPage {
   );
 
   protected readonly installations = computed(() => this.data()?.installations ?? []);
+
+  /** Backlog rows: each links to the filtered device list and names up to BACKLOG_PREVIEW devices. */
+  protected readonly backlog = computed(() => {
+    const d = this.data();
+    if (!d) return [];
+    const today = new Date(new Date().setHours(0, 0, 0, 0)).getTime();
+    return [
+      {
+        key: 'qc',
+        label: 'รอตรวจสอบ (QC)',
+        icon: 'e-icons e-check-box',
+        count: d.pending_qc,
+        status: 'UNDER_QC' as DeviceStatus,
+        items: [] as { id: string; serial: string; detail: string }[],
+      },
+      {
+        key: 'loan',
+        label: 'ยืมเกินกำหนดคืน',
+        icon: 'e-icons e-clock',
+        count: d.loan_overdue.length,
+        status: 'ON_LOAN' as DeviceStatus,
+        items: d.loan_overdue.slice(0, BACKLOG_PREVIEW).map((x) => ({
+          id: x.id,
+          serial: x.serial_number,
+          detail: `เกิน ${Math.round((today - toDate(x.loan_due_date)!.getTime()) / 86_400_000)} วัน`,
+        })),
+      },
+      {
+        key: 'repair',
+        label: `ส่งซ่อมเกิน ${REPAIR_AGING_DAYS} วัน`,
+        icon: 'e-icons e-settings',
+        count: d.repair_aging.length,
+        status: 'IN_REPAIR' as DeviceStatus,
+        items: d.repair_aging.slice(0, BACKLOG_PREVIEW).map((x) => ({
+          id: x.device.id,
+          serial: x.device.serial_number,
+          detail: `${x.days} วัน`,
+        })),
+      },
+    ];
+  });
+  protected readonly backlogTotal = computed(() => this.backlog().reduce((sum, b) => sum + b.count, 0));
 
   protected readonly primaryXAxis = {
     valueType: 'Category',

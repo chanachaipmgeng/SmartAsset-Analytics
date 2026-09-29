@@ -265,6 +265,34 @@ class SqlDeviceRepository(_Repo):
         )
         return [_device_view(r) for r in (await self.s.execute(stmt)).all()]
 
+    async def loan_overdue(self, today: date) -> list[DeviceView]:
+        stmt = (
+            _device_view_stmt()
+            .where(DeviceORM.status == DeviceStatus.ON_LOAN.value, DeviceORM.loan_due_date < today)
+            .order_by(DeviceORM.loan_due_date)
+        )
+        return [_device_view(r) for r in (await self.s.execute(stmt)).all()]
+
+    async def status_since(self, status: DeviceStatus | None = None) -> list[tuple[DeviceView, datetime]]:
+        tx = InventoryTransactionORM
+        # EDIT and TRANSFER keep the status, so they don't restart the clock.
+        last_change = (
+            select(tx.device_id, func.max(tx.occurred_at).label("since"))
+            .where(tx.from_status.is_distinct_from(tx.to_status))
+            .group_by(tx.device_id)
+            .subquery()
+        )
+        since = func.coalesce(last_change.c.since, DeviceORM.created_at)
+        stmt = (
+            _device_view_stmt()
+            .add_columns(since)
+            .outerjoin(last_change, last_change.c.device_id == DeviceORM.id)
+            .order_by(since)
+        )
+        if status:
+            stmt = stmt.where(DeviceORM.status == status.value)
+        return [(_device_view(r[:4]), r[4]) for r in (await self.s.execute(stmt)).all()]
+
 
 class SqlTransactionRepository(_Repo):
     orm, entity = InventoryTransactionORM, InventoryTransaction

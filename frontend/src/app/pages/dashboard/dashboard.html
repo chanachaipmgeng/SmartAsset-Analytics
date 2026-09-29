@@ -41,7 +41,7 @@
         />
       }
     } @else if (summary.isLoading()) {
-      @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+      @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
         <div class="rounded-[20px] border border-outline-variant bg-surface p-4">
           <app-skeleton-block width="60%" height="14px" />
           <app-skeleton-block class="mt-3" width="40%" height="32px" />
@@ -51,6 +51,34 @@
   </section>
 
   @if (data()) {
+    <section class="backlog panel" aria-label="งานค้าง">
+      <div class="backlog-head">
+        <span class="panel-title">งานค้าง</span>
+        <span class="panel-sub">{{ backlogTotal() ? backlogTotal() + ' รายการที่ต้องติดตาม' : 'ไม่มีงานค้าง' }}</span>
+      </div>
+      <div class="backlog-items">
+        @for (b of backlog(); track b.key) {
+          <div class="backlog-item" [class.clear]="!b.count">
+            <a class="backlog-link" routerLink="/devices" [queryParams]="{ status: b.status }">
+              <span class="backlog-icon" [class]="b.icon"></span>
+              <span class="backlog-label">{{ b.label }}</span>
+              <span class="backlog-count">{{ b.count }}</span>
+            </a>
+            @if (b.items.length) {
+              <ul class="backlog-list">
+                @for (item of b.items; track item.id) {
+                  <li>
+                    <a class="mono" [routerLink]="['/devices', item.id]">{{ item.serial }}</a>
+                    <span>{{ item.detail }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
     <div class="layout-host">
       <ejs-dashboardlayout [columns]="6" [cellSpacing]="cellSpacing" [cellAspectRatio]="1.4" [allowResizing]="false">
         <e-panels>

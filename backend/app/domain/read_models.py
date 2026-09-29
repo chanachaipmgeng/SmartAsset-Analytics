@@ -26,6 +26,15 @@ class DeviceView:
 
 
 @dataclass(frozen=True)
+class AgedDevice:
+    """A device with the time it entered its current status (last status-changing movement)."""
+
+    device: DeviceView
+    since: datetime
+    days: int
+
+
+@dataclass(frozen=True)
 class TransactionView:
     id: UUID
     device_id: UUID

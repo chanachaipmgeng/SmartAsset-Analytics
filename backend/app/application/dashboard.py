@@ -2,11 +2,12 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time, timedelta, timezone
 
 from app.application.context import Actor
-from app.domain.enums import TransactionType
+from app.domain.enums import DeviceStatus, TransactionType
 from app.domain.ports import UnitOfWork
-from app.domain.read_models import CountItem, DeviceView, InstallationView, TransactionView
+from app.domain.read_models import AgedDevice, CountItem, DeviceView, InstallationView, TransactionView
 
 WARRANTY_ALERT_DAYS = 30
+REPAIR_AGING_DAYS = 14
 ACTIVITY_DAYS = 30
 RECENT_LIMIT = 10
 # Activity is bucketed by the business's calendar day, not UTC. Thailand has no DST, so a fixed
@@ -34,6 +35,25 @@ class DashboardSummary:
     installations: list[InstallationView]
     activity_30d: list[ActivityDay]
     recent_transactions: list[TransactionView]
+    pending_qc: int = 0
+    loan_overdue: list[DeviceView] = field(default_factory=list)
+    repair_aging: list[AgedDevice] = field(default_factory=list)
+
+
+def days_since(moment: datetime, today: date) -> int:
+    return (today - moment.astimezone(BUSINESS_OFFSET).date()).days
+
+
+async def aged_devices(
+    uow: UnitOfWork, today: date, status: DeviceStatus | None = None, min_days: int = 0
+) -> list[AgedDevice]:
+    """Devices with days spent in their current status, oldest first."""
+    result = []
+    for device, since in await uow.devices.status_since(status):
+        days = days_since(since, today)
+        if days >= min_days:
+            result.append(AgedDevice(device=device, since=since, days=days))
+    return result
 
 
 async def _activity(uow: UnitOfWork, today: date) -> list[ActivityDay]:
@@ -57,4 +77,7 @@ async def dashboard_summary(uow: UnitOfWork, actor: Actor, *, today: date | None
         installations=await uow.installations.list_views(active_only=True),
         activity_30d=await _activity(uow, today),
         recent_transactions=await uow.transactions.list_views(limit=RECENT_LIMIT),
+        pending_qc=next((c.count for c in by_status if c.key == DeviceStatus.UNDER_QC.value), 0),
+        loan_overdue=await uow.devices.loan_overdue(today),
+        repair_aging=await aged_devices(uow, today, DeviceStatus.IN_REPAIR, REPAIR_AGING_DAYS + 1),
     )
