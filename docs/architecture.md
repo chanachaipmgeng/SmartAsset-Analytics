@@ -14,8 +14,8 @@ flowchart LR
 
 | ชั้น | เทคโนโลยี |
 | --- | --- |
-| Frontend | Angular 22 (zoneless, signals, standalone, OnPush), Syncfusion 32.2.3 Material 3, Tailwind CSS v4, Sass |
-| Backend | Python 3.12, FastAPI, SQLAlchemy 2 async, asyncpg, GeoAlchemy2, Alembic, PyJWT, argon2, openpyxl |
+| Frontend | Angular 22 (zoneless, signals, standalone, OnPush), Syncfusion 32.2.3 ธีม Tailwind 3, Tailwind CSS v4, Sass |
+| Backend | Python 3.12, FastAPI, SQLAlchemy 2 async, asyncpg, GeoAlchemy2, Alembic, PyJWT, argon2, openpyxl, Pillow |
 | Database | PostgreSQL 16 + PostGIS, Row-Level Security แยกข้อมูลตามกลุ่มลูกค้า |
 | Deploy | Docker Compose: `nginx`, `frontend`, `api`, `db` |
 
@@ -25,16 +25,16 @@ flowchart LR
 backend/
   app/
     domain/          entities, enums, errors, ports (Protocol), rules.py (state machine + สิทธิ์)
-    application/     use case ต่อโดเมน: inventory, device_import, customers, admin (รวม suppliers), auth, dashboard, reports
-    infrastructure/  db (models, repositories, session), security (JWT/argon2), spreadsheet, seed
+    application/     use case ต่อโดเมน: inventory, device_import, customers, admin (รวม suppliers), auth, dashboard, reports, photos
+    infrastructure/  db (models, repositories, session), security (JWT/argon2), spreadsheet, media (ไฟล์รูป), seed
     presentation/    routers.py (/api/v1), schemas.py (Pydantic), deps.py, errors.py
   alembic/versions/  migration ตั้งชื่อ 000N_คำอธิบาย.py
   tests/             test_rules.py (unit), test_api_flow.py (ต่อ DB จริง)
 frontend/src/
-  app/core/          api.service (mutation), auth, guards, models, labels, device-actions, locale, theme
+  app/core/          api.service (mutation), auth, guards, models, labels, device-actions, locale, theme, photos
   app/layout/        shell (app bar + sidebar)
   app/pages/         หน้าตาม route (dashboard, reports, devices, scan, transactions, customers, installations, admin/*, profile, login)
-  app/shared/        data-grid, dialogs, installation-map, page-header, empty/error state, stat-card, filter-chips, command-palette ...
+  app/shared/        data-grid, record-view, photo-gallery, photo-picker, avatar, dialogs, installation-map, page-header, empty/error state, stat-card, filter-chips, command-palette ...
   styles/            _tokens.scss, _mixins.scss (ใช้ด้วย @use 'tokens')
   tailwind.css       Tailwind + import CSS ของ Syncfusion เข้า cascade layer
   styles.scss        brand tokens, คลาส global, override ของ Syncfusion
@@ -88,6 +88,13 @@ docs/                เอกสารนี้ + คู่มือผู้�
 
 สิทธิ์: `WRITE_ROLES` = superadmin, tenant_admin, staff; `ADMIN_ROLES` = superadmin, tenant_admin; `viewer` อ่านอย่างเดียว
 
+### รูปภาพ
+
+- ตาราง `photos` ผูกกับเจ้าของแบบ polymorphic (`owner_type`, `owner_id`): `device` (หลายรูป), `installation` (รูปหน้างาน), `transaction` (รูปประกอบการรับคืน/ส่งซ่อม/ซ่อมเสร็จ/QC), `user` (รูปโปรไฟล์ 1 รูป), `device_model` (รูปสินค้า 1 รูป) อัปโหลดรูปใหม่ให้เจ้าของแบบ 1 รูปจะแทนที่รูปเดิม ส่วนแบบหลายรูปจำกัด 20 รูปต่อเจ้าของ
+- สิทธิ์ต่อเจ้าของตรวจใน `application/photos.py` (`_owner_tenant`): อุปกรณ์/จุดติดตั้ง/รายการใช้ `WRITE_ROLES`, รูปโปรไฟล์แก้ได้เฉพาะเจ้าของหรือผู้ดูแล, รูปรุ่นเฉพาะ superadmin; RLS ให้ทุกคนอ่าน `device_model` ได้ ประเภทอื่นเห็นเฉพาะกลุ่มลูกค้าตัวเอง และการโอนอุปกรณ์ย้าย `tenant_id` ของรูปอุปกรณ์ตามไปด้วย
+- `LocalPhotoStorage` (`infrastructure/media.py`) หมุนตาม EXIF แล้วเก็บเป็น WebP ด้านยาวไม่เกิน 1600px และ thumbnail 400px ที่ `MEDIA_ROOT/{id[:2]}/{id}.webp` / `{id}_t.webp` (ใน Docker คือ volume `media` ที่ `/data/media`) path อยู่ใน DB เฉพาะ id
+- ลิงก์ไฟล์ (`url`, `thumb_url` ใน `PhotoOut`) เป็น `GET /photos/{id}/file?v=&exp=&sig=` ลงลายเซ็น HMAC (คีย์มาจาก `JWT_SECRET`) หมดอายุตามรอบวัน จึงใส่ใน `<img>` ได้โดยไม่ต้องส่ง token และ URL คงที่พอให้เบราว์เซอร์ cache
+
 ### API
 
 ทุก endpoint อยู่ใต้ `/api/v1` เอกสาร OpenAPI ที่ `/docs`
@@ -102,6 +109,7 @@ docs/                เอกสารนี้ + คู่มือผู้�
 | installations | `GET /installations?active_only=`, `GET /installations/nearby?lat=&lng=&radius_m=` (PostGIS `ST_DWithin`, สูงสุด 500 กม.), `POST`, `PATCH` |
 | dashboard | `GET /dashboard/summary` (การ์ดสถานะ, แนวโน้ม 7/30 วัน, งานค้าง) |
 | reports | `GET /reports/stock-balance?include_retired=` (รุ่น × กลุ่มลูกค้า × สถานะ พร้อมรวมต้นทุน), `GET /reports/aging?status=` (วันในสถานะปัจจุบันนับจาก transaction ล่าสุด) |
+| photos | `GET /photos?owner_type=&owner_id=` (ส่ง `owner_id` ซ้ำได้ ไม่ส่งคือทุกรูปที่เห็นได้ของประเภทนั้น), `POST /photos` (multipart: `owner_type`, `owner_id`, `file` JPG/PNG/WebP ≤ 8 MB, `caption`), `DELETE /photos/{id}`, `GET /photos/{id}/file` (ลิงก์ลงลายเซ็น ไม่ต้อง auth) |
 
 Paging ของ `GET /devices`: ไม่ส่ง `take` จะคืนทุกแถว (ใช้ตอน export), ส่ง `take` (สูงสุด 500) กับ `skip` เพื่อแบ่งหน้า `sort` เป็นชื่อฟิลด์ใน `DEVICE_SORT_FIELDS` ใส่ `-` นำหน้าเพื่อเรียงมากไปน้อย (ค่าเริ่มต้น `-created_at`) และ header `X-Total-Count` บอกจำนวนแถวที่ตรงเงื่อนไขทุกครั้ง
 
@@ -113,7 +121,7 @@ Paging ของ `GET /devices`: ไม่ส่ง `take` จะคืนทุ
 
 - สร้างไฟล์ `alembic/versions/000N_<ชื่อ>.py` โดย `down_revision` ชี้ไฟล์ก่อนหน้า
 - เปลี่ยน enum ของสถานะหรือประเภทรายการ: แก้ CHECK constraint (ดู `0003_repair_status.py`, `0005_loan_qc.py`) และ enum ใน `domain/enums.py` และ `frontend/src/app/core/models.ts`
-- ประวัติ: `0004_edit_audit` (ประเภท EDIT, `customers.is_active`), `0005_loan_qc` (ON_LOAN/UNDER_QC, LOAN/QC_PASS/QC_FAIL, `devices.loan_due_date`), `0006_suppliers` (ตาราง `suppliers`, `inventory_transactions.supplier_id`)
+- ประวัติ: `0004_edit_audit` (ประเภท EDIT, `customers.is_active`), `0005_loan_qc` (ON_LOAN/UNDER_QC, LOAN/QC_PASS/QC_FAIL, `devices.loan_due_date`), `0006_suppliers` (ตาราง `suppliers`, `inventory_transactions.supplier_id`), `0007_photos` (ตาราง `photos` + policy RLS)
 - container `api` รัน `alembic upgrade head` ทุกครั้งที่เริ่ม
 
 ## Frontend
@@ -128,7 +136,9 @@ Paging ของ `GET /devices`: ไม่ส่ง `take` จะคืนทุ
 - ตาราง: ใช้ `<app-data-grid>` (export Excel/PDF ฟอนต์ไทย, เลือกคอลัมน์, จำมุมมองตาม `perspectiveKey`, skeleton/empty/error)
   - `hideAtMedia` ต่อคอลัมน์ซ่อนคอลัมน์รองบนจอแคบ, `groupBy` + `aggregates` สำหรับรายงาน, `cellTemplates` ผ่าน `<ng-template gridCell="field">`
   - โหมด `[serverPaging]="true"`: grid ส่ง `(query)` = `{skip, take, sort, search}` ให้หน้าไปเรียก API เอง แล้วส่ง `[total]` (จาก `X-Total-Count`) และ `[exportAll]` (ฟังก์ชันโหลดทุกแถวตอน export) กลับมา ตัวกรองนอก grid (เช่นชิปสถานะ) ให้เรียก `firstPage()`
+  - `[rowActions]="['view', 'edit']"` เพิ่มคอลัมน์ "จัดการ" ท้ายตาราง (ปุ่มไอคอนดู/แก้ไข) แล้วรับ `(rowAction)` = `{action, row}`; คอลัมน์นี้และคอลัมน์ที่ตั้ง `noExport` ไม่ถูก export ปุ่ม "ดู" เปิด `<app-record-view>` (dialog แสดง `fields` แบบอ่านอย่างเดียว มีปุ่มแก้ไขเมื่อ `editable` และใส่เนื้อหาเพิ่มผ่าน content projection เช่นแผนที่หรือแกลเลอรีรูป)
   - อย่าใส่ child directive แบบ dynamic (`@for` ใน `<e-aggregates>`) ใน grid เพราะ Syncfusion จะพัง ให้ส่งเป็น property แทน
+- รูปภาพ: `<app-photo-gallery ownerType ownerId editable>` (thumbnail, ลากวาง/เลือกไฟล์, lightbox, ลบ), `<app-photo-picker [(files)]>` เลือกรูปก่อนบันทึกฟอร์มแล้วค่อยอัปโหลดหลังได้ id ของรายการ, `<app-avatar name src size>` และ `AvatarStore` ถือรูปโปรไฟล์ของผู้ใช้ปัจจุบัน ลิงก์รูปจาก API เป็น path จึงต้องผ่าน pipe `photoSrc` (เติม `apiBaseUrl`)
 - แผนที่: `<app-installation-map>` (Syncfusion Maps + OSM) รับ `pin`, `radiusKm` (วาดวงกลมและซูมพอดี), `pickable` แล้วส่ง `(pick)` เป็น `{latitude, longitude}` เหตุการณ์ `click` ของ Maps ไม่ทำงานกับ OSM tile จึงคำนวณพิกัดเองจาก DOM click ด้วย `getTileGeoLocation`
 - ปุ่มทำรายการกับอุปกรณ์มาจาก `availableActions()` ใน `core/device-actions.ts` และ dialog กลาง `shared/device-action-dialogs.ts` (ใช้ร่วมหน้าอุปกรณ์และสถานีสแกน)
 - ข้อความ UI เป็นภาษาไทย ป้ายสถานะ/ประเภทรายการอยู่ใน `core/labels.ts` คำแปล Syncfusion อยู่ใน `core/locale.ts`
@@ -137,17 +147,17 @@ Paging ของ `GET /devices`: ไม่ส่ง `take` จะคืนทุ
 
 ลำดับ cascade (ต่ำ → สูง):
 
-1. `@layer syncfusion.base` — `ej2-base` คอมไพล์จาก SCSS ใน `styles.scss` โดยปิดการโหลด Roboto
-2. `@layer syncfusion.components` — CSS สำเร็จรูปของแต่ละแพ็กเกจ import ใน `tailwind.css`
+1. `@layer syncfusion.base` — `ej2-base/styles/tailwind3` คอมไพล์จาก SCSS ใน `styles.scss` โดยปิดการโหลด Inter (`is-inter-loaded`)
+2. `@layer syncfusion.components` — `tailwind3.css` สำเร็จรูปของแต่ละแพ็กเกจ import ใน `tailwind.css`
 3. `@layer utilities` — Tailwind จึงชนะ Syncfusion ได้โดยไม่ต้องสนใจ specificity
 4. ไม่อยู่ใน layer — `styles.scss` และ style ของคอมโพเนนต์
 
 หลักการ:
 
-- สีมาจาก CSS variable ของ Syncfusion (`--color-sf-*` เก็บเป็น `r, g, b`) ใช้ `rgb(var(--color-sf-x))` หรือ `rgba(var(--color-sf-x), a)` ห้าม hex ตายตัว เพื่อให้ธีมมืดและสีแบรนด์ทำงาน
-- ใน SCSS ใช้ `@use 'tokens' as *;` แล้วเรียก `sf(primary)`, `sf-a(primary, .4)` และ mixin จาก `mixins` (`card`, `card-hover`, `status-badge`, `mono`, `up`)
-- สีแบรนด์ indigo เปลี่ยนที่ `:root` และ `:root.e-dark-mode` ใน `styles.scss` จุดเดียว
-- Tailwind utility ใช้สีชุด M3 (`bg-surface`, `text-on-surface-variant`, `bg-primary-container` ...) และ `dark:` ผูกกับคลาส `.e-dark-mode`
+- สีของแอปมาจาก CSS variable `--app-*` (เก็บเป็น `r, g, b`) ใช้ `rgb(var(--app-x))` หรือ `rgba(var(--app-x), a)` ห้าม hex ตายตัว เพื่อให้ธีมมืดและสีแบรนด์ทำงาน ส่วน `--color-sf-*` เป็นของธีม Tailwind 3 (เก็บเป็น hex) ห้ามนำมาใช้หรือเขียนทับ
+- ใน SCSS ใช้ `@use 'tokens' as *;` แล้วเรียก `sf(primary)`, `sf-a(primary, .4)` (คืน `--app-*`) และ mixin จาก `mixins` (`card`, `card-hover`, `status-badge`, `mono`, `up`)
+- ชุดสี `--app-*` ทั้งหมดอยู่ที่ `:root` และ `:root.e-dark-mode` ใน `styles.scss` จุดเดียว สี primary ของ Syncfusion Tailwind 3 เป็น indigo อยู่แล้วจึงตรงกับแบรนด์ กราฟ/แผนที่ใช้ธีม `Tailwind3` / `Tailwind3Dark` จาก `ThemeService.chartTheme`
+- Tailwind utility ใช้ชื่อสีชุดเดิม (`bg-surface`, `text-on-surface-variant`, `bg-primary-container` ...) ที่ map กับ `--app-*` ใน `tailwind.css` และ `dark:` ผูกกับคลาส `.e-dark-mode`
 - ปรับหน้าตา Syncfusion ด้วย `cssClass` หรือ SCSS ของคอมโพเนนต์ (`:host ::ng-deep`) หลีกเลี่ยง `!important` เพราะใน layer `!important` ของ Syncfusion จะชนะ
 - ไม่ import Tailwind preflight (จะล้างสไตล์ของ Syncfusion)
 - ฟอนต์ Sarabun โหลดใน `index.html` กราฟ/แผนที่ถูกบังคับเป็น Sarabun ใน `styles.scss`
@@ -159,7 +169,7 @@ cd backend && uv run pytest               # test_api_flow ต้องมี DB 
 cd frontend && npx ng build && npx ng test
 ```
 
-`test_api_flow.py` สร้าง tenant/ผู้ใช้/รุ่นชั่วคราวแล้วลบเองเมื่อจบ ครอบคลุมสิทธิ์, RLS ข้ามกลุ่ม, วงจรชีวิต (รวมยืม/QC), ซ่อม, ผู้จำหน่าย, การระงับลูกค้า, ตัวกรองประวัติ, รายงาน, paging และนำเข้าไฟล์
+`test_api_flow.py` สร้าง tenant/ผู้ใช้/รุ่นชั่วคราวแล้วลบเองเมื่อจบ ครอบคลุมสิทธิ์, RLS ข้ามกลุ่ม, วงจรชีวิต (รวมยืม/QC), ซ่อม, ผู้จำหน่าย, การระงับลูกค้า, ตัวกรองประวัติ, รายงาน, paging, นำเข้าไฟล์ และรูปภาพ (ย่อขนาด, ลายเซ็นลิงก์, RLS, สิทธิ์, การโอน)
 
 ## ข้อควรระวัง
 
