@@ -31,3 +31,29 @@
   padding: 8px;
   overflow: hidden;
 }
+
+.state-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgb(var(--color-sf-success-container));
+  color: rgb(var(--color-sf-on-success-container));
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  &.removed {
+    background: rgb(var(--color-sf-surface-variant));
+    color: rgb(var(--color-sf-on-surface-variant));
+  }
+}

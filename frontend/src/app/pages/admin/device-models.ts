@@ -6,12 +6,20 @@ import { DeviceModel } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { ConfirmService } from '../../shared/confirm.service';
 import { PageHeader } from '../../shared/page-header';
-import { DIALOG_ANIMATION, FORM_IMPORTS, GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
+import { DataGrid, GridColumn } from '../../shared/data-grid';
+import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
+
+const COLUMNS: GridColumn[] = [
+  { field: 'brand', headerText: 'ยี่ห้อ', width: 140 },
+  { field: 'name', headerText: 'รุ่น', width: 180 },
+  { field: 'device_type', headerText: 'ประเภท', width: 150 },
+  { field: 'firmware_version', headerText: 'เฟิร์มแวร์', width: 120 },
+  { field: 'description', headerText: 'รายละเอียด', width: 260 },
+];
 
 @Component({
   selector: 'app-device-models',
-  imports: [...GRID_IMPORTS, ...FORM_IMPORTS, PageHeader],
-  providers: [...GRID_PROVIDERS],
+  imports: [...FORM_IMPORTS, PageHeader, DataGrid],
   template: `
     <div class="page">
       <app-page-header
@@ -25,23 +33,18 @@ import { DIALOG_ANIMATION, FORM_IMPORTS, GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVI
         }
       </app-page-header>
       <div class="panel">
-        <ejs-grid
-          [dataSource]="models.value()"
-          [allowPaging]="true"
-          [allowSorting]="true"
-          [pageSettings]="grid.pageSettings"
-          [toolbar]="grid.toolbar"
-          (rowSelected)="onRowSelected($event)"
-          (rowDeselected)="selected.set(null)"
-        >
-          <e-columns>
-            <e-column field="brand" headerText="ยี่ห้อ" width="140"></e-column>
-            <e-column field="name" headerText="รุ่น" width="180"></e-column>
-            <e-column field="device_type" headerText="ประเภท" width="150"></e-column>
-            <e-column field="firmware_version" headerText="เฟิร์มแวร์" width="120"></e-column>
-            <e-column field="description" headerText="รายละเอียด" width="260"></e-column>
-          </e-columns>
-        </ejs-grid>
+        <app-data-grid
+          [data]="models.value()"
+          [columns]="columns"
+          perspectiveKey="device-models"
+          exportName="device-models"
+          [loading]="models.isLoading()"
+          [error]="models.error()"
+          emptyTitle="ยังไม่มีรุ่นอุปกรณ์"
+          (selectionChange)="onRowSelected($event)"
+          (retry)="models.reload()"
+        />
+
       </div>
     </div>
 
@@ -93,7 +96,7 @@ export class DeviceModelsPage {
   private readonly notify = inject(NotifyService);
   private readonly confirm = inject(ConfirmService);
 
-  protected readonly grid = GRID_DEFAULTS;
+  protected readonly columns = COLUMNS;
   protected readonly animation = DIALOG_ANIMATION;
   protected readonly models = httpResource<DeviceModel[]>(() => '/api/v1/device-models', { defaultValue: [] });
 
@@ -110,8 +113,8 @@ export class DeviceModelsPage {
     () => !!this.brand().trim() && !!this.name().trim() && !!this.deviceType().trim(),
   );
 
-  protected onRowSelected(event: { data: DeviceModel }): void {
-    this.selected.set(event.data);
+  protected onRowSelected(row: DeviceModel | null): void {
+    this.selected.set(row);
   }
 
   protected openCreate(): void {

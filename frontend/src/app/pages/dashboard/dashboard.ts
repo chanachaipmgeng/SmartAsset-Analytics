@@ -21,7 +21,7 @@ import { EmptyState } from '../../shared/empty-state';
 import { InstallationMap } from '../../shared/installation-map';
 import { PageHeader } from '../../shared/page-header';
 import { SkeletonBlock } from '../../shared/skeleton-block';
-import { GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
+import { GridModule, SortService } from '@syncfusion/ej2-angular-grids';
 
 @Component({
   selector: 'app-dashboard',
@@ -34,7 +34,7 @@ import { GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
     PageHeader,
     EmptyState,
     SkeletonBlock,
-    ...GRID_IMPORTS,
+    GridModule,
   ],
   providers: [
     PieSeriesService,
@@ -45,7 +45,7 @@ import { GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
     CategoryService,
     DataLabelService,
     TooltipService,
-    ...GRID_PROVIDERS,
+    SortService,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',

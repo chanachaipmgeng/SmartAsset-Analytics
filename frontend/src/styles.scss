@@ -76,6 +76,36 @@ body {
   min-width: 0;
 }
 
+// Small tonal badge for grid cells: <span class="tone-chip" data-tone="success">ใช้งาน</span>
+.tone-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: rgb(var(--color-sf-surface-variant));
+  color: rgb(var(--color-sf-on-surface-variant));
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  @each $tone in success, warning, info, error {
+    &[data-tone='#{$tone}'] {
+      background: rgb(var(--color-sf-#{$tone}-container));
+      color: rgb(var(--color-sf-on-#{$tone}-container));
+    }
+  }
+}
+
 // ---- motion ----
 @keyframes fade-up {
   from {

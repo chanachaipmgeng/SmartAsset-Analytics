@@ -10,26 +10,23 @@
   </app-page-header>
 
   <div class="panel">
-    <ejs-grid
-      [dataSource]="rows()"
-      [allowPaging]="true"
-      [allowSorting]="true"
-      [allowFiltering]="true"
-      [pageSettings]="grid.pageSettings"
-      [filterSettings]="grid.filterSettings"
-      [toolbar]="grid.toolbar"
-      (rowSelected)="onRowSelected($event)"
-      (rowDeselected)="selected.set(null)"
+    <app-data-grid
+      [data]="rows()"
+      [columns]="columns()"
+      perspectiveKey="customers"
+      exportName="customers"
+      [loading]="customers.isLoading()"
+      [error]="customers.error()"
+      emptyTitle="ยังไม่มีลูกค้า"
+      emptyMessage="เพิ่มลูกค้ารายแรกเพื่อเริ่มบันทึกจุดติดตั้ง"
+      (selectionChange)="onRowSelected($event)"
+      (rowDoubleClick)="editRow($event)"
+      (retry)="customers.reload()"
     >
-      <e-columns>
-        <e-column field="company_name" headerText="ชื่อบริษัท" width="220"></e-column>
-        <e-column field="contact_person" headerText="ผู้ติดต่อ" width="150"></e-column>
-        <e-column field="phone" headerText="โทรศัพท์" width="130"></e-column>
-        <e-column field="email" headerText="อีเมล" width="200"></e-column>
-        <e-column field="level_label" headerText="ระดับบริการ" width="120"></e-column>
-        <e-column field="tenant_name" headerText="กลุ่มลูกค้า" width="200" [visible]="auth.isSuperadmin()"></e-column>
-      </e-columns>
-    </ejs-grid>
+      <ng-template gridCell="level_label" let-row>
+        <span class="level-chip" [attr.data-level]="row.service_level">{{ row.level_label }}</span>
+      </ng-template>
+    </app-data-grid>
   </div>
 </div>
 

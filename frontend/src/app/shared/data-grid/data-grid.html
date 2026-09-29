@@ -1,0 +1,77 @@
+@if (error()) {
+  <app-error-state [message]="errorText()" (retry)="retry.emit()" />
+} @else if (loading() && !data().length) {
+  <div class="flex flex-col gap-3 py-1" aria-busy="true" aria-label="กำลังโหลดข้อมูล">
+    <div class="flex gap-2">
+      <app-skeleton-block width="88px" height="32px" />
+      <app-skeleton-block width="88px" height="32px" />
+      <app-skeleton-block class="ml-auto" width="200px" height="32px" />
+    </div>
+    <app-skeleton-block width="100%" height="40px" />
+    @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+      <app-skeleton-block width="100%" height="36px" />
+    }
+  </div>
+} @else {
+  <div class="relative">
+    @if (loading()) {
+      <div class="grid-progress" role="progressbar" aria-label="กำลังโหลดข้อมูลใหม่"></div>
+    }
+    @for (v of [version()]; track v) {
+      <ejs-grid
+        class="app-grid"
+        [dataSource]="data()"
+        [allowPaging]="true"
+        [allowSorting]="true"
+        [allowFiltering]="true"
+        [allowResizing]="true"
+        [allowExcelExport]="true"
+        [allowPdfExport]="true"
+        [showColumnChooser]="true"
+        [enableStickyHeader]="true"
+        [enableHover]="true"
+        [pageSettings]="pageSettings()"
+        [filterSettings]="filterSettings"
+        [selectionSettings]="selectionSettings"
+        [toolbar]="toolbar"
+        (toolbarClick)="onToolbar($event)"
+        (actionComplete)="onActionComplete($event)"
+        (rowSelected)="onRowSelected($event)"
+        (rowDeselected)="selectionChange.emit(null)"
+        (recordDoubleClick)="onDoubleClick($event)"
+      >
+        <e-columns>
+          @for (col of effectiveColumns(); track col.field) {
+            @if (cells().get(col.field); as tpl) {
+              <e-column
+                [field]="col.field"
+                [headerText]="col.headerText"
+                [width]="col.width"
+                [type]="col.type ?? 'string'"
+                [format]="col.format"
+                [textAlign]="col.textAlign ?? 'Left'"
+                [visible]="col.visible"
+                [isPrimaryKey]="col.isPrimaryKey ?? false"
+                [template]="tpl"
+              ></e-column>
+            } @else {
+              <e-column
+                [field]="col.field"
+                [headerText]="col.headerText"
+                [width]="col.width"
+                [type]="col.type ?? 'string'"
+                [format]="col.format"
+                [textAlign]="col.textAlign ?? 'Left'"
+                [visible]="col.visible"
+                [isPrimaryKey]="col.isPrimaryKey ?? false"
+              ></e-column>
+            }
+          }
+        </e-columns>
+        <ng-template #emptyRecordTemplate>
+          <app-empty-state [title]="emptyTitle()" [message]="emptyMessage()" icon="e-icons e-search" />
+        </ng-template>
+      </ejs-grid>
+    }
+  </div>
+}

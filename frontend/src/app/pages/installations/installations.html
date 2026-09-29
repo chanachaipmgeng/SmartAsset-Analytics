@@ -34,31 +34,22 @@
   </div>
 
   <div class="panel">
-    <ejs-grid
-      [dataSource]="rows()"
-      [allowPaging]="true"
-      [allowSorting]="true"
-      [allowFiltering]="true"
-      [allowResizing]="true"
-      [pageSettings]="grid.pageSettings"
-      [filterSettings]="grid.filterSettings"
-      [toolbar]="grid.toolbar"
-      (rowSelected)="onRowSelected($event)"
-      (rowDeselected)="selected.set(null)"
+    <app-data-grid
+      [data]="rows()"
+      [columns]="columns()"
+      perspectiveKey="installations"
+      exportName="installations"
+      [loading]="installations.isLoading() || nearby.isLoading()"
+      [error]="installations.error() || nearby.error()"
+      [emptyTitle]="nearbyQuery() ? 'ไม่พบอุปกรณ์ในรัศมีนี้' : 'ยังไม่มีจุดติดตั้ง'"
+      [emptyMessage]="nearbyQuery() ? 'ลองเพิ่มรัศมีหรือเปลี่ยนพิกัดที่ค้นหา' : null"
+      (selectionChange)="onRowSelected($event)"
+      (retry)="installations.reload(); nearby.reload()"
     >
-      <e-columns>
-        <e-column field="serial_number" headerText="ซีเรียล" width="150"></e-column>
-        <e-column field="model_name" headerText="รุ่น" width="140"></e-column>
-        <e-column field="customer_name" headerText="ลูกค้า" width="200"></e-column>
-        <e-column field="level_label" headerText="ระดับบริการ" width="110"></e-column>
-        <e-column field="install_date" headerText="วันที่ติดตั้ง" type="date" format="dd/MM/yyyy" width="120"></e-column>
-        <e-column field="latitude" headerText="ละติจูด" type="number" format="N6" width="120"></e-column>
-        <e-column field="longitude" headerText="ลองจิจูด" type="number" format="N6" width="120"></e-column>
-        <e-column field="distance_km" headerText="ระยะ (กม.)" type="number" format="N2" width="110" [visible]="!!nearbyQuery()"></e-column>
-        <e-column field="state_label" headerText="สถานะ" width="140"></e-column>
-        <e-column field="address" headerText="ที่อยู่" width="260"></e-column>
-      </e-columns>
-    </ejs-grid>
+      <ng-template gridCell="state_label" let-row>
+        <span class="state-chip" [class.removed]="!!row.removed_at">{{ row.state_label }}</span>
+      </ng-template>
+    </app-data-grid>
   </div>
 </div>
 

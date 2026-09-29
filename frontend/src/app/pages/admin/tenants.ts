@@ -4,12 +4,18 @@ import { ApiService } from '../../core/api.service';
 import { Tenant } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { PageHeader } from '../../shared/page-header';
-import { DIALOG_ANIMATION, FORM_IMPORTS, GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
+import { DataGrid, GridCell, GridColumn } from '../../shared/data-grid';
+import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
+
+const COLUMNS: GridColumn[] = [
+  { field: 'code', headerText: 'รหัส', width: 140 },
+  { field: 'name', headerText: 'ชื่อกลุ่มลูกค้า', width: 300 },
+  { field: 'active_label', headerText: 'สถานะ', width: 120 },
+];
 
 @Component({
   selector: 'app-tenants',
-  imports: [...GRID_IMPORTS, ...FORM_IMPORTS, PageHeader],
-  providers: [...GRID_PROVIDERS],
+  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell],
   template: `
     <div class="page">
       <app-page-header title="กลุ่มลูกค้า (Tenant)" subtitle="องค์กรที่แยกข้อมูลกันด้วย Row-Level Security">
@@ -17,21 +23,22 @@ import { DIALOG_ANIMATION, FORM_IMPORTS, GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVI
         <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
       </app-page-header>
       <div class="panel">
-        <ejs-grid
-          [dataSource]="rows()"
-          [allowPaging]="true"
-          [allowSorting]="true"
-          [pageSettings]="grid.pageSettings"
-          [toolbar]="grid.toolbar"
-          (rowSelected)="onRowSelected($event)"
-          (rowDeselected)="selected.set(null)"
+        <app-data-grid
+          [data]="rows()"
+          [columns]="columns"
+          perspectiveKey="tenants"
+          exportName="tenants"
+          [loading]="tenants.isLoading()"
+          [error]="tenants.error()"
+          emptyTitle="ยังไม่มีกลุ่มลูกค้า"
+          (selectionChange)="onRowSelected($event)"
+          (rowDoubleClick)="onRowSelected($event); openEdit()"
+          (retry)="tenants.reload()"
         >
-          <e-columns>
-            <e-column field="code" headerText="รหัส" width="140"></e-column>
-            <e-column field="name" headerText="ชื่อกลุ่มลูกค้า" width="300"></e-column>
-            <e-column field="active_label" headerText="สถานะ" width="120"></e-column>
-          </e-columns>
-        </ejs-grid>
+          <ng-template gridCell="active_label" let-row>
+            <span class="tone-chip" [attr.data-tone]="row.is_active ? 'success' : null">{{ row.active_label }}</span>
+          </ng-template>
+        </app-data-grid>
       </div>
     </div>
 
@@ -74,7 +81,7 @@ export class TenantsPage {
   private readonly api = inject(ApiService);
   private readonly notify = inject(NotifyService);
 
-  protected readonly grid = GRID_DEFAULTS;
+  protected readonly columns = COLUMNS;
   protected readonly animation = DIALOG_ANIMATION;
   protected readonly tenants = httpResource<Tenant[]>(() => '/api/v1/tenants', { defaultValue: [] });
   protected readonly rows = computed(() =>
@@ -92,8 +99,8 @@ export class TenantsPage {
     () => !!this.name().trim() && /^[A-Za-z0-9_-]{2,20}$/.test(this.code().trim()),
   );
 
-  protected onRowSelected(event: { data: Tenant }): void {
-    this.selected.set(this.tenants.value().find((t) => t.id === event.data.id) ?? null);
+  protected onRowSelected(row: { id: string } | null): void {
+    this.selected.set(row ? (this.tenants.value().find((t) => t.id === row.id) ?? null) : null);
   }
 
   protected openCreate(): void {

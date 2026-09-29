@@ -7,7 +7,8 @@ import { Installation } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { InstallationMap } from '../../shared/installation-map';
 import { PageHeader } from '../../shared/page-header';
-import { DIALOG_ANIMATION, FORM_IMPORTS, GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
+import { DataGrid, GridCell, GridColumn } from '../../shared/data-grid';
+import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 
 interface NearbyQuery {
   lat: number;
@@ -17,8 +18,7 @@ interface NearbyQuery {
 
 @Component({
   selector: 'app-installations',
-  imports: [...GRID_IMPORTS, ...FORM_IMPORTS, InstallationMap, PageHeader],
-  providers: [...GRID_PROVIDERS],
+  imports: [...FORM_IMPORTS, InstallationMap, PageHeader, DataGrid, GridCell],
   templateUrl: './installations.html',
   styleUrl: './installations.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,7 +28,6 @@ export class InstallationsPage {
   private readonly api = inject(ApiService);
   private readonly notify = inject(NotifyService);
 
-  protected readonly grid = GRID_DEFAULTS;
   protected readonly animation = DIALOG_ANIMATION;
 
   protected readonly showRemoved = signal(false);
@@ -58,6 +57,21 @@ export class InstallationsPage {
     const q = this.nearbyQuery();
     return q ? { latitude: q.lat, longitude: q.lng } : null;
   });
+  protected readonly columns = computed<GridColumn[]>(() => [
+    { field: 'serial_number', headerText: 'ซีเรียล', width: 150 },
+    { field: 'model_name', headerText: 'รุ่น', width: 140 },
+    { field: 'customer_name', headerText: 'ลูกค้า', width: 200 },
+    { field: 'level_label', headerText: 'ระดับบริการ', width: 110 },
+    { field: 'install_date', headerText: 'วันที่ติดตั้ง', type: 'date', format: 'dd/MM/yyyy', width: 120 },
+    ...(this.nearbyQuery()
+      ? [{ field: 'distance_km', headerText: 'ระยะ (กม.)', type: 'number' as const, format: 'N2', width: 110 }]
+      : []),
+    { field: 'state_label', headerText: 'สถานะ', width: 150 },
+    { field: 'latitude', headerText: 'ละติจูด', type: 'number', format: 'N6', width: 120, hidden: true },
+    { field: 'longitude', headerText: 'ลองจิจูด', type: 'number', format: 'N6', width: 120, hidden: true },
+    { field: 'address', headerText: 'ที่อยู่', width: 260 },
+  ]);
+
   protected readonly rows = computed(() =>
     this.displayed().map((i) => ({
       ...i,
@@ -95,8 +109,8 @@ export class InstallationsPage {
     this.nearbyQuery.set(null);
   }
 
-  protected onRowSelected(event: { data: Installation }): void {
-    this.selected.set(this.displayed().find((i) => i.id === event.data.id) ?? null);
+  protected onRowSelected(row: { id: string } | null): void {
+    this.selected.set(row ? (this.displayed().find((i) => i.id === row.id) ?? null) : null);
   }
 
   protected openEdit(): void {

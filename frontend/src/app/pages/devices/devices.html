@@ -25,35 +25,22 @@
         <span>เลือกแถวเพื่อทำรายการ</span>
       }
     </div>
-    <ejs-grid
-      [dataSource]="rows()"
-      [allowPaging]="true"
-      [allowSorting]="true"
-      [allowFiltering]="true"
-      [allowResizing]="true"
-      [pageSettings]="grid.pageSettings"
-      [filterSettings]="grid.filterSettings"
-      [toolbar]="grid.toolbar"
-      [selectionSettings]="{ type: 'Single' }"
-      (rowSelected)="onRowSelected($event)"
-      (rowDeselected)="selected.set(null)"
+    <app-data-grid
+      [data]="rows()"
+      [columns]="columns"
+      perspectiveKey="devices"
+      exportName="devices"
+      [loading]="devices.isLoading()"
+      [error]="devices.error()"
+      emptyTitle="ยังไม่มีอุปกรณ์"
+      emptyMessage="กด “รับเข้าใหม่” เพื่อเพิ่มอุปกรณ์เครื่องแรก"
+      (selectionChange)="onRowSelected($event)"
+      (retry)="devices.reload()"
     >
-      <e-columns>
-        <e-column field="serial_number" headerText="ซีเรียล" width="150" [isPrimaryKey]="true"></e-column>
-        <e-column field="brand" headerText="ยี่ห้อ" width="110"></e-column>
-        <e-column field="model_name" headerText="รุ่น" width="150"></e-column>
-        <e-column field="status_label" headerText="สถานะ" width="130">
-          <ng-template #template let-data>
-            <app-status-chip [status]="data.status" />
-          </ng-template>
-        </e-column>
-        <e-column field="tenant_label" headerText="กลุ่มลูกค้า" width="200"></e-column>
-        <e-column field="mac_address" headerText="MAC" width="160"></e-column>
-        <e-column field="purchase_date" headerText="วันที่ซื้อ" type="date" format="dd/MM/yyyy" width="120"></e-column>
-        <e-column field="warranty_end" headerText="หมดประกัน" type="date" format="dd/MM/yyyy" width="120"></e-column>
-        <e-column field="cost" headerText="ต้นทุน" type="number" format="N2" textAlign="Right" width="120"></e-column>
-      </e-columns>
-    </ejs-grid>
+      <ng-template gridCell="status_label" let-row>
+        <app-status-chip [status]="row.status" />
+      </ng-template>
+    </app-data-grid>
   </div>
 </div>
 

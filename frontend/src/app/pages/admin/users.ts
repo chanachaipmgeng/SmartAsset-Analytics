@@ -6,12 +6,30 @@ import { ROLE_LABELS, toOptions } from '../../core/labels';
 import { Role, Tenant, User } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { PageHeader } from '../../shared/page-header';
-import { DIALOG_ANIMATION, FORM_IMPORTS, GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
+import { DataGrid, GridCell, GridColumn } from '../../shared/data-grid';
+import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 
 @Component({
   selector: 'app-users',
-  imports: [...GRID_IMPORTS, ...FORM_IMPORTS, PageHeader],
-  providers: [...GRID_PROVIDERS],
+  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell],
+  styles: `
+    .user-cell {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .avatar {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgb(var(--color-sf-primary-container));
+      color: rgb(var(--color-sf-on-primary-container));
+    }
+  `,
   template: `
     <div class="page">
       <app-page-header title="ผู้ใช้งาน" subtitle="บัญชีผู้ใช้ บทบาท และการระงับการใช้งาน">
@@ -19,25 +37,31 @@ import { DIALOG_ANIMATION, FORM_IMPORTS, GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVI
         <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
       </app-page-header>
       <div class="panel">
-        <ejs-grid
-          [dataSource]="rows()"
-          [allowPaging]="true"
-          [allowSorting]="true"
-          [allowFiltering]="true"
-          [pageSettings]="grid.pageSettings"
-          [filterSettings]="grid.filterSettings"
-          [toolbar]="grid.toolbar"
-          (rowSelected)="onRowSelected($event)"
-          (rowDeselected)="selected.set(null)"
+        <app-data-grid
+          [data]="rows()"
+          [columns]="columns()"
+          perspectiveKey="users"
+          exportName="users"
+          [loading]="users.isLoading()"
+          [error]="users.error()"
+          emptyTitle="ยังไม่มีผู้ใช้"
+          (selectionChange)="onRowSelected($event)"
+          (rowDoubleClick)="onRowSelected($event); openEdit()"
+          (retry)="users.reload()"
         >
-          <e-columns>
-            <e-column field="full_name" headerText="ชื่อ-นามสกุล" width="200"></e-column>
-            <e-column field="email" headerText="อีเมล" width="230"></e-column>
-            <e-column field="role_label" headerText="บทบาท" width="160"></e-column>
-            <e-column field="tenant_name" headerText="กลุ่มลูกค้า" width="220" [visible]="auth.isSuperadmin()"></e-column>
-            <e-column field="active_label" headerText="สถานะ" width="110"></e-column>
-          </e-columns>
-        </ejs-grid>
+          <ng-template gridCell="full_name" let-row>
+            <span class="user-cell">
+              <span class="avatar">{{ row.full_name.charAt(0) }}</span>
+              {{ row.full_name }}
+            </span>
+          </ng-template>
+          <ng-template gridCell="role_label" let-row>
+            <span class="tone-chip" [attr.data-tone]="roleTone[row.role]">{{ row.role_label }}</span>
+          </ng-template>
+          <ng-template gridCell="active_label" let-row>
+            <span class="tone-chip" [attr.data-tone]="row.is_active ? 'success' : null">{{ row.active_label }}</span>
+          </ng-template>
+        </app-data-grid>
       </div>
     </div>
 
@@ -95,8 +119,20 @@ export class UsersPage {
   private readonly api = inject(ApiService);
   private readonly notify = inject(NotifyService);
 
-  protected readonly grid = GRID_DEFAULTS;
   protected readonly animation = DIALOG_ANIMATION;
+  protected readonly roleTone: Record<string, string | null> = {
+    superadmin: 'error',
+    tenant_admin: 'warning',
+    staff: 'info',
+    viewer: null,
+  };
+  protected readonly columns = computed<GridColumn[]>(() => [
+    { field: 'full_name', headerText: 'ชื่อ-นามสกุล', width: 220 },
+    { field: 'email', headerText: 'อีเมล', width: 230 },
+    { field: 'role_label', headerText: 'บทบาท', width: 160 },
+    ...(this.auth.isSuperadmin() ? [{ field: 'tenant_name', headerText: 'กลุ่มลูกค้า', width: 220 }] : []),
+    { field: 'active_label', headerText: 'สถานะ', width: 110 },
+  ]);
   protected readonly users = httpResource<User[]>(() => '/api/v1/users', { defaultValue: [] });
   protected readonly tenants = httpResource<Tenant[]>(() => '/api/v1/tenants', { defaultValue: [] });
 
@@ -132,8 +168,8 @@ export class UsersPage {
     return !!this.fullName().trim() && !!this.email().trim() && pwOk && tenantOk;
   });
 
-  protected onRowSelected(event: { data: User }): void {
-    this.selected.set(this.users.value().find((u) => u.id === event.data.id) ?? null);
+  protected onRowSelected(row: { id: string } | null): void {
+    this.selected.set(row ? (this.users.value().find((u) => u.id === row.id) ?? null) : null);
   }
 
   protected openCreate(): void {

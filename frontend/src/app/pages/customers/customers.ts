@@ -7,13 +7,14 @@ import { Customer, ServiceLevel, Tenant } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { ConfirmService } from '../../shared/confirm.service';
 import { PageHeader } from '../../shared/page-header';
-import { DIALOG_ANIMATION, FORM_IMPORTS, GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
+import { DataGrid, GridCell, GridColumn } from '../../shared/data-grid';
+import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 
 @Component({
   selector: 'app-customers',
-  imports: [...GRID_IMPORTS, ...FORM_IMPORTS, PageHeader],
-  providers: [...GRID_PROVIDERS],
+  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell],
   templateUrl: './customers.html',
+  styleUrl: './customers.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CustomersPage {
@@ -22,8 +23,15 @@ export class CustomersPage {
   private readonly notify = inject(NotifyService);
   private readonly confirm = inject(ConfirmService);
 
-  protected readonly grid = GRID_DEFAULTS;
   protected readonly animation = DIALOG_ANIMATION;
+  protected readonly columns = computed<GridColumn[]>(() => [
+    { field: 'company_name', headerText: 'ชื่อบริษัท', width: 220 },
+    { field: 'contact_person', headerText: 'ผู้ติดต่อ', width: 150 },
+    { field: 'phone', headerText: 'โทรศัพท์', width: 130 },
+    { field: 'email', headerText: 'อีเมล', width: 200 },
+    { field: 'level_label', headerText: 'ระดับบริการ', width: 130 },
+    ...(this.auth.isSuperadmin() ? [{ field: 'tenant_name', headerText: 'กลุ่มลูกค้า', width: 200 }] : []),
+  ]);
   protected readonly levelOptions = toOptions(SERVICE_LEVEL_LABELS);
 
   protected readonly customers = httpResource<Customer[]>(() => '/api/v1/customers', { defaultValue: [] });
@@ -56,8 +64,13 @@ export class CustomersPage {
       (this.editingId() !== null || !this.auth.isSuperadmin() || !!this.tenantId()),
   );
 
-  protected onRowSelected(event: { data: Customer }): void {
-    this.selected.set(this.customers.value().find((c) => c.id === event.data.id) ?? null);
+  protected onRowSelected(row: { id: string } | null): void {
+    this.selected.set(row ? (this.customers.value().find((c) => c.id === row.id) ?? null) : null);
+  }
+
+  protected editRow(row: { id: string }): void {
+    this.onRowSelected(row);
+    if (this.auth.canWrite()) this.openEdit();
   }
 
   protected openCreate(): void {

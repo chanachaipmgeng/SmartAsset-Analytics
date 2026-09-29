@@ -7,7 +7,8 @@ import { Customer, Device, DeviceModel, Tenant } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { PageHeader } from '../../shared/page-header';
 import { StatusChip } from '../../shared/status-chip';
-import { DIALOG_ANIMATION, FORM_IMPORTS, GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
+import { DataGrid, GridCell, GridColumn } from '../../shared/data-grid';
+import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 
 type Movement = 'checkout' | 'return' | 'retire' | 'transfer';
 
@@ -20,10 +21,21 @@ const MOVEMENT_TITLES: Record<Movement, string> = {
 
 const CENTRAL_STOCK = '__central__';
 
+const COLUMNS: GridColumn[] = [
+  { field: 'serial_number', headerText: 'ซีเรียล', width: 150, isPrimaryKey: true },
+  { field: 'brand', headerText: 'ยี่ห้อ', width: 110 },
+  { field: 'model_name', headerText: 'รุ่น', width: 150 },
+  { field: 'status_label', headerText: 'สถานะ', width: 140 },
+  { field: 'tenant_label', headerText: 'กลุ่มลูกค้า', width: 200 },
+  { field: 'mac_address', headerText: 'MAC', width: 160 },
+  { field: 'purchase_date', headerText: 'วันที่ซื้อ', type: 'date', format: 'dd/MM/yyyy', width: 120 },
+  { field: 'warranty_end', headerText: 'หมดประกัน', type: 'date', format: 'dd/MM/yyyy', width: 120 },
+  { field: 'cost', headerText: 'ต้นทุน', type: 'number', format: 'N2', textAlign: 'Right', width: 120 },
+];
+
 @Component({
   selector: 'app-devices',
-  imports: [...GRID_IMPORTS, ...FORM_IMPORTS, PageHeader, StatusChip],
-  providers: [...GRID_PROVIDERS],
+  imports: [...FORM_IMPORTS, PageHeader, StatusChip, DataGrid, GridCell],
   templateUrl: './devices.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -32,7 +44,7 @@ export class DevicesPage {
   private readonly api = inject(ApiService);
   private readonly notify = inject(NotifyService);
 
-  protected readonly grid = GRID_DEFAULTS;
+  protected readonly columns = COLUMNS;
   protected readonly animation = DIALOG_ANIMATION;
   protected readonly movementTitles = MOVEMENT_TITLES;
 
@@ -120,8 +132,8 @@ export class DevicesPage {
       Math.abs(this.longitude()!) <= 180,
   );
 
-  protected onRowSelected(event: { data: Device }): void {
-    this.selected.set(this.devices.value().find((d) => d.id === event.data.id) ?? null);
+  protected onRowSelected(row: { id: string } | null): void {
+    this.selected.set(row ? (this.devices.value().find((d) => d.id === row.id) ?? null) : null);
   }
 
   protected openCreate(): void {

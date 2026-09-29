@@ -1,0 +1,106 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.grid-progress {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 5;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgb(var(--color-sf-primary) / 0.15);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 40%;
+    background: rgb(var(--color-sf-primary));
+    animation: grid-progress 1s ease-in-out infinite;
+  }
+}
+
+@keyframes grid-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+:host ::ng-deep .app-grid.e-grid {
+  border: 0;
+  background: transparent;
+  animation: fade-in 240ms ease-out both;
+
+  .e-toolbar {
+    border: 0;
+    background: transparent;
+    margin-bottom: 8px;
+
+    .e-toolbar-items {
+      background: transparent;
+    }
+
+    .e-tbar-btn {
+      border-radius: 999px;
+    }
+
+    .e-search-wrapper .e-input-group {
+      border-radius: 999px;
+    }
+  }
+
+  .e-gridheader {
+    border-top: 1px solid rgb(var(--color-sf-outline-variant));
+    border-radius: 12px 12px 0 0;
+    overflow: hidden;
+  }
+
+  .e-headercell {
+    background: color-mix(in srgb, rgb(var(--color-sf-surface)) 94%, rgb(var(--color-sf-primary)));
+  }
+
+  .e-headertext {
+    font-weight: 600;
+  }
+
+  .e-row {
+    transition: background-color 120ms ease;
+  }
+
+  .e-row.e-altrow .e-rowcell:not(.e-selectionbackground) {
+    background: color-mix(in srgb, rgb(var(--color-sf-surface)) 98%, rgb(var(--color-sf-primary)));
+  }
+
+  .e-rowcell.e-selectionbackground,
+  .e-row[aria-selected='true'] .e-rowcell {
+    background: rgb(var(--color-sf-primary-container));
+    color: rgb(var(--color-sf-on-primary-container));
+  }
+
+  // Keep the empty-state centred in the visible width even when columns overflow.
+  .e-emptyrow td {
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .e-content {
+    container-type: inline-size;
+  }
+
+  .e-emptyrow td > * {
+    position: sticky;
+    left: 0;
+    display: block;
+    width: 100cqi;
+  }
+
+  .e-gridpager {
+    border-top: 1px solid rgb(var(--color-sf-outline-variant));
+    background: transparent;
+  }
+}
