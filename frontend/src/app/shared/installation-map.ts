@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, output, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+  output,
+  viewChild,
+} from '@angular/core';
 import {
   MapsComponent,
   MapsModule,
@@ -29,7 +38,10 @@ function circlePoints(center: LatLng, radiusM: number): LatLng[] {
   const dLng = dLat / Math.cos((center.latitude * Math.PI) / 180);
   return Array.from({ length: CIRCLE_SEGMENTS + 1 }, (_, i) => {
     const angle = (i / CIRCLE_SEGMENTS) * 2 * Math.PI;
-    return { latitude: center.latitude + dLat * Math.sin(angle), longitude: center.longitude + dLng * Math.cos(angle) };
+    return {
+      latitude: center.latitude + dLat * Math.sin(angle),
+      longitude: center.longitude + dLng * Math.cos(angle),
+    };
   });
 }
 
@@ -45,7 +57,11 @@ function circlePoints(center: LatLng, radiusM: number): LatLng[] {
   template: `
     <!-- Maps cache theme colours on first render, so rebuild when the theme flips. -->
     @for (mapTheme of [theme.chartTheme()]; track mapTheme) {
-      <div [class.pickable]="pickable()" (pointerdown)="onPointerDown($event)" (click)="onClick($event)">
+      <div
+        [class.pickable]="pickable()"
+        (pointerdown)="onPointerDown($event)"
+        (click)="onClick($event)"
+      >
         <ejs-maps
           [theme]="mapTheme"
           [height]="height()"
@@ -139,7 +155,8 @@ export class InstallationMap {
             tooltipSettings: {
               visible: true,
               valuePath: 'title',
-              format: '<b>${title}</b><br/>ลูกค้า: ${customer}<br/>ระดับบริการ: ${level}<br/>${address}',
+              format:
+                '<b>${title}</b><br/>ลูกค้า: ${customer}<br/>ระดับบริการ: ${level}<br/>${address}',
             },
           },
           {
@@ -178,7 +195,9 @@ export class InstallationMap {
   private zoomToFit(latitude: number, radiusKm: number): number {
     const heightPx = parseFloat(this.height()) || 400;
     const metresPerPxAtZoom0 = 156_543 * Math.cos((latitude * Math.PI) / 180);
-    const zoom = Math.floor(Math.log2((metresPerPxAtZoom0 * heightPx * 0.8) / (2 * radiusKm * 1000)));
+    const zoom = Math.floor(
+      Math.log2((metresPerPxAtZoom0 * heightPx * 0.8) / (2 * radiusKm * 1000)),
+    );
     return Math.min(Math.max(zoom, 3), 16);
   }
 
@@ -194,14 +213,19 @@ export class InstallationMap {
     if (!this.pickable() || !maps) return;
     const start = this.pressedAt;
     // A drag pans the map; only a stationary press picks a point.
-    if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > PICK_TOLERANCE_PX) return;
+    if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > PICK_TOLERANCE_PX)
+      return;
     const target = event.target as Element | null;
     if (target?.closest('[id*="_Zooming_"], [id*="_MarkerIndex_"], [id*="_cluster_"]')) return;
     const rect = maps.element.getBoundingClientRect();
-    const { latitude, longitude } = maps.getTileGeoLocation(event.clientX - rect.left, event.clientY - rect.top) ?? {};
+    const { latitude, longitude } =
+      maps.getTileGeoLocation(event.clientX - rect.left, event.clientY - rect.top) ?? {};
     if (typeof latitude !== 'number' || typeof longitude !== 'number') return;
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
-    const point = { latitude: Number(latitude.toFixed(6)), longitude: Number(longitude.toFixed(6)) };
+    const point = {
+      latitude: Number(latitude.toFixed(6)),
+      longitude: Number(longitude.toFixed(6)),
+    };
     this.view.set({ center: point, zoom: maps.tileZoomLevel ?? this.view().zoom });
     this.pick.emit(point);
   }

@@ -1,13 +1,27 @@
 <div class="page">
   <app-page-header title="ลูกค้า" subtitle="บริษัทลูกค้าของแต่ละกลุ่มลูกค้าและระดับบริการ">
     @if (auth.canWrite()) {
-      <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มลูกค้า</button>
-      <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
+      <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">
+        เพิ่มลูกค้า
+      </button>
+      <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">
+        แก้ไข
+      </button>
       @if (auth.isAdmin()) {
         @if (selected()?.is_active === false) {
-          <button ejs-button iconCss="e-icons e-check" [disabled]="busy()" (click)="toggleActive()">เปิดใช้งาน</button>
+          <button ejs-button iconCss="e-icons e-check" [disabled]="busy()" (click)="toggleActive()">
+            เปิดใช้งาน
+          </button>
         } @else {
-          <button ejs-button cssClass="e-danger" iconCss="e-icons e-lock" [disabled]="!selected() || busy()" (click)="toggleActive()">ระงับ</button>
+          <button
+            ejs-button
+            cssClass="e-danger"
+            iconCss="e-icons e-lock"
+            [disabled]="!selected() || busy()"
+            (click)="toggleActive()"
+          >
+            ระงับ
+          </button>
         }
       }
     }
@@ -32,13 +46,20 @@
       (retry)="customers.reload()"
     >
       <ng-template gridCell="company_name" let-row>
-        <a class="customer-link" [routerLink]="['/customers', row.id]" (click)="$event.stopPropagation()">{{ row.company_name }}</a>
+        <a
+          class="customer-link"
+          [routerLink]="['/customers', row.id]"
+          (click)="$event.stopPropagation()"
+          >{{ row.company_name }}</a
+        >
       </ng-template>
       <ng-template gridCell="level_label" let-row>
         <span class="level-chip" [attr.data-level]="row.service_level">{{ row.level_label }}</span>
       </ng-template>
       <ng-template gridCell="active_label" let-row>
-        <span class="tone-chip" [attr.data-tone]="row.is_active ? 'success' : null">{{ row.active_label }}</span>
+        <span class="tone-chip" [attr.data-tone]="row.is_active ? 'success' : null">{{
+          row.active_label
+        }}</span>
       </ng-template>
     </app-data-grid>
   </div>
@@ -63,7 +84,12 @@
       @if (auth.isSuperadmin() && !editingId()) {
         <div class="full">
           <label>กลุ่มลูกค้า *</label>
-          <ejs-dropdownlist [dataSource]="tenantOptions()" [fields]="{ value: 'value', text: 'text' }" [(value)]="tenantId" placeholder="เลือกกลุ่มลูกค้า"></ejs-dropdownlist>
+          <ejs-dropdownlist
+            [dataSource]="tenantOptions()"
+            [fields]="{ value: 'value', text: 'text' }"
+            [(value)]="tenantId"
+            placeholder="เลือกกลุ่มลูกค้า"
+          ></ejs-dropdownlist>
         </div>
       }
       <div>
@@ -80,11 +106,20 @@
       </div>
       <div>
         <label>ระดับบริการ</label>
-        <ejs-dropdownlist [dataSource]="levelOptions" [fields]="{ value: 'value', text: 'text' }" [(value)]="serviceLevel"></ejs-dropdownlist>
+        <ejs-dropdownlist
+          [dataSource]="levelOptions"
+          [fields]="{ value: 'value', text: 'text' }"
+          [(value)]="serviceLevel"
+        ></ejs-dropdownlist>
       </div>
       <div>
         <label>เลขประจำตัวผู้เสียภาษี</label>
-        <ejs-textbox [(value)]="taxId" [liveValue]="taxId" [cssClass]="taxIdInvalid() ? 'e-error' : ''" placeholder="13 หลัก"></ejs-textbox>
+        <ejs-textbox
+          [(value)]="taxId"
+          [liveValue]="taxId"
+          [cssClass]="taxIdInvalid() ? 'e-error' : ''"
+          placeholder="13 หลัก"
+        ></ejs-textbox>
         @if (taxIdInvalid()) {
           <p class="m-0 mt-1 text-xs text-error">ต้องเป็นตัวเลข 13 หลัก</p>
         }
@@ -101,6 +136,8 @@
   </ng-template>
   <ng-template #footerTemplate>
     <button ejs-button (click)="formOpen.set(false)">ยกเลิก</button>
-    <button ejs-button [isPrimary]="true" [disabled]="!formValid() || busy()" (click)="save()">บันทึก</button>
+    <button ejs-button [isPrimary]="true" [disabled]="!formValid() || busy()" (click)="save()">
+      บันทึก
+    </button>
   </ng-template>
 </ejs-dialog>

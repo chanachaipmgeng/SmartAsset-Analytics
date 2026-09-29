@@ -24,10 +24,13 @@ function readMode(): ThemeMode {
 export class ThemeService {
   readonly mode = signal<ThemeMode>(readMode());
 
-  private readonly media = typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: dark)') : null;
+  private readonly media =
+    typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: dark)') : null;
   private readonly systemDark = signal(this.media?.matches ?? false);
 
-  readonly isDark = computed(() => this.mode() === 'dark' || (this.mode() === 'system' && this.systemDark()));
+  readonly isDark = computed(
+    () => this.mode() === 'dark' || (this.mode() === 'system' && this.systemDark()),
+  );
   readonly chartTheme = computed(() => (this.isDark() ? 'Tailwind3Dark' : 'Tailwind3'));
 
   constructor() {
@@ -37,7 +40,9 @@ export class ThemeService {
 
     effect(() => {
       document.documentElement.classList.toggle(DARK_CLASS, this.isDark());
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', cssColor('--app-surface'));
+      document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute('content', cssColor('--app-surface'));
     });
   }
 

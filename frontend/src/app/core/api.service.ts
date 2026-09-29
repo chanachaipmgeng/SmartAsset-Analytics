@@ -36,7 +36,10 @@ export class ApiService {
   }
 
   changePassword(currentPassword: string, newPassword: string) {
-    return this.post<void>('/auth/change-password', { current_password: currentPassword, new_password: newPassword });
+    return this.post<void>('/auth/change-password', {
+      current_password: currentPassword,
+      new_password: newPassword,
+    });
   }
 
   /** Every device matching the filters, e.g. to export all pages of the server-paged list. */
@@ -54,7 +57,11 @@ export class ApiService {
     return this.post<Device>('/inventory/check-out', { device_id: deviceId, note });
   }
   transfer(deviceId: string, targetTenantId: string | null, note?: string | null) {
-    return this.post<Device>('/inventory/transfer', { device_id: deviceId, target_tenant_id: targetTenantId, note });
+    return this.post<Device>('/inventory/transfer', {
+      device_id: deviceId,
+      target_tenant_id: targetTenantId,
+      note,
+    });
   }
   returnDevice(deviceId: string, note?: string | null) {
     return this.post<Device>('/inventory/return', { device_id: deviceId, note });
@@ -85,11 +92,17 @@ export class ApiService {
     return this.post<ImportResult>(`/inventory/import?dry_run=${dryRun}`, form);
   }
   importTemplate() {
-    return firstValueFrom(this.http.get(`${API}/inventory/import/template`, { responseType: 'blob' }));
+    return firstValueFrom(
+      this.http.get(`${API}/inventory/import/template`, { responseType: 'blob' }),
+    );
   }
 
   sendRepair(deviceId: string, note?: string | null, supplierId?: string | null) {
-    return this.post<Device>('/inventory/send-repair', { device_id: deviceId, note, supplier_id: supplierId });
+    return this.post<Device>('/inventory/send-repair', {
+      device_id: deviceId,
+      note,
+      supplier_id: supplierId,
+    });
   }
   repairDone(deviceId: string, qcNote: string) {
     return this.post<Device>('/inventory/repair-done', { device_id: deviceId, qc_note: qcNote });
@@ -154,7 +167,9 @@ export class ApiService {
 
   latestTransaction(deviceId: string) {
     return firstValueFrom(
-      this.http.get<InventoryTransaction[]>(`${API}/inventory/transactions`, { params: { device_id: deviceId, limit: 1 } }),
+      this.http.get<InventoryTransaction[]>(`${API}/inventory/transactions`, {
+        params: { device_id: deviceId, limit: 1 },
+      }),
     ).then((rows) => rows[0] ?? null);
   }
 

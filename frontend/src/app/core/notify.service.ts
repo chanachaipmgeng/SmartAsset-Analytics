@@ -37,7 +37,13 @@ export class NotifyService {
 
   private show(tone: Tone, content: string): void {
     const t = TOASTS[tone];
-    this.toast?.show({ title: t.title, content, icon: t.icon, timeOut: t.timeOut, cssClass: `m3-toast m3-toast-${tone}` });
+    this.toast?.show({
+      title: t.title,
+      content,
+      icon: t.icon,
+      timeOut: t.timeOut,
+      cssClass: `m3-toast m3-toast-${tone}`,
+    });
   }
 }
 

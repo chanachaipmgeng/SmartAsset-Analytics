@@ -1,7 +1,12 @@
 <div class="page">
-  <app-page-header title="อุปกรณ์" subtitle="รับเข้า เบิกออก ติดตั้ง และติดตามสถานะอุปกรณ์รายเครื่อง">
+  <app-page-header
+    title="อุปกรณ์"
+    subtitle="รับเข้า เบิกออก ติดตั้ง และติดตามสถานะอุปกรณ์รายเครื่อง"
+  >
     @if (auth.canWrite()) {
-      <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">รับเข้าใหม่</button>
+      <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">
+        รับเข้าใหม่
+      </button>
       <button ejs-button iconCss="e-icons e-upload-1" (click)="importOpen.set(true)">นำเข้า</button>
     }
     <button ejs-button iconCss="e-icons e-zoom-in" routerLink="/scan">สแกน</button>
@@ -11,10 +16,17 @@
       [items]="actionItems()"
       [disabled]="!actionItems().length"
       (select)="onActionSelect($event)"
-    >ทำรายการ</button>
+    >
+      ทำรายการ
+    </button>
   </app-page-header>
 
-  <app-filter-chips [options]="filters()" [value]="statusFilter()" (valueChange)="onStatusFilter($event)" label="กรองตามสถานะ" />
+  <app-filter-chips
+    [options]="filters()"
+    [value]="statusFilter()"
+    (valueChange)="onStatusFilter($event)"
+    label="กรองตามสถานะ"
+  />
 
   <div class="panel">
     <app-data-grid
@@ -29,7 +41,9 @@
       [loading]="devices.isLoading()"
       [error]="devices.error()"
       [emptyTitle]="statusFilter() === 'ALL' ? 'ยังไม่มีอุปกรณ์' : 'ไม่มีอุปกรณ์ในสถานะนี้'"
-      [emptyMessage]="statusFilter() === 'ALL' ? 'กด “รับเข้าใหม่” เพื่อเพิ่มอุปกรณ์เครื่องแรก' : null"
+      [emptyMessage]="
+        statusFilter() === 'ALL' ? 'กด “รับเข้าใหม่” เพื่อเพิ่มอุปกรณ์เครื่องแรก' : null
+      "
       (selectionChange)="onRowSelected($event)"
       [multiSelect]="auth.canWrite()"
       (multiSelectionChange)="checked.set($event)"
@@ -50,14 +64,23 @@
     <div class="bulk-bar" role="toolbar" aria-label="ทำรายการหลายเครื่อง">
       <span class="bulk-count">เลือก {{ checked().length }} เครื่อง</span>
       @for (a of bulkActions(); track a.id) {
-        <button ejs-button [iconCss]="a.iconCss" [cssClass]="a.danger ? 'e-danger' : ''" (click)="runBulk(a.id)">
+        <button
+          ejs-button
+          [iconCss]="a.iconCss"
+          [cssClass]="a.danger ? 'e-danger' : ''"
+          (click)="runBulk(a.id)"
+        >
           {{ a.text }}
         </button>
       } @empty {
         <span class="bulk-empty">ไม่มีรายการที่ทำได้กับทุกเครื่องที่เลือก</span>
       }
-      <button ejs-button iconCss="e-icons e-print" (click)="labels().open(checked())">พิมพ์ฉลาก</button>
-      <button ejs-button cssClass="e-flat" iconCss="e-icons e-close" (click)="clearChecked()">ล้าง</button>
+      <button ejs-button iconCss="e-icons e-print" (click)="labels().open(checked())">
+        พิมพ์ฉลาก
+      </button>
+      <button ejs-button cssClass="e-flat" iconCss="e-icons e-close" (click)="clearChecked()">
+        ล้าง
+      </button>
     </div>
   }
 </div>
@@ -86,11 +109,39 @@
         </div>
         <div class="flex gap-1">
           @if (canEdit()) {
-            <button ejs-button cssClass="e-flat e-round" iconCss="e-icons e-edit" title="แก้ไขข้อมูล" aria-label="แก้ไขข้อมูล" (click)="openEdit()"></button>
+            <button
+              ejs-button
+              cssClass="e-flat e-round"
+              iconCss="e-icons e-edit"
+              title="แก้ไขข้อมูล"
+              aria-label="แก้ไขข้อมูล"
+              (click)="openEdit()"
+            ></button>
           }
-          <button ejs-button cssClass="e-flat e-round" iconCss="e-icons e-print" title="พิมพ์ฉลาก" aria-label="พิมพ์ฉลาก" (click)="printLabel()"></button>
-          <button ejs-button cssClass="e-flat e-round" iconCss="e-icons e-copy" title="คัดลอกลิงก์" aria-label="คัดลอกลิงก์" (click)="copyLink()"></button>
-          <button ejs-button cssClass="e-flat e-round" iconCss="e-icons e-close" title="ปิด" aria-label="ปิด" (click)="closeDetail()"></button>
+          <button
+            ejs-button
+            cssClass="e-flat e-round"
+            iconCss="e-icons e-print"
+            title="พิมพ์ฉลาก"
+            aria-label="พิมพ์ฉลาก"
+            (click)="printLabel()"
+          ></button>
+          <button
+            ejs-button
+            cssClass="e-flat e-round"
+            iconCss="e-icons e-copy"
+            title="คัดลอกลิงก์"
+            aria-label="คัดลอกลิงก์"
+            (click)="copyLink()"
+          ></button>
+          <button
+            ejs-button
+            cssClass="e-flat e-round"
+            iconCss="e-icons e-close"
+            title="ปิด"
+            aria-label="ปิด"
+            (click)="closeDetail()"
+          ></button>
         </div>
       </header>
 
@@ -98,7 +149,12 @@
         @if (actions().length) {
           <div class="actions stagger">
             @for (a of actions(); track a.id) {
-              <button ejs-button [cssClass]="a.danger ? 'e-outline e-danger' : 'e-outline'" [iconCss]="a.iconCss" (click)="runAction(a.id)">
+              <button
+                ejs-button
+                [cssClass]="a.danger ? 'e-outline e-danger' : 'e-outline'"
+                [iconCss]="a.iconCss"
+                (click)="runAction(a.id)"
+              >
                 {{ a.text }}
               </button>
             }
@@ -166,18 +222,28 @@
           <section class="section">
             <h3>จุดติดตั้ง</h3>
             <div class="install-card">
-              <a class="customer-link font-semibold" [routerLink]="['/customers', inst.customer_id]">{{ inst.customer_name }}</a>
+              <a
+                class="customer-link font-semibold"
+                [routerLink]="['/customers', inst.customer_id]"
+                >{{ inst.customer_name }}</a
+              >
               <div class="text-sm text-on-surface-variant">
-                ติดตั้ง {{ inst.install_date | date: 'd MMM y' }} · ระดับบริการ {{ levelLabels[inst.service_level] }}
+                ติดตั้ง {{ inst.install_date | date: 'd MMM y' }} · ระดับบริการ
+                {{ levelLabels[inst.service_level] }}
               </div>
               @if (inst.address) {
                 <div class="mt-1 text-sm">{{ inst.address }}</div>
               }
               @if (inst.site_contact || inst.site_phone) {
-                <div class="mt-1 text-sm">ผู้ติดต่อหน้างาน: {{ inst.site_contact || '-' }} {{ inst.site_phone ? '· ' + inst.site_phone : '' }}</div>
+                <div class="mt-1 text-sm">
+                  ผู้ติดต่อหน้างาน: {{ inst.site_contact || '-' }}
+                  {{ inst.site_phone ? '· ' + inst.site_phone : '' }}
+                </div>
               }
               @if (inst.notes) {
-                <div class="mt-1 whitespace-pre-line text-sm text-on-surface-variant">{{ inst.notes }}</div>
+                <div class="mt-1 whitespace-pre-line text-sm text-on-surface-variant">
+                  {{ inst.notes }}
+                </div>
               }
               <app-installation-map
                 class="mt-3 block overflow-hidden rounded-m3-md"
@@ -187,7 +253,11 @@
               />
               <div class="mt-3">
                 <div class="mb-1 text-sm font-semibold">รูปหน้างาน</div>
-                <app-photo-gallery ownerType="installation" [ownerId]="inst.id" [editable]="auth.canWrite()" />
+                <app-photo-gallery
+                  ownerType="installation"
+                  [ownerId]="inst.id"
+                  [editable]="auth.canWrite()"
+                />
               </div>
             </div>
           </section>
@@ -200,7 +270,11 @@
 
         <section class="section">
           <h3>ประวัติความเคลื่อนไหว</h3>
-          <app-asset-timeline [items]="history.value()" [loading]="history.isLoading()" [photos]="txPhotos.value()" />
+          <app-asset-timeline
+            [items]="history.value()"
+            [loading]="history.isLoading()"
+            [photos]="txPhotos.value()"
+          />
         </section>
       </div>
     </div>
@@ -225,25 +299,51 @@
     <div class="form-grid">
       <div>
         <label>หมายเลขซีเรียล *</label>
-        <ejs-textbox [(value)]="formSerial" [liveValue]="formSerial" [readonly]="!!editingId()" placeholder="เช่น ZK-V5L-0003"></ejs-textbox>
+        <ejs-textbox
+          [(value)]="formSerial"
+          [liveValue]="formSerial"
+          [readonly]="!!editingId()"
+          placeholder="เช่น ZK-V5L-0003"
+        ></ejs-textbox>
       </div>
       <div>
         <label>รุ่นอุปกรณ์ *</label>
-        <ejs-dropdownlist [dataSource]="modelOptions()" [fields]="{ value: 'value', text: 'text' }" [(value)]="modelId" [allowFiltering]="true" placeholder="เลือกรุ่น"></ejs-dropdownlist>
+        <ejs-dropdownlist
+          [dataSource]="modelOptions()"
+          [fields]="{ value: 'value', text: 'text' }"
+          [(value)]="modelId"
+          [allowFiltering]="true"
+          placeholder="เลือกรุ่น"
+        ></ejs-dropdownlist>
       </div>
       @if (auth.isSuperadmin() && !editingId()) {
         <div class="full">
           <label>กลุ่มลูกค้า (เว้นว่าง = คลังกลาง)</label>
-          <ejs-dropdownlist [dataSource]="tenantOptions()" [fields]="{ value: 'value', text: 'text' }" [(value)]="tenantId" [showClearButton]="true" placeholder="คลังกลาง"></ejs-dropdownlist>
+          <ejs-dropdownlist
+            [dataSource]="tenantOptions()"
+            [fields]="{ value: 'value', text: 'text' }"
+            [(value)]="tenantId"
+            [showClearButton]="true"
+            placeholder="คลังกลาง"
+          ></ejs-dropdownlist>
         </div>
       }
       <div>
         <label>MAC Address</label>
-        <ejs-textbox [(value)]="mac" [liveValue]="mac" placeholder="00:11:22:33:44:55"></ejs-textbox>
+        <ejs-textbox
+          [(value)]="mac"
+          [liveValue]="mac"
+          placeholder="00:11:22:33:44:55"
+        ></ejs-textbox>
       </div>
       <div>
         <label>ต้นทุน (บาท)</label>
-        <ejs-numerictextbox [(value)]="cost" [min]="0" format="N2" [showSpinButton]="false"></ejs-numerictextbox>
+        <ejs-numerictextbox
+          [(value)]="cost"
+          [min]="0"
+          format="N2"
+          [showSpinButton]="false"
+        ></ejs-numerictextbox>
       </div>
       <div>
         <label>วันที่ซื้อ</label>
@@ -255,7 +355,11 @@
       </div>
       <div>
         <label>รหัสทรัพย์สิน</label>
-        <ejs-textbox [(value)]="assetTag" [liveValue]="assetTag" placeholder="เช่น AT-2026-0001"></ejs-textbox>
+        <ejs-textbox
+          [(value)]="assetTag"
+          [liveValue]="assetTag"
+          placeholder="เช่น AT-2026-0001"
+        ></ejs-textbox>
       </div>
       <div>
         <label>เฟิร์มแวร์</label>
@@ -284,6 +388,13 @@
   </ng-template>
   <ng-template #footerTemplate>
     <button ejs-button (click)="formOpen.set(false)">ยกเลิก</button>
-    <button ejs-button [isPrimary]="true" [disabled]="!formValid() || busy()" (click)="saveDevice()">บันทึก</button>
+    <button
+      ejs-button
+      [isPrimary]="true"
+      [disabled]="!formValid() || busy()"
+      (click)="saveDevice()"
+    >
+      บันทึก
+    </button>
   </ng-template>
 </ejs-dialog>

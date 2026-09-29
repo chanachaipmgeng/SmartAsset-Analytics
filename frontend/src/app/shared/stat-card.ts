@@ -2,14 +2,21 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { RouterLink } from '@angular/router';
 import { CountUp } from './count-up';
 
-export type StatVariant = 'gradient' | 'success' | 'warning' | 'info' | 'error' | 'neutral' | 'primary' | 'tertiary';
+export type StatVariant =
+  'gradient' | 'success' | 'warning' | 'info' | 'error' | 'neutral' | 'primary' | 'tertiary';
 
 /** KPI tile: icon, animated number, optional hint and 7-day trend. Clickable when `link` is set. */
 @Component({
   selector: 'app-stat-card',
   imports: [RouterLink, CountUp],
   template: `
-    <a class="card lift" [attr.data-variant]="variant()" [routerLink]="link()" [queryParams]="queryParams()" [class.static]="!link()">
+    <a
+      class="card lift"
+      [attr.data-variant]="variant()"
+      [routerLink]="link()"
+      [queryParams]="queryParams()"
+      [class.static]="!link()"
+    >
       <span class="card-glow"></span>
       <span class="card-noise"></span>
       <div class="top">
@@ -102,7 +109,11 @@ export type StatVariant = 'gradient' | 'success' | 'warning' | 'info' | 'error' 
       border-color: transparent;
       background:
         radial-gradient(120% 140% at 100% 0%, rgba(var(--app-tertiary), 0.85), transparent 60%),
-        linear-gradient(135deg, rgb(var(--app-primary)), color-mix(in srgb, rgb(var(--app-primary)) 65%, rgb(var(--app-tertiary))));
+        linear-gradient(
+          135deg,
+          rgb(var(--app-primary)),
+          color-mix(in srgb, rgb(var(--app-primary)) 65%, rgb(var(--app-tertiary)))
+        );
       background-size: 200% 200%;
       animation: gradient-shift 8s ease infinite;
 
@@ -128,9 +139,15 @@ export type StatVariant = 'gradient' | 'success' | 'warning' | 'info' | 'error' 
     }
 
     @keyframes gradient-shift {
-      0%   { background-position: 0% 50%; }
-      50%  { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
     }
 
     .top {
@@ -167,7 +184,9 @@ export type StatVariant = 'gradient' | 'success' | 'warning' | 'info' | 'error' 
       border-radius: inherit;
       border: 2px solid var(--icon-fg);
       opacity: 0;
-      transition: opacity 300ms ease, transform 300ms ease;
+      transition:
+        opacity 300ms ease,
+        transform 300ms ease;
       transform: scale(0.9);
       pointer-events: none;
     }

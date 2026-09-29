@@ -1,5 +1,12 @@
 import { HttpErrorResponse, httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  output,
+  signal,
+} from '@angular/core';
 import { ApiService } from '../core/api.service';
 import { BULK_ACTIONS, BulkActionId, DeviceActionId, actionTitle } from '../core/device-actions';
 import { toIsoDate } from '../core/labels';
@@ -15,7 +22,13 @@ export type BulkDevice = Pick<Device, 'id' | 'serial_number' | 'status' | 'tenan
 
 const CENTRAL_STOCK = '__central__';
 /** Movements whose transaction can carry photos (condition on return, repair and QC evidence). */
-const PHOTO_MOVEMENTS: ReadonlySet<Movement> = new Set(['return', 'send_repair', 'repair_done', 'qc_pass', 'qc_fail']);
+const PHOTO_MOVEMENTS: ReadonlySet<Movement> = new Set([
+  'return',
+  'send_repair',
+  'repair_done',
+  'qc_pass',
+  'qc_fail',
+]);
 
 /** Movement and install dialogs shared by the devices page and the scan station. */
 @Component({
@@ -34,21 +47,34 @@ const PHOTO_MOVEMENTS: ReadonlySet<Movement> = new Set(['return', 'send_repair',
     >
       <ng-template #content>
         <div class="form-grid">
-          <div class="full">อุปกรณ์: <b>{{ device()?.serial_number }}</b></div>
+          <div class="full">
+            อุปกรณ์: <b>{{ device()?.serial_number }}</b>
+          </div>
           @if (movement() === 'transfer') {
             <div class="full">
               <label>ปลายทาง *</label>
-              <ejs-dropdownlist [dataSource]="transferOptions()" [fields]="{ value: 'value', text: 'text' }" [(value)]="transferTarget" placeholder="เลือกปลายทาง"></ejs-dropdownlist>
+              <ejs-dropdownlist
+                [dataSource]="transferOptions()"
+                [fields]="{ value: 'value', text: 'text' }"
+                [(value)]="transferTarget"
+                placeholder="เลือกปลายทาง"
+              ></ejs-dropdownlist>
             </div>
           }
           @if (movement() === 'loan') {
             <div class="full">
               <label>วันครบกำหนดคืน *</label>
-              <ejs-datepicker [(value)]="dueDate" [min]="today" format="dd/MM/yyyy"></ejs-datepicker>
+              <ejs-datepicker
+                [(value)]="dueDate"
+                [min]="today"
+                format="dd/MM/yyyy"
+              ></ejs-datepicker>
             </div>
           }
           @if (movement() === 'return') {
-            <div class="full muted">เครื่องจะอยู่สถานะ "รอตรวจสอบ (QC)" จนกว่าจะบันทึกผล QC ผ่านหรือไม่ผ่าน</div>
+            <div class="full muted">
+              เครื่องจะอยู่สถานะ "รอตรวจสอบ (QC)" จนกว่าจะบันทึกผล QC ผ่านหรือไม่ผ่าน
+            </div>
           }
           @if (movement() === 'retire') {
             <div class="full muted">อุปกรณ์ที่ปลดระวางจะไม่นับรวมในสต็อก แต่ประวัติยังคงอยู่</div>
@@ -94,7 +120,9 @@ const PHOTO_MOVEMENTS: ReadonlySet<Movement> = new Set(['return', 'send_repair',
           [cssClass]="movement() === 'retire' ? 'e-danger' : ''"
           [disabled]="!movementValid() || busy()"
           (click)="confirmMovement()"
-        >ยืนยัน</button>
+        >
+          ยืนยัน
+        </button>
       </ng-template>
     </ejs-dialog>
 
@@ -116,18 +144,30 @@ const PHOTO_MOVEMENTS: ReadonlySet<Movement> = new Set(['return', 'send_repair',
                 <span class="mono">{{ d.serial_number }}</span>
               }
             </div>
-            <p class="muted">บันทึกแบบทั้งหมดหรือไม่บันทึกเลย ถ้ามีเครื่องใดทำรายการไม่ได้ จะไม่มีการบันทึกเครื่องใดเลย</p>
+            <p class="muted">
+              บันทึกแบบทั้งหมดหรือไม่บันทึกเลย ถ้ามีเครื่องใดทำรายการไม่ได้
+              จะไม่มีการบันทึกเครื่องใดเลย
+            </p>
           </div>
           @if (bulkAction() === 'transfer') {
             <div class="full">
               <label>ปลายทาง *</label>
-              <ejs-dropdownlist [dataSource]="transferOptions()" [fields]="{ value: 'value', text: 'text' }" [(value)]="transferTarget" placeholder="เลือกปลายทาง"></ejs-dropdownlist>
+              <ejs-dropdownlist
+                [dataSource]="transferOptions()"
+                [fields]="{ value: 'value', text: 'text' }"
+                [(value)]="transferTarget"
+                placeholder="เลือกปลายทาง"
+              ></ejs-dropdownlist>
             </div>
           }
           @if (bulkAction() === 'loan') {
             <div class="full">
               <label>วันครบกำหนดคืน *</label>
-              <ejs-datepicker [(value)]="dueDate" [min]="today" format="dd/MM/yyyy"></ejs-datepicker>
+              <ejs-datepicker
+                [(value)]="dueDate"
+                [min]="today"
+                format="dd/MM/yyyy"
+              ></ejs-datepicker>
             </div>
           }
           @if (bulkAction() === 'send_repair') {
@@ -158,7 +198,9 @@ const PHOTO_MOVEMENTS: ReadonlySet<Movement> = new Set(['return', 'send_repair',
               <b>ทำรายการไม่ได้ {{ bulkFailures().length }} เครื่อง</b>
               <ul>
                 @for (f of bulkFailures(); track f.device_id) {
-                  <li><span class="mono">{{ f.serial_number }}</span> — {{ f.reason }}</li>
+                  <li>
+                    <span class="mono">{{ f.serial_number }}</span> — {{ f.reason }}
+                  </li>
                 }
               </ul>
             </div>
@@ -173,7 +215,9 @@ const PHOTO_MOVEMENTS: ReadonlySet<Movement> = new Set(['return', 'send_repair',
           [cssClass]="bulkAction() === 'retire' ? 'e-danger' : ''"
           [disabled]="!bulkValid() || busy()"
           (click)="confirmBulk()"
-        >ยืนยัน {{ bulkDevices().length }} เครื่อง</button>
+        >
+          ยืนยัน {{ bulkDevices().length }} เครื่อง
+        </button>
       </ng-template>
     </ejs-dialog>
 
@@ -189,10 +233,18 @@ const PHOTO_MOVEMENTS: ReadonlySet<Movement> = new Set(['return', 'send_repair',
     >
       <ng-template #content>
         <div class="form-grid">
-          <div class="full">อุปกรณ์: <b>{{ device()?.serial_number }}</b> — {{ device()?.tenant_name }}</div>
+          <div class="full">
+            อุปกรณ์: <b>{{ device()?.serial_number }}</b> — {{ device()?.tenant_name }}
+          </div>
           <div>
             <label>ลูกค้า *</label>
-            <ejs-dropdownlist [dataSource]="customerOptions()" [fields]="{ value: 'value', text: 'text' }" [(value)]="customer" [allowFiltering]="true" placeholder="เลือกลูกค้า"></ejs-dropdownlist>
+            <ejs-dropdownlist
+              [dataSource]="customerOptions()"
+              [fields]="{ value: 'value', text: 'text' }"
+              [(value)]="customer"
+              [allowFiltering]="true"
+              placeholder="เลือกลูกค้า"
+            ></ejs-dropdownlist>
           </div>
           <div>
             <label>วันที่ติดตั้ง *</label>
@@ -201,19 +253,45 @@ const PHOTO_MOVEMENTS: ReadonlySet<Movement> = new Set(['return', 'send_repair',
           <div class="full">
             <label>ตำแหน่งติดตั้ง * <span class="muted">คลิกบนแผนที่เพื่อปักหมุด</span></label>
             @if (installOpen()) {
-              <app-installation-map [pin]="installPin()" [focus]="installPin()" [pickable]="true" (pick)="onPickInstall($event)" height="260px" />
+              <app-installation-map
+                [pin]="installPin()"
+                [focus]="installPin()"
+                [pickable]="true"
+                (pick)="onPickInstall($event)"
+                height="260px"
+              />
             }
           </div>
           <div>
             <label>ละติจูด *</label>
-            <ejs-numerictextbox [(value)]="latitude" [min]="-90" [max]="90" format="N6" [decimals]="6" [showSpinButton]="false"></ejs-numerictextbox>
+            <ejs-numerictextbox
+              [(value)]="latitude"
+              [min]="-90"
+              [max]="90"
+              format="N6"
+              [decimals]="6"
+              [showSpinButton]="false"
+            ></ejs-numerictextbox>
           </div>
           <div>
             <label>ลองจิจูด *</label>
-            <ejs-numerictextbox [(value)]="longitude" [min]="-180" [max]="180" format="N6" [decimals]="6" [showSpinButton]="false"></ejs-numerictextbox>
+            <ejs-numerictextbox
+              [(value)]="longitude"
+              [min]="-180"
+              [max]="180"
+              format="N6"
+              [decimals]="6"
+              [showSpinButton]="false"
+            ></ejs-numerictextbox>
           </div>
           <div class="full">
-            <button ejs-button cssClass="e-flat" iconCss="e-icons e-location" [disabled]="locating()" (click)="useMyLocation()">
+            <button
+              ejs-button
+              cssClass="e-flat"
+              iconCss="e-icons e-location"
+              [disabled]="locating()"
+              (click)="useMyLocation()"
+            >
               {{ locating() ? 'กำลังหาตำแหน่ง…' : 'ใช้ตำแหน่งปัจจุบัน' }}
             </button>
           </div>
@@ -231,7 +309,11 @@ const PHOTO_MOVEMENTS: ReadonlySet<Movement> = new Set(['return', 'send_repair',
           </div>
           <div class="full">
             <label>หมายเหตุการติดตั้ง</label>
-            <ejs-textarea [(value)]="installNotes" [liveValue]="installNotes" rows="2"></ejs-textarea>
+            <ejs-textarea
+              [(value)]="installNotes"
+              [liveValue]="installNotes"
+              rows="2"
+            ></ejs-textarea>
           </div>
           <div class="full">
             <label>รูปหน้างาน <span class="muted">จุดติดตั้ง การเดินสาย ป้ายหน้าอาคาร</span></label>
@@ -241,7 +323,14 @@ const PHOTO_MOVEMENTS: ReadonlySet<Movement> = new Set(['return', 'send_repair',
       </ng-template>
       <ng-template #footerTemplate>
         <button ejs-button (click)="installOpen.set(false)">ยกเลิก</button>
-        <button ejs-button [isPrimary]="true" [disabled]="!installValid() || busy()" (click)="confirmInstall()">บันทึก</button>
+        <button
+          ejs-button
+          [isPrimary]="true"
+          [disabled]="!installValid() || busy()"
+          (click)="confirmInstall()"
+        >
+          บันทึก
+        </button>
       </ng-template>
     </ejs-dialog>
   `,
@@ -305,9 +394,12 @@ export class DeviceActionDialogs {
     this.suppliers.value().map((s) => ({ value: s.id, text: s.name })),
   );
   protected readonly supplier = signal<string | null>(null);
-  private readonly tenants = httpResource<Tenant[]>(() => (this.needTenants() ? '/api/v1/tenants' : undefined), {
-    defaultValue: [],
-  });
+  private readonly tenants = httpResource<Tenant[]>(
+    () => (this.needTenants() ? '/api/v1/tenants' : undefined),
+    {
+      defaultValue: [],
+    },
+  );
   private readonly customers = httpResource<Customer[]>(
     () => (this.needCustomers() ? '/api/v1/customers' : undefined),
     { defaultValue: [] },
@@ -361,7 +453,9 @@ export class DeviceActionDialogs {
   /** Tenants the device(s) being transferred are in now; a destination equal to all of them is pointless. */
   private readonly sourceTenants = computed(() => {
     const d = this.device();
-    return new Set(this.bulkAction() ? this.bulkDevices().map((b) => b.tenant_id) : d ? [d.tenant_id] : []);
+    return new Set(
+      this.bulkAction() ? this.bulkDevices().map((b) => b.tenant_id) : d ? [d.tenant_id] : [],
+    );
   });
   protected readonly transferOptions = computed(() => {
     const sources = this.sourceTenants();
@@ -415,7 +509,12 @@ export class DeviceActionDialogs {
     const lat = this.latitude();
     const lng = this.longitude();
     return (
-      !!this.customer() && !!this.installDate() && lat !== null && lng !== null && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+      !!this.customer() &&
+      !!this.installDate() &&
+      lat !== null &&
+      lng !== null &&
+      Math.abs(lat) <= 90 &&
+      Math.abs(lng) <= 180
     );
   });
 
@@ -478,14 +577,18 @@ export class DeviceActionDialogs {
       if (PHOTO_MOVEMENTS.has(kind) && files.length) {
         await this.attachPhotos(async () => {
           let saved = 0;
-          for (const item of result.items) saved += await this.api.uploadPhotos('transaction', item.transaction_id, files);
+          for (const item of result.items)
+            saved += await this.api.uploadPhotos('transaction', item.transaction_id, files);
           return saved;
         });
       }
       this.bulkAction.set(null);
       this.bulkDone.emit(result.items.map((i) => i.device));
     } catch (err) {
-      const failures = err instanceof HttpErrorResponse ? (err.error?.failures as BulkFailure[] | undefined) : undefined;
+      const failures =
+        err instanceof HttpErrorResponse
+          ? (err.error?.failures as BulkFailure[] | undefined)
+          : undefined;
       if (failures?.length) this.bulkFailures.set(failures);
       else this.notify.error(err);
     } finally {
@@ -528,9 +631,11 @@ export class DeviceActionDialogs {
       if (kind === 'checkout') updated = await this.api.checkOut(d.id, note);
       else if (kind === 'return') updated = await this.api.returnDevice(d.id, note);
       else if (kind === 'retire') updated = await this.api.retireDevice(d.id, note);
-      else if (kind === 'send_repair') updated = await this.api.sendRepair(d.id, note, this.supplier());
+      else if (kind === 'send_repair')
+        updated = await this.api.sendRepair(d.id, note, this.supplier());
       else if (kind === 'repair_done') updated = await this.api.repairDone(d.id, note ?? '');
-      else if (kind === 'loan') updated = await this.api.loan(d.id, toIsoDate(this.dueDate())!, note);
+      else if (kind === 'loan')
+        updated = await this.api.loan(d.id, toIsoDate(this.dueDate())!, note);
       else if (kind === 'qc_pass') updated = await this.api.qcPass(d.id, note);
       else if (kind === 'qc_fail') updated = await this.api.qcFail(d.id, note ?? '');
       else {
@@ -577,7 +682,10 @@ export class DeviceActionDialogs {
       });
       this.notify.success('บันทึกการติดตั้งแล้ว');
       const files = this.photoFiles();
-      if (files.length) await this.attachPhotos(() => this.api.uploadPhotos('installation', installation.id, files));
+      if (files.length)
+        await this.attachPhotos(() =>
+          this.api.uploadPhotos('installation', installation.id, files),
+        );
       this.installOpen.set(false);
       return { ...d, status: 'INSTALLED' as const };
     });

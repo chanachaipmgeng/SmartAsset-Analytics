@@ -1,5 +1,13 @@
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, input, model, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  model,
+  signal,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { DialogModule } from '@syncfusion/ej2-angular-popups';
 import { STATUS_LABELS } from '../core/labels';
@@ -76,7 +84,9 @@ function normalize(text: string): string {
 
         <div id="palette-results" class="max-h-[60vh] overflow-y-auto py-2" role="listbox">
           @for (group of grouped(); track group.name) {
-            <div class="px-4 pb-1 pt-2 text-xs font-semibold text-on-surface-variant">{{ group.name }}</div>
+            <div class="px-4 pb-1 pt-2 text-xs font-semibold text-on-surface-variant">
+              {{ group.name }}
+            </div>
             @for (item of group.items; track item.key) {
               <button
                 type="button"
@@ -90,9 +100,13 @@ function normalize(text: string): string {
               >
                 <span class="palette-icon" [class]="item.icon"></span>
                 <span class="min-w-0 flex-1 text-left">
-                  <span class="block truncate text-sm font-medium text-on-surface">{{ item.label }}</span>
+                  <span class="block truncate text-sm font-medium text-on-surface">{{
+                    item.label
+                  }}</span>
                   @if (item.sub) {
-                    <span class="block truncate text-xs text-on-surface-variant">{{ item.sub }}</span>
+                    <span class="block truncate text-xs text-on-surface-variant">{{
+                      item.sub
+                    }}</span>
                   }
                 </span>
                 @if (item.hint) {
@@ -111,10 +125,15 @@ function normalize(text: string): string {
           }
         </div>
 
-        <div class="flex items-center gap-4 border-t border-outline-variant px-4 py-2 text-xs text-on-surface-variant">
+        <div
+          class="flex items-center gap-4 border-t border-outline-variant px-4 py-2 text-xs text-on-surface-variant"
+        >
           <span><kbd class="palette-kbd">↑</kbd> <kbd class="palette-kbd">↓</kbd> เลื่อน</span>
           <span><kbd class="palette-kbd">Enter</kbd> เลือก</span>
-          <span class="ml-auto hidden sm:inline"><kbd class="palette-kbd">Ctrl</kbd> + <kbd class="palette-kbd">K</kbd> เปิดได้ทุกหน้า</span>
+          <span class="ml-auto hidden sm:inline"
+            ><kbd class="palette-kbd">Ctrl</kbd> +
+            <kbd class="palette-kbd">K</kbd> เปิดได้ทุกหน้า</span
+          >
         </div>
       </ng-template>
     </ejs-dialog>
@@ -200,9 +219,12 @@ export class CommandPalette {
   protected readonly active = signal(0);
   private readonly everOpened = signal(false);
 
-  protected readonly devices = httpResource<Device[]>(() => (this.everOpened() ? '/api/v1/devices' : undefined), {
-    defaultValue: [],
-  });
+  protected readonly devices = httpResource<Device[]>(
+    () => (this.everOpened() ? '/api/v1/devices' : undefined),
+    {
+      defaultValue: [],
+    },
+  );
 
   private readonly items = computed<PaletteItem[]>(() => {
     const q = normalize(this.query());
@@ -210,14 +232,25 @@ export class CommandPalette {
 
     for (const c of this.commands()) {
       if (!q || normalize(`${c.label} ${c.keywords ?? ''}`).includes(q)) {
-        list.push({ key: `c:${c.id}`, label: c.label, icon: c.icon, hint: c.hint, group: c.group, run: c.run });
+        list.push({
+          key: `c:${c.id}`,
+          label: c.label,
+          icon: c.icon,
+          hint: c.hint,
+          group: c.group,
+          run: c.run,
+        });
       }
     }
 
     if (q.length >= 2) {
       const matches = this.devices
         .value()
-        .filter((d) => normalize(`${d.serial_number} ${d.brand} ${d.model_name} ${d.mac_address ?? ''}`).includes(q))
+        .filter((d) =>
+          normalize(
+            `${d.serial_number} ${d.brand} ${d.model_name} ${d.mac_address ?? ''}`,
+          ).includes(q),
+        )
         .slice(0, MAX_DEVICES);
       for (const d of matches) {
         list.push({
@@ -241,7 +274,9 @@ export class CommandPalette {
     return [...groups].map(([name, items]) => ({ name, items }));
   });
 
-  protected readonly activeId = computed(() => (this.items().length ? `palette-${this.active()}` : null));
+  protected readonly activeId = computed(() =>
+    this.items().length ? `palette-${this.active()}` : null,
+  );
 
   protected onGlobalKey(event: KeyboardEvent): void {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {

@@ -1,16 +1,25 @@
 <div class="grid min-h-dvh bg-surface-dim lg:grid-cols-[1.1fr_1fr]">
-  <aside class="hidden flex-col justify-between bg-primary-container p-12 text-on-primary-container lg:flex">
+  <aside
+    class="hidden flex-col justify-between bg-primary-container p-12 text-on-primary-container lg:flex"
+  >
     <div class="flex items-center gap-3">
-      <span class="grid size-11 place-items-center rounded-m3-md bg-primary text-xl text-on-primary"><span class="e-icons e-clock"></span></span>
+      <span class="grid size-11 place-items-center rounded-m3-md bg-primary text-xl text-on-primary"
+        ><span class="e-icons e-clock"></span
+      ></span>
       <span class="text-xl font-semibold">myAssets</span>
     </div>
 
     <div class="max-w-lg">
-      <h2 class="m-0 text-4xl font-bold leading-tight">ติดตามเครื่องลงเวลาทุกเครื่อง ตั้งแต่รับเข้าจนติดตั้งที่ลูกค้า</h2>
+      <h2 class="m-0 text-4xl font-bold leading-tight">
+        ติดตามเครื่องลงเวลาทุกเครื่อง ตั้งแต่รับเข้าจนติดตั้งที่ลูกค้า
+      </h2>
       <ul class="m-0 mt-8 flex list-none flex-col gap-5 p-0">
         @for (f of features; track f.title) {
           <li class="flex gap-4">
-            <span class="grid size-10 shrink-0 place-items-center rounded-full bg-surface text-primary"><span [class]="f.icon"></span></span>
+            <span
+              class="grid size-10 shrink-0 place-items-center rounded-full bg-surface text-primary"
+              ><span [class]="f.icon"></span
+            ></span>
             <span>
               <span class="block font-semibold">{{ f.title }}</span>
               <span class="block text-sm opacity-80">{{ f.detail }}</span>
@@ -29,13 +38,18 @@
       (submit)="submit($event)"
     >
       <div class="flex items-center gap-3 lg:hidden">
-        <span class="grid size-10 place-items-center rounded-m3-md bg-primary text-lg text-on-primary"><span class="e-icons e-clock"></span></span>
+        <span
+          class="grid size-10 place-items-center rounded-m3-md bg-primary text-lg text-on-primary"
+          ><span class="e-icons e-clock"></span
+        ></span>
         <span class="text-lg font-semibold text-on-surface">myAssets</span>
       </div>
 
       <div>
         <h1 class="m-0 text-2xl font-semibold text-on-surface">เข้าสู่ระบบ</h1>
-        <p class="m-0 mt-1 text-sm text-on-surface-variant">ใช้อีเมลและรหัสผ่านที่ผู้ดูแลระบบสร้างให้</p>
+        <p class="m-0 mt-1 text-sm text-on-surface-variant">
+          ใช้อีเมลและรหัสผ่านที่ผู้ดูแลระบบสร้างให้
+        </p>
       </div>
 
       @if (error(); as message) {

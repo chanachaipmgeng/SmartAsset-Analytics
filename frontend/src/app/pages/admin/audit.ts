@@ -3,7 +3,13 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal } f
 import { Router } from '@angular/router';
 import { ButtonModule } from '@syncfusion/ej2-angular-buttons';
 import { DateRangePickerModule, RangeEventArgs } from '@syncfusion/ej2-angular-calendars';
-import { AUDIT_ACTION_LABELS, AUDIT_ACTION_TONES, AUDIT_ENTITY_LABELS, toDate, toIsoDate } from '../../core/labels';
+import {
+  AUDIT_ACTION_LABELS,
+  AUDIT_ACTION_TONES,
+  AUDIT_ENTITY_LABELS,
+  toDate,
+  toIsoDate,
+} from '../../core/labels';
 import { AuditEntity, AuditEntry } from '../../core/models';
 import { AuditDiff } from '../../shared/audit-diff';
 import { DataGrid, GridCell, GridColumn, GridRowAction } from '../../shared/data-grid';
@@ -26,7 +32,13 @@ const WIDE = '(min-width: 768px)';
 const LIMIT = 2000;
 
 const COLUMNS: GridColumn[] = [
-  { field: 'occurred_at', headerText: 'วันเวลา', type: 'datetime', format: 'dd/MM/yyyy HH:mm', width: 150 },
+  {
+    field: 'occurred_at',
+    headerText: 'วันเวลา',
+    type: 'datetime',
+    format: 'dd/MM/yyyy HH:mm',
+    width: 150,
+  },
   { field: 'action_label', headerText: 'การกระทำ', width: 140 },
   { field: 'entity_type_label', headerText: 'ประเภทข้อมูล', width: 150 },
   { field: 'entity_label_text', headerText: 'รายการ', width: 220 },
@@ -45,11 +57,30 @@ function daysAgo(n: number): Date {
 /** Who changed which settings record and how; tenant admins see only their own tenant (enforced by RLS). */
 @Component({
   selector: 'app-audit',
-  imports: [ButtonModule, DateRangePickerModule, PageHeader, DataGrid, GridCell, FilterChips, RecordView, AuditDiff],
+  imports: [
+    ButtonModule,
+    DateRangePickerModule,
+    PageHeader,
+    DataGrid,
+    GridCell,
+    FilterChips,
+    RecordView,
+    AuditDiff,
+  ],
   template: `
     <div class="page">
-      <app-page-header title="ประวัติการแก้ไขข้อมูล" subtitle="บันทึกการสร้าง แก้ไข ระงับ และลบข้อมูลตั้งค่า ลูกค้า และจุดติดตั้ง">
-        <button ejs-button cssClass="e-outline" iconCss="e-icons e-refresh" (click)="entries.reload()">รีเฟรช</button>
+      <app-page-header
+        title="ประวัติการแก้ไขข้อมูล"
+        subtitle="บันทึกการสร้าง แก้ไข ระงับ และลบข้อมูลตั้งค่า ลูกค้า และจุดติดตั้ง"
+      >
+        <button
+          ejs-button
+          cssClass="e-outline"
+          iconCss="e-icons e-refresh"
+          (click)="entries.reload()"
+        >
+          รีเฟรช
+        </button>
       </app-page-header>
 
       <div class="mb-3 flex flex-wrap items-center gap-3">
@@ -66,11 +97,20 @@ function daysAgo(n: number): Date {
           ></ejs-daterangepicker>
         </div>
         @if (from() || to() || entity()) {
-          <button ejs-button cssClass="e-flat" iconCss="e-icons e-close" (click)="clear()">ล้างตัวกรอง</button>
+          <button ejs-button cssClass="e-flat" iconCss="e-icons e-close" (click)="clear()">
+            ล้างตัวกรอง
+          </button>
         }
-        <span class="ml-auto text-sm text-on-surface-variant">{{ rows().length.toLocaleString('th-TH') }} รายการ</span>
+        <span class="ml-auto text-sm text-on-surface-variant"
+          >{{ rows().length.toLocaleString('th-TH') }} รายการ</span
+        >
       </div>
-      <app-filter-chips [options]="entityOptions" [value]="entityFilter()" (valueChange)="setEntity($event)" label="กรองตามประเภทข้อมูล" />
+      <app-filter-chips
+        [options]="entityOptions"
+        [value]="entityFilter()"
+        (valueChange)="setEntity($event)"
+        label="กรองตามประเภทข้อมูล"
+      />
 
       <div class="panel">
         <app-data-grid
@@ -80,7 +120,9 @@ function daysAgo(n: number): Date {
           exportName="audit-log"
           [loading]="entries.isLoading()"
           [error]="entries.error()"
-          [emptyTitle]="from() || to() || entity() ? 'ไม่พบรายการตามตัวกรอง' : 'ยังไม่มีประวัติการแก้ไข'"
+          [emptyTitle]="
+            from() || to() || entity() ? 'ไม่พบรายการตามตัวกรอง' : 'ยังไม่มีประวัติการแก้ไข'
+          "
           [rowActions]="['view']"
           (rowAction)="onRowAction($event)"
           (retry)="entries.reload()"
@@ -118,7 +160,10 @@ export class AuditPage {
   ];
   protected readonly entityOptions: FilterChip<EntityFilter>[] = [
     { key: 'ALL', label: 'ทุกประเภท' },
-    ...(Object.keys(AUDIT_ENTITY_LABELS) as AuditEntity[]).map((k) => ({ key: k, label: AUDIT_ENTITY_LABELS[k] })),
+    ...(Object.keys(AUDIT_ENTITY_LABELS) as AuditEntity[]).map((k) => ({
+      key: k,
+      label: AUDIT_ENTITY_LABELS[k],
+    })),
   ];
 
   protected readonly start = computed(() => toDate(this.from()));
@@ -148,7 +193,10 @@ export class AuditPage {
       action_label: AUDIT_ACTION_LABELS[e.action],
       action_tone: AUDIT_ACTION_TONES[e.action],
       tenant_label: e.tenant_name ?? 'แพลตฟอร์ม',
-      summary: e.action === 'update' || e.action === 'deactivate' ? Object.keys(e.changes).length + ' ฟิลด์' : '',
+      summary:
+        e.action === 'update' || e.action === 'deactivate'
+          ? Object.keys(e.changes).length + ' ฟิลด์'
+          : '',
     })),
   );
 
@@ -156,7 +204,9 @@ export class AuditPage {
   protected readonly viewOpen = signal(false);
   protected readonly viewHeader = computed(() => {
     const e = this.selected();
-    return e ? `${e.action_label}${e.entity_type_label}: ${e.entity_label_text}` : 'ประวัติการแก้ไข';
+    return e
+      ? `${e.action_label}${e.entity_type_label}: ${e.entity_label_text}`
+      : 'ประวัติการแก้ไข';
   });
   protected readonly viewFields = computed<RecordField[]>(() => {
     const e = this.selected();

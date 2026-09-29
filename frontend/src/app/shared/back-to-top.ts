@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, effect, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 
 const THRESHOLD_PX = 400;
 

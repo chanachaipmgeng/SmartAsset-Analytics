@@ -1,5 +1,13 @@
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { ButtonModule } from '@syncfusion/ej2-angular-buttons';
 import { DialogModule } from '@syncfusion/ej2-angular-popups';
 import { ApiService } from '../core/api.service';
@@ -22,13 +30,30 @@ import { DIALOG_ANIMATION } from './syncfusion';
       (drop)="onDrop($event)"
     >
       @for (p of photos(); track p.id; let i = $index) {
-        <button type="button" class="thumb" [style.--i]="i" [title]="p.caption ?? 'ดูรูป'" (click)="openAt(i)">
-          <img [src]="p.thumb_url | photoSrc" [alt]="p.caption ?? 'รูปภาพ'" loading="lazy" decoding="async" />
+        <button
+          type="button"
+          class="thumb"
+          [style.--i]="i"
+          [title]="p.caption ?? 'ดูรูป'"
+          (click)="openAt(i)"
+        >
+          <img
+            [src]="p.thumb_url | photoSrc"
+            [alt]="p.caption ?? 'รูปภาพ'"
+            loading="lazy"
+            decoding="async"
+          />
         </button>
       }
       @if (editable()) {
         <label class="add" [class.busy]="uploading()" [attr.aria-disabled]="uploading()">
-          <input type="file" [accept]="accept" multiple [disabled]="uploading()" (change)="onPick($event)" />
+          <input
+            type="file"
+            [accept]="accept"
+            multiple
+            [disabled]="uploading()"
+            (change)="onPick($event)"
+          />
           @if (uploading()) {
             <span class="spinner" aria-hidden="true"></span>
             <span>กำลังอัปโหลด…</span>
@@ -60,7 +85,12 @@ import { DIALOG_ANIMATION } from './syncfusion';
     >
       <ng-template #content>
         @if (current(); as p) {
-          <div class="stage" (keydown.arrowleft)="step(-1)" (keydown.arrowright)="step(1)" tabindex="0">
+          <div
+            class="stage"
+            (keydown.arrowleft)="step(-1)"
+            (keydown.arrowright)="step(1)"
+            tabindex="0"
+          >
             @for (key of [p.id]; track key) {
               <img [src]="p.url | photoSrc" [alt]="p.caption ?? 'รูปภาพ'" />
             }
@@ -80,12 +110,26 @@ import { DIALOG_ANIMATION } from './syncfusion';
       </ng-template>
       <ng-template #footerTemplate>
         @if (editable()) {
-          <button ejs-button cssClass="e-danger e-flat" iconCss="e-icons e-trash" [disabled]="deleting()" (click)="removeCurrent()">
+          <button
+            ejs-button
+            cssClass="e-danger e-flat"
+            iconCss="e-icons e-trash"
+            [disabled]="deleting()"
+            (click)="removeCurrent()"
+          >
             ลบรูปนี้
           </button>
         }
         @if (current(); as p) {
-          <a ejs-button cssClass="e-flat" iconCss="e-icons e-open-link" [href]="p.url | photoSrc" target="_blank" rel="noopener">เปิดขนาดเต็ม</a>
+          <a
+            ejs-button
+            cssClass="e-flat"
+            iconCss="e-icons e-open-link"
+            [href]="p.url | photoSrc"
+            target="_blank"
+            rel="noopener"
+            >เปิดขนาดเต็ม</a
+          >
         }
         <button ejs-button [isPrimary]="true" (click)="index.set(null)">ปิด</button>
       </ng-template>
@@ -306,11 +350,15 @@ export class PhotoGallery {
   protected readonly resource = httpResource<Photo[]>(
     () => {
       const id = this.ownerId();
-      return id ? { url: '/api/v1/photos', params: { owner_type: this.ownerType(), owner_id: id } } : undefined;
+      return id
+        ? { url: '/api/v1/photos', params: { owner_type: this.ownerType(), owner_id: id } }
+        : undefined;
     },
     { defaultValue: [] },
   );
-  protected readonly photos = computed(() => (this.resource.hasValue() ? this.resource.value() : []));
+  protected readonly photos = computed(() =>
+    this.resource.hasValue() ? this.resource.value() : [],
+  );
 
   protected readonly uploading = signal(false);
   protected readonly deleting = signal(false);

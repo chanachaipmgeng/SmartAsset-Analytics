@@ -1,8 +1,22 @@
 <div class="page">
-  <app-page-header title="จุดติดตั้ง / แผนที่" subtitle="ตำแหน่งอุปกรณ์ที่ติดตั้งอยู่ และค้นหาในรัศมีที่กำหนด">
-    <ejs-checkbox label="แสดงรายการที่ถอนแล้ว" [(checked)]="showRemoved" [disabled]="!!nearbyQuery()"></ejs-checkbox>
+  <app-page-header
+    title="จุดติดตั้ง / แผนที่"
+    subtitle="ตำแหน่งอุปกรณ์ที่ติดตั้งอยู่ และค้นหาในรัศมีที่กำหนด"
+  >
+    <ejs-checkbox
+      label="แสดงรายการที่ถอนแล้ว"
+      [(checked)]="showRemoved"
+      [disabled]="!!nearbyQuery()"
+    ></ejs-checkbox>
     @if (auth.canWrite()) {
-      <button ejs-button iconCss="e-icons e-edit" [disabled]="!canEditSelected()" (click)="openEdit()">แก้ไขพิกัด</button>
+      <button
+        ejs-button
+        iconCss="e-icons e-edit"
+        [disabled]="!canEditSelected()"
+        (click)="openEdit()"
+      >
+        แก้ไขพิกัด
+      </button>
     }
   </app-page-header>
 
@@ -12,11 +26,25 @@
     <div class="fields">
       <div>
         <label>ละติจูด</label>
-        <ejs-numerictextbox [(value)]="searchLat" [min]="-90" [max]="90" format="N6" [decimals]="6" [showSpinButton]="false"></ejs-numerictextbox>
+        <ejs-numerictextbox
+          [(value)]="searchLat"
+          [min]="-90"
+          [max]="90"
+          format="N6"
+          [decimals]="6"
+          [showSpinButton]="false"
+        ></ejs-numerictextbox>
       </div>
       <div>
         <label>ลองจิจูด</label>
-        <ejs-numerictextbox [(value)]="searchLng" [min]="-180" [max]="180" format="N6" [decimals]="6" [showSpinButton]="false"></ejs-numerictextbox>
+        <ejs-numerictextbox
+          [(value)]="searchLng"
+          [min]="-180"
+          [max]="180"
+          format="N6"
+          [decimals]="6"
+          [showSpinButton]="false"
+        ></ejs-numerictextbox>
       </div>
       <div class="radius">
         <label>รัศมี {{ searchRadiusKm() }} กม.</label>
@@ -30,7 +58,9 @@
           (changed)="refreshNearby()"
         ></ejs-slider>
       </div>
-      <button ejs-button [isPrimary]="true" iconCss="e-icons e-search" (click)="searchNearby()">ค้นหา</button>
+      <button ejs-button [isPrimary]="true" iconCss="e-icons e-search" (click)="searchNearby()">
+        ค้นหา
+      </button>
       @if (nearbyQuery()) {
         <button ejs-button (click)="clearNearby()">แสดงทั้งหมด</button>
         <span class="muted">พบ {{ displayed().length }} จุด</span>
@@ -69,7 +99,9 @@
         <span class="state-chip" [class.removed]="!!row.removed_at">{{ row.state_label }}</span>
       </ng-template>
       <ng-template gridCell="customer_name" let-row>
-        <a class="customer-link" [routerLink]="['/customers', row.customer_id]">{{ row.customer_name }}</a>
+        <a class="customer-link" [routerLink]="['/customers', row.customer_id]">{{
+          row.customer_name
+        }}</a>
       </ng-template>
     </app-data-grid>
   </div>
@@ -107,7 +139,9 @@
 >
   <ng-template #content>
     <div class="form-grid">
-      <div class="full">อุปกรณ์: <b>{{ selected()?.serial_number }}</b> — {{ selected()?.customer_name }}</div>
+      <div class="full">
+        อุปกรณ์: <b>{{ selected()?.serial_number }}</b> — {{ selected()?.customer_name }}
+      </div>
       <div class="full">
         <label>วันที่ติดตั้ง *</label>
         <ejs-datepicker [(value)]="editDate" format="dd/MM/yyyy"></ejs-datepicker>
@@ -115,16 +149,36 @@
       <div class="full">
         <label>ตำแหน่ง * <span class="muted">คลิกบนแผนที่เพื่อย้ายหมุด</span></label>
         @if (editOpen()) {
-          <app-installation-map [pin]="editPin()" [focus]="editPin()" [pickable]="true" (pick)="onPickEdit($event)" height="240px" />
+          <app-installation-map
+            [pin]="editPin()"
+            [focus]="editPin()"
+            [pickable]="true"
+            (pick)="onPickEdit($event)"
+            height="240px"
+          />
         }
       </div>
       <div>
         <label>ละติจูด *</label>
-        <ejs-numerictextbox [(value)]="editLat" [min]="-90" [max]="90" format="N6" [decimals]="6" [showSpinButton]="false"></ejs-numerictextbox>
+        <ejs-numerictextbox
+          [(value)]="editLat"
+          [min]="-90"
+          [max]="90"
+          format="N6"
+          [decimals]="6"
+          [showSpinButton]="false"
+        ></ejs-numerictextbox>
       </div>
       <div>
         <label>ลองจิจูด *</label>
-        <ejs-numerictextbox [(value)]="editLng" [min]="-180" [max]="180" format="N6" [decimals]="6" [showSpinButton]="false"></ejs-numerictextbox>
+        <ejs-numerictextbox
+          [(value)]="editLng"
+          [min]="-180"
+          [max]="180"
+          format="N6"
+          [decimals]="6"
+          [showSpinButton]="false"
+        ></ejs-numerictextbox>
       </div>
       <div class="full">
         <label>ที่อยู่</label>
@@ -146,6 +200,8 @@
   </ng-template>
   <ng-template #footerTemplate>
     <button ejs-button (click)="editOpen.set(false)">ยกเลิก</button>
-    <button ejs-button [isPrimary]="true" [disabled]="!editValid() || busy()" (click)="saveEdit()">บันทึก</button>
+    <button ejs-button [isPrimary]="true" [disabled]="!editValid() || busy()" (click)="saveEdit()">
+      บันทึก
+    </button>
   </ng-template>
 </ejs-dialog>

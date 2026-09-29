@@ -1,5 +1,12 @@
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  viewChild,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   AccumulationChartModule,
@@ -123,7 +130,9 @@ export class DashboardPage {
     return types.reduce((sum, t) => sum + (counts.get(t) ?? 0), 0);
   }
 
-  protected readonly totalTrend = computed(() => this.sumRecent(['CHECK_IN']) - this.sumRecent(['RETIRE']));
+  protected readonly totalTrend = computed(
+    () => this.sumRecent(['CHECK_IN']) - this.sumRecent(['RETIRE']),
+  );
 
   protected readonly statusCards = computed(() => {
     this.theme.isDark();
@@ -151,7 +160,9 @@ export class DashboardPage {
       .map((s) => ({ x: s.label, y: s.count, fill: s.color })),
   );
 
-  protected readonly modelChart = computed(() => (this.data()?.by_model ?? []).map((m) => ({ x: m.label, y: m.count })));
+  protected readonly modelChart = computed(() =>
+    (this.data()?.by_model ?? []).map((m) => ({ x: m.label, y: m.count })),
+  );
 
   protected readonly activitySeries = computed(() => {
     this.theme.isDark();
@@ -159,7 +170,10 @@ export class DashboardPage {
     return ACTIVITY_SERIES.map((s) => ({
       name: s.name,
       fill: cssColor(s.token),
-      points: days.map((d) => ({ x: toDate(d.day), y: s.types.reduce((sum, t) => sum + (d.counts[t] ?? 0), 0) })),
+      points: days.map((d) => ({
+        x: toDate(d.day),
+        y: s.types.reduce((sum, t) => sum + (d.counts[t] ?? 0), 0),
+      })),
     }));
   });
   protected readonly activityTotal = computed(() =>
@@ -169,7 +183,10 @@ export class DashboardPage {
   protected readonly recent = computed(() => this.data()?.recent_transactions ?? []);
 
   protected readonly warranty = computed(() =>
-    (this.data()?.warranty_expiring ?? []).map((d) => ({ ...d, warranty_end: toDate(d.warranty_end) })),
+    (this.data()?.warranty_expiring ?? []).map((d) => ({
+      ...d,
+      warranty_end: toDate(d.warranty_end),
+    })),
   );
 
   protected readonly installations = computed(() => this.data()?.installations ?? []);
@@ -214,7 +231,9 @@ export class DashboardPage {
       },
     ];
   });
-  protected readonly backlogTotal = computed(() => this.backlog().reduce((sum, b) => sum + b.count, 0));
+  protected readonly backlogTotal = computed(() =>
+    this.backlog().reduce((sum, b) => sum + b.count, 0),
+  );
 
   protected readonly primaryXAxis = {
     valueType: 'Category',
@@ -232,8 +251,17 @@ export class DashboardPage {
     edgeLabelPlacement: 'Shift',
     majorGridLines: { width: 0 },
   };
-  protected readonly activityYAxis = { minimum: 0, labelFormat: '{value}', lineStyle: { width: 0 }, majorTickLines: { width: 0 } };
-  protected readonly activityTooltip = { enable: true, shared: true, format: '${series.name}: <b>${point.y}</b>' };
+  protected readonly activityYAxis = {
+    minimum: 0,
+    labelFormat: '{value}',
+    lineStyle: { width: 0 },
+    majorTickLines: { width: 0 },
+  };
+  protected readonly activityTooltip = {
+    enable: true,
+    shared: true,
+    format: '${series.name}: <b>${point.y}</b>',
+  };
   protected readonly tooltip = { enable: true };
   // Paging hides statuses behind "1/2" in short panels; let the legend wrap and shrink the donut instead.
   protected readonly legend = {
@@ -245,7 +273,12 @@ export class DashboardPage {
     itemPadding: 10,
     textStyle: { size: '12px' },
   };
-  protected readonly pieLabels = { visible: true, name: 'y', position: 'Inside', font: { color: '#fff', fontWeight: '600' } };
+  protected readonly pieLabels = {
+    visible: true,
+    name: 'y',
+    position: 'Inside',
+    font: { color: '#fff', fontWeight: '600' },
+  };
   protected readonly columnLabels = { visible: true, position: 'Top' };
   protected readonly cellSpacing = [16, 16];
 

@@ -15,7 +15,11 @@ export function buildAppConfig(config: AppConfig): ApplicationConfig {
     providers: [
       provideBrowserGlobalErrorListeners(),
       provideZonelessChangeDetection(),
-      provideRouter(routes, withComponentInputBinding(), withViewTransitions({ skipInitialTransition: true })),
+      provideRouter(
+        routes,
+        withComponentInputBinding(),
+        withViewTransitions({ skipInitialTransition: true }),
+      ),
       // Angular 22 uses the fetch backend by default, so withFetch() is no longer needed.
       provideHttpClient(withInterceptors([authInterceptor])),
       { provide: APP_CONFIG, useValue: config },

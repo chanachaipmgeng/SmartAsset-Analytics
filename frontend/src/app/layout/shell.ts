@@ -23,7 +23,11 @@ import {
   SidebarModule,
 } from '@syncfusion/ej2-angular-navigations';
 import { ToastComponent, ToastModule } from '@syncfusion/ej2-angular-notifications';
-import { DropDownButtonModule, ItemModel, MenuEventArgs } from '@syncfusion/ej2-angular-splitbuttons';
+import {
+  DropDownButtonModule,
+  ItemModel,
+  MenuEventArgs,
+} from '@syncfusion/ej2-angular-splitbuttons';
 import { filter, map } from 'rxjs';
 import { AuthStore } from '../core/auth.store';
 import { ROLE_LABELS } from '../core/labels';
@@ -87,7 +91,9 @@ export class Shell {
   private readonly desktopQuery = matchMedia(DESKTOP_QUERY);
   protected readonly isDesktop = signal(this.desktopQuery.matches);
   /** Desktop: expanded vs docked to icons (remembered). Mobile: drawer open vs closed. */
-  protected readonly sidebarOpen = signal(this.isDesktop() && localStorage.getItem(SIDEBAR_KEY) !== 'false');
+  protected readonly sidebarOpen = signal(
+    this.isDesktop() && localStorage.getItem(SIDEBAR_KEY) !== 'false',
+  );
   protected readonly docked = computed(() => this.isDesktop() && !this.sidebarOpen());
 
   private readonly url = toSignal(
@@ -107,8 +113,16 @@ export class Shell {
 
   protected readonly menu = computed<MenuGroup[]>(() => {
     const settings: MenuItem[] = [];
-    settings.push({ path: '/admin/device-models', label: 'รุ่นอุปกรณ์', icon: 'e-icons e-settings' });
-    settings.push({ path: '/admin/suppliers', label: 'ผู้จำหน่าย / ผู้ซ่อม', icon: 'e-icons e-repeat' });
+    settings.push({
+      path: '/admin/device-models',
+      label: 'รุ่นอุปกรณ์',
+      icon: 'e-icons e-settings',
+    });
+    settings.push({
+      path: '/admin/suppliers',
+      label: 'ผู้จำหน่าย / ผู้ซ่อม',
+      icon: 'e-icons e-repeat',
+    });
     if (this.auth.isSuperadmin()) {
       settings.push({ path: '/admin/tenants', label: 'กลุ่มลูกค้า', icon: 'e-icons e-grid-view' });
     }
@@ -146,7 +160,11 @@ export class Shell {
   protected readonly breadcrumb = computed<BreadcrumbItemModel[]>(() => {
     const path = this.url().split(/[?#]/)[0];
     const groups = [...this.menu(), { label: 'บัญชี', items: ACCOUNT_PAGES }];
-    const home: BreadcrumbItemModel = { text: 'หน้าหลัก', iconCss: 'e-icons e-home', url: '/dashboard' };
+    const home: BreadcrumbItemModel = {
+      text: 'หน้าหลัก',
+      iconCss: 'e-icons e-home',
+      url: '/dashboard',
+    };
     for (const group of groups) {
       const item = group.items.find((i) => path === i.path || path.startsWith(`${i.path}/`));
       if (item) return [home, { text: group.label }, { text: item.label, url: item.path }];
@@ -174,12 +192,33 @@ export class Shell {
     const actions: PaletteCommand[] = [];
     if (this.auth.canWrite()) {
       actions.push(
-        { id: 'new-device', label: 'รับอุปกรณ์เข้าคลัง', group: 'คำสั่งด่วน', icon: 'e-icons e-plus', keywords: 'check in new รับเข้า', run: go('/devices', { action: 'new' }) },
-        { id: 'import', label: 'นำเข้าอุปกรณ์จาก Excel', group: 'คำสั่งด่วน', icon: 'e-icons e-upload-1', keywords: 'import excel csv', run: go('/devices', { action: 'import' }) },
+        {
+          id: 'new-device',
+          label: 'รับอุปกรณ์เข้าคลัง',
+          group: 'คำสั่งด่วน',
+          icon: 'e-icons e-plus',
+          keywords: 'check in new รับเข้า',
+          run: go('/devices', { action: 'new' }),
+        },
+        {
+          id: 'import',
+          label: 'นำเข้าอุปกรณ์จาก Excel',
+          group: 'คำสั่งด่วน',
+          icon: 'e-icons e-upload-1',
+          keywords: 'import excel csv',
+          run: go('/devices', { action: 'import' }),
+        },
       );
     }
     actions.push(
-      { id: 'scan', label: 'เปิดสถานีสแกน', group: 'คำสั่งด่วน', icon: 'e-icons e-zoom-in', keywords: 'scan barcode qr สแกน', run: go('/scan') },
+      {
+        id: 'scan',
+        label: 'เปิดสถานีสแกน',
+        group: 'คำสั่งด่วน',
+        icon: 'e-icons e-zoom-in',
+        keywords: 'scan barcode qr สแกน',
+        run: go('/scan'),
+      },
       {
         id: 'theme',
         label: this.theme.isDark() ? 'เปลี่ยนเป็นธีมสว่าง' : 'เปลี่ยนเป็นธีมมืด',
@@ -188,7 +227,14 @@ export class Shell {
         keywords: 'theme dark light ธีม',
         run: () => this.theme.toggle(),
       },
-      { id: 'logout', label: 'ออกจากระบบ', group: 'คำสั่งด่วน', icon: 'e-icons e-export', keywords: 'logout sign out', run: () => this.auth.logout() },
+      {
+        id: 'logout',
+        label: 'ออกจากระบบ',
+        group: 'คำสั่งด่วน',
+        icon: 'e-icons e-export',
+        keywords: 'logout sign out',
+        run: () => this.auth.logout(),
+      },
     );
     return [...actions, ...pages];
   });

@@ -8,7 +8,13 @@ import { Customer, ServiceLevel, Tenant } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { ConfirmService } from '../../shared/confirm.service';
 import { PageHeader } from '../../shared/page-header';
-import { DataGrid, GridCell, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
+import {
+  DataGrid,
+  GridCell,
+  GridColumn,
+  GridRowAction,
+  GridRowActionId,
+} from '../../shared/data-grid';
 import { FilterChip, FilterChips } from '../../shared/filter-chips';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 
@@ -40,15 +46,25 @@ export class CustomersPage {
     { field: 'active_label', headerText: 'สถานะ', width: 110 },
     { field: 'address', headerText: 'ที่อยู่', width: 260, hidden: true },
     { field: 'tax_id', headerText: 'เลขผู้เสียภาษี', width: 150, hidden: true },
-    ...(this.auth.isSuperadmin() ? [{ field: 'tenant_name', headerText: 'กลุ่มลูกค้า', width: 200 }] : []),
+    ...(this.auth.isSuperadmin()
+      ? [{ field: 'tenant_name', headerText: 'กลุ่มลูกค้า', width: 200 }]
+      : []),
   ]);
   protected readonly levelOptions = toOptions(SERVICE_LEVEL_LABELS);
 
-  protected readonly customers = httpResource<Customer[]>(() => '/api/v1/customers', { defaultValue: [] });
-  protected readonly tenants = httpResource<Tenant[]>(() => '/api/v1/tenants', { defaultValue: [] });
+  protected readonly customers = httpResource<Customer[]>(() => '/api/v1/customers', {
+    defaultValue: [],
+  });
+  protected readonly tenants = httpResource<Tenant[]>(() => '/api/v1/tenants', {
+    defaultValue: [],
+  });
 
-  private readonly tenantNames = computed(() => new Map(this.tenants.value().map((t) => [t.id, t.name])));
-  protected readonly tenantOptions = computed(() => this.tenants.value().map((t) => ({ value: t.id, text: t.name })));
+  private readonly tenantNames = computed(
+    () => new Map(this.tenants.value().map((t) => [t.id, t.name])),
+  );
+  protected readonly tenantOptions = computed(() =>
+    this.tenants.value().map((t) => ({ value: t.id, text: t.name })),
+  );
   protected readonly activeFilter = signal<ActiveFilter>('ACTIVE');
   protected readonly filters = computed<FilterChip<ActiveFilter>[]>(() => {
     const all = this.customers.value();
@@ -86,7 +102,9 @@ export class CustomersPage {
   protected readonly taxId = signal('');
   protected readonly address = signal('');
   protected readonly notes = signal('');
-  protected readonly taxIdInvalid = computed(() => !!this.taxId().trim() && !TAX_ID_RE.test(this.taxId().trim()));
+  protected readonly taxIdInvalid = computed(
+    () => !!this.taxId().trim() && !TAX_ID_RE.test(this.taxId().trim()),
+  );
   protected readonly formValid = computed(
     () =>
       !!this.companyName().trim() &&
@@ -159,7 +177,10 @@ export class CustomersPage {
       if (id) {
         await this.api.updateCustomer(id, body);
       } else {
-        await this.api.createCustomer({ ...body, tenant_id: this.auth.isSuperadmin() ? this.tenantId() : undefined });
+        await this.api.createCustomer({
+          ...body,
+          tenant_id: this.auth.isSuperadmin() ? this.tenantId() : undefined,
+        });
       }
       this.notify.success('บันทึกข้อมูลลูกค้าแล้ว');
       this.formOpen.set(false);

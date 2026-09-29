@@ -1,7 +1,9 @@
 .theme-option {
   cursor: pointer;
   font: inherit;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
 }
 
 .avatar-edit {

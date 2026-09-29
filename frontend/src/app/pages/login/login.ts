@@ -33,9 +33,21 @@ export class LoginPage {
   readonly returnUrl = input<string>();
 
   protected readonly features = [
-    { icon: 'e-icons e-box', title: 'สต็อกรายเครื่อง', detail: 'รู้สถานะและที่อยู่ของทุกซีเรียลแบบเรียลไทม์' },
-    { icon: 'e-icons e-location', title: 'แผนที่จุดติดตั้ง', detail: 'ดูตำแหน่งเครื่องที่ติดตั้งและค้นหาในรัศมี' },
-    { icon: 'e-icons e-changes-track', title: 'ประวัติตรวจสอบย้อนหลัง', detail: 'ทุกการรับเข้า เบิก โอน และคืน ถูกบันทึกไว้' },
+    {
+      icon: 'e-icons e-box',
+      title: 'สต็อกรายเครื่อง',
+      detail: 'รู้สถานะและที่อยู่ของทุกซีเรียลแบบเรียลไทม์',
+    },
+    {
+      icon: 'e-icons e-location',
+      title: 'แผนที่จุดติดตั้ง',
+      detail: 'ดูตำแหน่งเครื่องที่ติดตั้งและค้นหาในรัศมี',
+    },
+    {
+      icon: 'e-icons e-changes-track',
+      title: 'ประวัติตรวจสอบย้อนหลัง',
+      detail: 'ทุกการรับเข้า เบิก โอน และคืน ถูกบันทึกไว้',
+    },
   ];
 
   protected readonly email = signal(savedEmail());
@@ -44,7 +56,9 @@ export class LoginPage {
   protected readonly showPassword = signal(false);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
-  protected readonly canSubmit = computed(() => !!this.email().trim() && !!this.password() && !this.loading());
+  protected readonly canSubmit = computed(
+    () => !!this.email().trim() && !!this.password() && !this.loading(),
+  );
 
   protected async submit(event: Event): Promise<void> {
     event.preventDefault();

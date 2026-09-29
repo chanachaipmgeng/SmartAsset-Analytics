@@ -8,7 +8,13 @@ import { NotifyService } from '../../core/notify.service';
 import { Avatar } from '../../shared/avatar';
 import { AuditHistory } from '../../shared/audit-history';
 import { PageHeader } from '../../shared/page-header';
-import { DataGrid, GridCell, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
+import {
+  DataGrid,
+  GridCell,
+  GridColumn,
+  GridRowAction,
+  GridRowActionId,
+} from '../../shared/data-grid';
 import { RecordField, RecordView } from '../../shared/record-view';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 
@@ -25,8 +31,12 @@ import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
   template: `
     <div class="page">
       <app-page-header title="ผู้ใช้งาน" subtitle="บัญชีผู้ใช้ บทบาท และการระงับการใช้งาน">
-        <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มผู้ใช้</button>
-        <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
+        <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">
+          เพิ่มผู้ใช้
+        </button>
+        <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">
+          แก้ไข
+        </button>
       </app-page-header>
       <div class="panel">
         <app-data-grid
@@ -50,10 +60,14 @@ import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
             </span>
           </ng-template>
           <ng-template gridCell="role_label" let-row>
-            <span class="tone-chip" [attr.data-tone]="roleTone[row.role]">{{ row.role_label }}</span>
+            <span class="tone-chip" [attr.data-tone]="roleTone[row.role]">{{
+              row.role_label
+            }}</span>
           </ng-template>
           <ng-template gridCell="active_label" let-row>
-            <span class="tone-chip" [attr.data-tone]="row.is_active ? 'success' : null">{{ row.active_label }}</span>
+            <span class="tone-chip" [attr.data-tone]="row.is_active ? 'success' : null">{{
+              row.active_label
+            }}</span>
           </ng-template>
         </app-data-grid>
       </div>
@@ -87,20 +101,36 @@ import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
           </div>
           <div>
             <label>อีเมล *</label>
-            <ejs-textbox type="email" [(value)]="email" [liveValue]="email" [readonly]="!!editingId()"></ejs-textbox>
+            <ejs-textbox
+              type="email"
+              [(value)]="email"
+              [liveValue]="email"
+              [readonly]="!!editingId()"
+            ></ejs-textbox>
           </div>
           <div>
             <label>บทบาท *</label>
-            <ejs-dropdownlist [dataSource]="roleOptions()" [fields]="{ value: 'value', text: 'text' }" [(value)]="role"></ejs-dropdownlist>
+            <ejs-dropdownlist
+              [dataSource]="roleOptions()"
+              [fields]="{ value: 'value', text: 'text' }"
+              [(value)]="role"
+            ></ejs-dropdownlist>
           </div>
           <div>
-            <label>{{ editingId() ? 'รหัสผ่านใหม่ (เว้นว่างถ้าไม่เปลี่ยน)' : 'รหัสผ่าน (อย่างน้อย 8 ตัว) *' }}</label>
+            <label>{{
+              editingId() ? 'รหัสผ่านใหม่ (เว้นว่างถ้าไม่เปลี่ยน)' : 'รหัสผ่าน (อย่างน้อย 8 ตัว) *'
+            }}</label>
             <ejs-textbox type="password" [(value)]="password" [liveValue]="password"></ejs-textbox>
           </div>
           @if (auth.isSuperadmin() && role() !== 'superadmin') {
             <div class="full">
               <label>กลุ่มลูกค้า *</label>
-              <ejs-dropdownlist [dataSource]="tenantOptions()" [fields]="{ value: 'value', text: 'text' }" [(value)]="tenantId" placeholder="เลือกกลุ่มลูกค้า"></ejs-dropdownlist>
+              <ejs-dropdownlist
+                [dataSource]="tenantOptions()"
+                [fields]="{ value: 'value', text: 'text' }"
+                [(value)]="tenantId"
+                placeholder="เลือกกลุ่มลูกค้า"
+              ></ejs-dropdownlist>
             </div>
           }
           @if (editingId()) {
@@ -112,7 +142,9 @@ import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
       </ng-template>
       <ng-template #footerTemplate>
         <button ejs-button (click)="formOpen.set(false)">ยกเลิก</button>
-        <button ejs-button [isPrimary]="true" [disabled]="!formValid() || busy()" (click)="save()">บันทึก</button>
+        <button ejs-button [isPrimary]="true" [disabled]="!formValid() || busy()" (click)="save()">
+          บันทึก
+        </button>
       </ng-template>
     </ejs-dialog>
   `,
@@ -134,19 +166,29 @@ export class UsersPage {
     { field: 'full_name', headerText: 'ชื่อ-นามสกุล', width: 220 },
     { field: 'email', headerText: 'อีเมล', width: 230 },
     { field: 'role_label', headerText: 'บทบาท', width: 160 },
-    ...(this.auth.isSuperadmin() ? [{ field: 'tenant_name', headerText: 'กลุ่มลูกค้า', width: 220 }] : []),
+    ...(this.auth.isSuperadmin()
+      ? [{ field: 'tenant_name', headerText: 'กลุ่มลูกค้า', width: 220 }]
+      : []),
     { field: 'active_label', headerText: 'สถานะ', width: 110 },
   ]);
   protected readonly users = httpResource<User[]>(() => '/api/v1/users', { defaultValue: [] });
-  protected readonly tenants = httpResource<Tenant[]>(() => '/api/v1/tenants', { defaultValue: [] });
+  protected readonly tenants = httpResource<Tenant[]>(() => '/api/v1/tenants', {
+    defaultValue: [],
+  });
   private readonly userPhotos = httpResource<Photo[]>(
     () => ({ url: '/api/v1/photos', params: { owner_type: 'user' } }),
     { defaultValue: [] },
   );
-  private readonly avatars = computed(() => new Map(this.userPhotos.value().map((p) => [p.owner_id, p.thumb_url])));
+  private readonly avatars = computed(
+    () => new Map(this.userPhotos.value().map((p) => [p.owner_id, p.thumb_url])),
+  );
 
-  private readonly tenantNames = computed(() => new Map(this.tenants.value().map((t) => [t.id, t.name])));
-  protected readonly tenantOptions = computed(() => this.tenants.value().map((t) => ({ value: t.id, text: t.name })));
+  private readonly tenantNames = computed(
+    () => new Map(this.tenants.value().map((t) => [t.id, t.name])),
+  );
+  protected readonly tenantOptions = computed(() =>
+    this.tenants.value().map((t) => ({ value: t.id, text: t.name })),
+  );
   protected readonly roleOptions = computed(() =>
     toOptions(ROLE_LABELS).filter((o) => this.auth.isSuperadmin() || o.value !== 'superadmin'),
   );
@@ -189,7 +231,13 @@ export class UsersPage {
       { label: 'บทบาท', value: ROLE_LABELS[u.role] },
       { label: 'สถานะ', value: u.is_active ? 'ใช้งาน' : 'ระงับ' },
       ...(this.auth.isSuperadmin()
-        ? [{ label: 'กลุ่มลูกค้า', value: u.tenant_id ? this.tenantNames().get(u.tenant_id) : 'แพลตฟอร์ม', wide: true }]
+        ? [
+            {
+              label: 'กลุ่มลูกค้า',
+              value: u.tenant_id ? this.tenantNames().get(u.tenant_id) : 'แพลตฟอร์ม',
+              wide: true,
+            },
+          ]
         : []),
     ];
   });

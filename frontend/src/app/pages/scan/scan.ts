@@ -18,7 +18,12 @@ import { Router, RouterLink } from '@angular/router';
 import { ButtonModule, CheckBoxModule } from '@syncfusion/ej2-angular-buttons';
 import { firstValueFrom } from 'rxjs';
 import { AuthStore } from '../../core/auth.store';
-import { DeviceActionId, availableActions, commonBulkActions, isBulkAction } from '../../core/device-actions';
+import {
+  DeviceActionId,
+  availableActions,
+  commonBulkActions,
+  isBulkAction,
+} from '../../core/device-actions';
 import { relativeTime } from '../../core/labels';
 import { Device, DeviceStatus } from '../../core/models';
 import { errorMessage } from '../../core/notify.service';
@@ -78,7 +83,18 @@ function barcodeDetector(): BarcodeDetectorCtor | null {
 
 @Component({
   selector: 'app-scan',
-  imports: [DatePipe, RouterLink, ButtonModule, CheckBoxModule, PageHeader, StatusChip, EmptyState, SkeletonBlock, DeviceActionDialogs, LabelPrintDialog],
+  imports: [
+    DatePipe,
+    RouterLink,
+    ButtonModule,
+    CheckBoxModule,
+    PageHeader,
+    StatusChip,
+    EmptyState,
+    SkeletonBlock,
+    DeviceActionDialogs,
+    LabelPrintDialog,
+  ],
   templateUrl: './scan.html',
   styleUrl: './scan.scss',
   host: { '(document:keydown)': 'captureWedge($event)' },
@@ -116,14 +132,20 @@ export class ScanPage {
     return l.kind === 'error' ? l.message : null;
   });
   protected readonly actions = computed(() =>
-    availableActions(this.device(), { canWrite: this.auth.canWrite(), isSuperadmin: this.auth.isSuperadmin() }),
+    availableActions(this.device(), {
+      canWrite: this.auth.canWrite(),
+      isSuperadmin: this.auth.isSuperadmin(),
+    }),
   );
 
   /** Continuous mode: every device found is queued for one bulk action. */
   protected readonly batchMode = signal(false);
   protected readonly batch = signal<Device[]>([]);
   protected readonly batchActions = computed(() =>
-    commonBulkActions(this.batch(), { canWrite: this.auth.canWrite(), isSuperadmin: this.auth.isSuperadmin() }),
+    commonBulkActions(this.batch(), {
+      canWrite: this.auth.canWrite(),
+      isSuperadmin: this.auth.isSuperadmin(),
+    }),
   );
 
   protected readonly cameraSupported = barcodeDetector() !== null;
@@ -141,7 +163,11 @@ export class ScanPage {
       if (!serial) return;
       untracked(() => {
         void this.scan(serial);
-        void this.router.navigate([], { queryParams: { serial: null }, queryParamsHandling: 'merge', replaceUrl: true });
+        void this.router.navigate([], {
+          queryParams: { serial: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
       });
     });
     inject(DestroyRef).onDestroy(() => this.stopCamera());
@@ -171,7 +197,12 @@ export class ScanPage {
       this.lookup.set({ kind: 'found', serial, device });
       if (record) {
         scanSuccess();
-        this.remember({ serial, at: new Date().toISOString(), deviceId: device.id, status: device.status });
+        this.remember({
+          serial,
+          at: new Date().toISOString(),
+          deviceId: device.id,
+          status: device.status,
+        });
         if (this.batchMode()) this.addToBatch(device);
       } else {
         this.updateHistoryStatus(device);
@@ -180,7 +211,8 @@ export class ScanPage {
     } catch (err) {
       if (err instanceof HttpErrorResponse && err.status === 404) {
         this.lookup.set({ kind: 'missing', serial });
-        if (record) this.remember({ serial, at: new Date().toISOString(), deviceId: null, status: null });
+        if (record)
+          this.remember({ serial, at: new Date().toISOString(), deviceId: null, status: null });
       } else {
         this.lookup.set({ kind: 'error', serial, message: errorMessage(err) });
       }
@@ -229,7 +261,9 @@ export class ScanPage {
 
   private addToBatch(device: Device): void {
     this.batch.update((list) =>
-      list.some((d) => d.id === device.id) ? list.map((d) => (d.id === device.id ? device : d)) : [device, ...list],
+      list.some((d) => d.id === device.id)
+        ? list.map((d) => (d.id === device.id ? device : d))
+        : [device, ...list],
     );
   }
 
@@ -249,7 +283,10 @@ export class ScanPage {
     if (!Detector || !video) return;
     this.cameraError.set(null);
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+        audio: false,
+      });
       video.srcObject = this.stream;
       await video.play();
       const detector = new Detector({ formats: await Detector.getSupportedFormats() });
@@ -291,7 +328,9 @@ export class ScanPage {
   }
 
   private updateHistoryStatus(device: Device): void {
-    this.history.update((list) => list.map((h) => (h.deviceId === device.id ? { ...h, status: device.status } : h)));
+    this.history.update((list) =>
+      list.map((h) => (h.deviceId === device.id ? { ...h, status: device.status } : h)),
+    );
     this.persist();
   }
 

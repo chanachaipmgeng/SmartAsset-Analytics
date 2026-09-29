@@ -64,13 +64,17 @@ const PAGE_RULES: Record<LabelSize, string> = {
             }
           </div>
           @if (devices().length > preview().length) {
-            <div class="muted">แสดงตัวอย่าง {{ preview().length }} จาก {{ devices().length }} ดวง</div>
+            <div class="muted">
+              แสดงตัวอย่าง {{ preview().length }} จาก {{ devices().length }} ดวง
+            </div>
           }
         </div>
       </ng-template>
       <ng-template #footerTemplate>
         <button ejs-button (click)="devices.set([])">ยกเลิก</button>
-        <button ejs-button [isPrimary]="true" iconCss="e-icons e-print" (click)="print()">พิมพ์</button>
+        <button ejs-button [isPrimary]="true" iconCss="e-icons e-print" (click)="print()">
+          พิมพ์
+        </button>
       </ng-template>
     </ejs-dialog>
 
@@ -140,7 +144,9 @@ export class LabelPrintDialog {
 
   open(devices: readonly LabelDevice[]): void {
     const seen = new Set<string>();
-    this.devices.set(devices.filter((d) => !seen.has(d.serial_number) && seen.add(d.serial_number)));
+    this.devices.set(
+      devices.filter((d) => !seen.has(d.serial_number) && seen.add(d.serial_number)),
+    );
   }
 
   protected print(): void {

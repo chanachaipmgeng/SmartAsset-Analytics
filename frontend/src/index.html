@@ -1,26 +1,33 @@
 <!doctype html>
 <html lang="th">
-<head>
-  <meta charset="utf-8">
-  <title>ระบบสต็อกและติดตามเครื่องลงเวลา</title>
-  <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#4f46e5">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap">
-  <script>
-    // Apply the saved theme before Angular boots so the first paint is not the wrong theme.
-    (function () {
-      var mode = 'system';
-      try { mode = localStorage.getItem('inventory.theme') || 'system'; } catch (e) {}
-      var dark = mode === 'dark' || (mode === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
-      if (dark) document.documentElement.classList.add('e-dark-mode');
-    })();
-  </script>
-</head>
-<body>
-  <app-root></app-root>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <title>ระบบสต็อกและติดตามเครื่องลงเวลา</title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#4f46e5" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap"
+    />
+    <script>
+      // Apply the saved theme before Angular boots so the first paint is not the wrong theme.
+      (function () {
+        var mode = 'system';
+        try {
+          mode = localStorage.getItem('inventory.theme') || 'system';
+        } catch (e) {}
+        var dark =
+          mode === 'dark' ||
+          (mode === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+        if (dark) document.documentElement.classList.add('e-dark-mode');
+      })();
+    </script>
+  </head>
+  <body>
+    <app-root></app-root>
+  </body>
 </html>

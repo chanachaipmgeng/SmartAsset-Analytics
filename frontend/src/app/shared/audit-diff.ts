@@ -16,15 +16,23 @@ export function formatAuditValue(field: string, value: unknown): string {
   if (value === null || value === undefined || value === '') return EMPTY;
   if (typeof value === 'boolean') return value ? 'ใช่' : 'ไม่ใช่';
   if (field === 'role') return ROLE_LABELS[value as Role] ?? String(value);
-  if (field === 'service_level') return SERVICE_LEVEL_LABELS[value as ServiceLevel] ?? String(value);
+  if (field === 'service_level')
+    return SERVICE_LEVEL_LABELS[value as ServiceLevel] ?? String(value);
   return String(value);
 }
 
 export function auditRows(changes: AuditEntry['changes']): DiffRow[] {
   return Object.entries(changes).map(([field, change]) => {
     const label = FIELD_LABELS[field] ?? field;
-    if (!Array.isArray(change)) return { field, label, old: '', new: 'มีการเปลี่ยนแปลง', secret: true };
-    return { field, label, old: formatAuditValue(field, change[0]), new: formatAuditValue(field, change[1]), secret: false };
+    if (!Array.isArray(change))
+      return { field, label, old: '', new: 'มีการเปลี่ยนแปลง', secret: true };
+    return {
+      field,
+      label,
+      old: formatAuditValue(field, change[0]),
+      new: formatAuditValue(field, change[1]),
+      secret: false,
+    };
   });
 }
 

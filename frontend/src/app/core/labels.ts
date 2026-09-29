@@ -1,5 +1,12 @@
 import { cssColor } from './theme.service';
-import { AuditAction, AuditEntity, DeviceStatus, Role, ServiceLevel, TransactionType } from './models';
+import {
+  AuditAction,
+  AuditEntity,
+  DeviceStatus,
+  Role,
+  ServiceLevel,
+  TransactionType,
+} from './models';
 
 export const STATUS_LABELS: Record<DeviceStatus, string> = {
   IN_STOCK: 'อยู่ในคลัง',
@@ -11,7 +18,8 @@ export const STATUS_LABELS: Record<DeviceStatus, string> = {
   RETIRED: 'ปลดระวาง',
 };
 
-export type StatusTone = 'success' | 'warning' | 'info' | 'error' | 'neutral' | 'primary' | 'tertiary';
+export type StatusTone =
+  'success' | 'warning' | 'info' | 'error' | 'neutral' | 'primary' | 'tertiary';
 
 export const STATUS_TONES: Record<DeviceStatus, StatusTone> = {
   IN_STOCK: 'success',
@@ -181,7 +189,9 @@ export const FIELD_LABELS: Record<string, string> = {
   uploaded_by: 'ผู้อัปโหลด',
 };
 
-export function toOptions<K extends string>(labels: Record<K, string>): { value: K; text: string }[] {
+export function toOptions<K extends string>(
+  labels: Record<K, string>,
+): { value: K; text: string }[] {
   return (Object.keys(labels) as K[]).map((value) => ({ value, text: labels[value] }));
 }
 

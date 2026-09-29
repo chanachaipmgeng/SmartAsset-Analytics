@@ -57,7 +57,11 @@
 
   --color-surface: rgb(var(--app-surface));
   --color-surface-dim: color-mix(in srgb, rgb(var(--app-surface)) 95%, rgb(var(--app-primary)));
-  --color-surface-container: color-mix(in srgb, rgb(var(--app-surface)) 90%, rgb(var(--app-primary)));
+  --color-surface-container: color-mix(
+    in srgb,
+    rgb(var(--app-surface)) 90%,
+    rgb(var(--app-primary))
+  );
   --color-surface-variant: rgb(var(--app-surface-variant));
   --color-on-surface: rgb(var(--app-on-surface));
   --color-on-surface-variant: rgb(var(--app-on-surface-variant));

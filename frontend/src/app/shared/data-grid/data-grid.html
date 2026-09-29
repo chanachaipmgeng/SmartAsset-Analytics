@@ -114,7 +114,11 @@
           </div>
         </ng-template>
         <ng-template #emptyRecordTemplate>
-          <app-empty-state [title]="emptyTitle()" [message]="emptyMessage()" icon="e-icons e-search" />
+          <app-empty-state
+            [title]="emptyTitle()"
+            [message]="emptyMessage()"
+            icon="e-icons e-search"
+          />
         </ng-template>
       </ejs-grid>
     }

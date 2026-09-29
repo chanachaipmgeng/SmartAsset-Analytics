@@ -38,7 +38,8 @@ export const routes: Routes = [
       {
         path: 'transactions',
         title: 'ความเคลื่อนไหวสต็อก',
-        loadComponent: () => import('./pages/transactions/transactions').then((m) => m.TransactionsPage),
+        loadComponent: () =>
+          import('./pages/transactions/transactions').then((m) => m.TransactionsPage),
       },
       {
         path: 'reports',
@@ -53,12 +54,14 @@ export const routes: Routes = [
       {
         path: 'customers/:id',
         title: 'รายละเอียดลูกค้า',
-        loadComponent: () => import('./pages/customers/customer-detail').then((m) => m.CustomerDetailPage),
+        loadComponent: () =>
+          import('./pages/customers/customer-detail').then((m) => m.CustomerDetailPage),
       },
       {
         path: 'installations',
         title: 'จุดติดตั้ง',
-        loadComponent: () => import('./pages/installations/installations').then((m) => m.InstallationsPage),
+        loadComponent: () =>
+          import('./pages/installations/installations').then((m) => m.InstallationsPage),
       },
       {
         path: 'admin/tenants',

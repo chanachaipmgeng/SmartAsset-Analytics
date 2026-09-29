@@ -106,7 +106,10 @@ const RULES: Rule[] = [
 ];
 
 /** Actions the current user may run on `device` in its current status. */
-export function availableActions(device: Device | null | undefined, perms: Permissions): DeviceAction[] {
+export function availableActions(
+  device: Device | null | undefined,
+  perms: Permissions,
+): DeviceAction[] {
   if (!device) return [];
   return RULES.filter((r) => r.allowed(device, perms)).map(({ allowed: _, ...action }) => action);
 }
@@ -135,9 +138,12 @@ export function isBulkAction(id: DeviceActionId): id is BulkActionId {
 type StatusFields = Pick<Device, 'status' | 'tenant_id'>;
 
 /** Bulk actions allowed for every one of `devices` (the intersection of each device's actions). */
-export function commonBulkActions(devices: readonly StatusFields[], perms: Permissions): DeviceAction[] {
+export function commonBulkActions(
+  devices: readonly StatusFields[],
+  perms: Permissions,
+): DeviceAction[] {
   if (!devices.length) return [];
-  return RULES.filter((r) => isBulkAction(r.id) && devices.every((d) => r.allowed(d as Device, perms))).map(
-    ({ allowed: _, ...action }) => action,
-  );
+  return RULES.filter(
+    (r) => isBulkAction(r.id) && devices.every((d) => r.allowed(d as Device, perms)),
+  ).map(({ allowed: _, ...action }) => action);
 }

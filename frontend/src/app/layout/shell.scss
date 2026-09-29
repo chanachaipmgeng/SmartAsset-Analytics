@@ -78,8 +78,15 @@
 }
 
 @keyframes pulse-ring {
-  0%, 100% { opacity: 0; transform: scale(0.85); }
-  50%      { opacity: 1; transform: scale(1); }
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .ai-badge {
@@ -99,9 +106,15 @@
 }
 
 @keyframes badge-shimmer {
-  0%   { background-position: 100% 50%; }
-  50%  { background-position: 0% 50%; }
-  100% { background-position: 100% 50%; }
+  0% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
 }
 
 :host ::ng-deep {
@@ -132,17 +145,25 @@
 }
 
 @keyframes ring-spin {
-  to { --ring-angle: 360deg; }
+  to {
+    --ring-angle: 360deg;
+  }
 }
 
 // Fallback spin for browsers without @property support
 @supports not (background: paint(id)) {
   @keyframes ring-spin {
-    to { rotate: 360deg; }
+    to {
+      rotate: 360deg;
+    }
   }
   .avatar-ring {
     animation: none;
-    background: linear-gradient(135deg, rgba(var(--app-primary), 0.7), rgba(var(--app-tertiary), 0.5));
+    background: linear-gradient(
+      135deg,
+      rgba(var(--app-primary), 0.7),
+      rgba(var(--app-tertiary), 0.5)
+    );
   }
 }
 
@@ -196,11 +217,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(
-    circle at 30% 50%,
-    rgba(var(--app-primary), 0.08),
-    transparent 70%
-  );
+  background: radial-gradient(circle at 30% 50%, rgba(var(--app-primary), 0.08), transparent 70%);
   opacity: 0;
   transition: opacity 300ms ease;
 

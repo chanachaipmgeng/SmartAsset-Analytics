@@ -15,7 +15,13 @@ const WIDE = '(min-width: 768px)';
 const LIMIT = 2000;
 
 const COLUMNS: GridColumn[] = [
-  { field: 'occurred_at', headerText: 'วันเวลา', type: 'datetime', format: 'dd/MM/yyyy HH:mm', width: 150 },
+  {
+    field: 'occurred_at',
+    headerText: 'วันเวลา',
+    type: 'datetime',
+    format: 'dd/MM/yyyy HH:mm',
+    width: 150,
+  },
   { field: 'type_label', headerText: 'รายการ', width: 190 },
   { field: 'serial_number', headerText: 'ซีเรียล', width: 150 },
   { field: 'from_label', headerText: 'จากสถานะ', width: 120, hideAtMedia: WIDE },
@@ -36,11 +42,29 @@ function daysAgo(n: number): Date {
 
 @Component({
   selector: 'app-transactions',
-  imports: [ButtonModule, DateRangePickerModule, RouterLink, PageHeader, DataGrid, GridCell, FilterChips],
+  imports: [
+    ButtonModule,
+    DateRangePickerModule,
+    RouterLink,
+    PageHeader,
+    DataGrid,
+    GridCell,
+    FilterChips,
+  ],
   template: `
     <div class="page">
-      <app-page-header title="ความเคลื่อนไหวสต็อก" subtitle="ประวัติทุกรายการที่เปลี่ยนสถานะหรือย้ายอุปกรณ์">
-        <button ejs-button cssClass="e-outline" iconCss="e-icons e-refresh" (click)="transactions.reload()">รีเฟรช</button>
+      <app-page-header
+        title="ความเคลื่อนไหวสต็อก"
+        subtitle="ประวัติทุกรายการที่เปลี่ยนสถานะหรือย้ายอุปกรณ์"
+      >
+        <button
+          ejs-button
+          cssClass="e-outline"
+          iconCss="e-icons e-refresh"
+          (click)="transactions.reload()"
+        >
+          รีเฟรช
+        </button>
       </app-page-header>
 
       <div class="mb-3 flex flex-wrap items-center gap-3">
@@ -57,13 +81,26 @@ function daysAgo(n: number): Date {
           ></ejs-daterangepicker>
         </div>
         @if (from() || to() || type()) {
-          <button ejs-button cssClass="e-flat" iconCss="e-icons e-close" (click)="clear()">ล้างตัวกรอง</button>
+          <button ejs-button cssClass="e-flat" iconCss="e-icons e-close" (click)="clear()">
+            ล้างตัวกรอง
+          </button>
         }
         <span class="ml-auto text-sm text-on-surface-variant">
-          {{ rows().length.toLocaleString('th-TH') }} รายการ{{ rows().length >= limit ? ' (แสดงล่าสุด ' + limit.toLocaleString('th-TH') + ' รายการ ปรับช่วงวันที่เพื่อดูเพิ่ม)' : '' }}
+          {{ rows().length.toLocaleString('th-TH') }} รายการ{{
+            rows().length >= limit
+              ? ' (แสดงล่าสุด ' +
+                limit.toLocaleString('th-TH') +
+                ' รายการ ปรับช่วงวันที่เพื่อดูเพิ่ม)'
+              : ''
+          }}
         </span>
       </div>
-      <app-filter-chips [options]="typeOptions" [value]="typeFilter()" (valueChange)="setType($event)" label="กรองตามประเภทรายการ" />
+      <app-filter-chips
+        [options]="typeOptions"
+        [value]="typeFilter()"
+        (valueChange)="setType($event)"
+        label="กรองตามประเภทรายการ"
+      />
 
       <div class="panel">
         <app-data-grid
@@ -73,17 +110,25 @@ function daysAgo(n: number): Date {
           exportName="stock-transactions"
           [loading]="transactions.isLoading()"
           [error]="transactions.error()"
-          [emptyTitle]="from() || to() || type() ? 'ไม่พบรายการตามตัวกรอง' : 'ยังไม่มีความเคลื่อนไหว'"
+          [emptyTitle]="
+            from() || to() || type() ? 'ไม่พบรายการตามตัวกรอง' : 'ยังไม่มีความเคลื่อนไหว'
+          "
           (retry)="transactions.reload()"
         >
           <ng-template gridCell="type_label" let-row>
-            <span class="tone-chip has-icon" [attr.data-tone]="row.type_tone" [title]="row.type_label">
+            <span
+              class="tone-chip has-icon"
+              [attr.data-tone]="row.type_tone"
+              [title]="row.type_label"
+            >
               <span [class]="row.type_icon"></span>{{ row.type_label }}
             </span>
           </ng-template>
           <ng-template gridCell="customer_name" let-row>
             @if (row.customer_id) {
-              <a class="customer-link" [routerLink]="['/customers', row.customer_id]">{{ row.customer_name }}</a>
+              <a class="customer-link" [routerLink]="['/customers', row.customer_id]">{{
+                row.customer_name
+              }}</a>
             }
           </ng-template>
         </app-data-grid>
@@ -107,7 +152,11 @@ export class TransactionsPage {
     { label: 'วันนี้', start: daysAgo(0), end: new Date() },
     { label: '7 วันล่าสุด', start: daysAgo(6), end: new Date() },
     { label: '30 วันล่าสุด', start: daysAgo(29), end: new Date() },
-    { label: 'เดือนนี้', start: new Date(new Date().getFullYear(), new Date().getMonth(), 1), end: new Date() },
+    {
+      label: 'เดือนนี้',
+      start: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+      end: new Date(),
+    },
   ];
   protected readonly typeOptions: FilterChip<TypeFilter>[] = [
     { key: 'ALL', label: 'ทุกประเภท' },

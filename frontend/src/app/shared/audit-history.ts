@@ -100,7 +100,10 @@ export class AuditHistory {
     () => {
       const id = this.entityId();
       if (!id || !this.active() || !this.auth.isAdmin()) return undefined;
-      return { url: '/api/v1/audit', params: { entity_type: this.entityType(), entity_id: id, limit: HISTORY_LIMIT } };
+      return {
+        url: '/api/v1/audit',
+        params: { entity_type: this.entityType(), entity_id: id, limit: HISTORY_LIMIT },
+      };
     },
     { defaultValue: [] },
   );

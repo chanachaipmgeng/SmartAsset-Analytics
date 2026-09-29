@@ -5,7 +5,13 @@ import { Tenant } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { AuditHistory } from '../../shared/audit-history';
 import { PageHeader } from '../../shared/page-header';
-import { DataGrid, GridCell, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
+import {
+  DataGrid,
+  GridCell,
+  GridColumn,
+  GridRowAction,
+  GridRowActionId,
+} from '../../shared/data-grid';
 import { RecordField, RecordView } from '../../shared/record-view';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 
@@ -20,9 +26,16 @@ const COLUMNS: GridColumn[] = [
   imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell, RecordView, AuditHistory],
   template: `
     <div class="page">
-      <app-page-header title="กลุ่มลูกค้า" subtitle="องค์กรที่ใช้ระบบ แต่ละกลุ่มเห็นเฉพาะอุปกรณ์และข้อมูลของตนเอง">
-        <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มกลุ่มลูกค้า</button>
-        <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
+      <app-page-header
+        title="กลุ่มลูกค้า"
+        subtitle="องค์กรที่ใช้ระบบ แต่ละกลุ่มเห็นเฉพาะอุปกรณ์และข้อมูลของตนเอง"
+      >
+        <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">
+          เพิ่มกลุ่มลูกค้า
+        </button>
+        <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">
+          แก้ไข
+        </button>
       </app-page-header>
       <div class="panel">
         <app-data-grid
@@ -40,7 +53,9 @@ const COLUMNS: GridColumn[] = [
           (retry)="tenants.reload()"
         >
           <ng-template gridCell="active_label" let-row>
-            <span class="tone-chip" [attr.data-tone]="row.is_active ? 'success' : null">{{ row.active_label }}</span>
+            <span class="tone-chip" [attr.data-tone]="row.is_active ? 'success' : null">{{
+              row.active_label
+            }}</span>
           </ng-template>
         </app-data-grid>
       </div>
@@ -85,7 +100,9 @@ const COLUMNS: GridColumn[] = [
       </ng-template>
       <ng-template #footerTemplate>
         <button ejs-button (click)="formOpen.set(false)">ยกเลิก</button>
-        <button ejs-button [isPrimary]="true" [disabled]="!formValid() || busy()" (click)="save()">บันทึก</button>
+        <button ejs-button [isPrimary]="true" [disabled]="!formValid() || busy()" (click)="save()">
+          บันทึก
+        </button>
       </ng-template>
     </ejs-dialog>
   `,
@@ -97,7 +114,9 @@ export class TenantsPage {
 
   protected readonly columns = COLUMNS;
   protected readonly animation = DIALOG_ANIMATION;
-  protected readonly tenants = httpResource<Tenant[]>(() => '/api/v1/tenants', { defaultValue: [] });
+  protected readonly tenants = httpResource<Tenant[]>(() => '/api/v1/tenants', {
+    defaultValue: [],
+  });
   protected readonly rows = computed(() =>
     this.tenants.value().map((t) => ({ ...t, active_label: t.is_active ? 'ใช้งาน' : 'ระงับ' })),
   );

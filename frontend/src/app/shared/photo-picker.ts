@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, model } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  model,
+} from '@angular/core';
 import { NotifyService } from '../core/notify.service';
 import { PHOTO_ACCEPT, checkPhotoFiles } from '../core/photos';
 
@@ -12,7 +19,12 @@ const MAX_PICKED = 10;
       @for (item of previews(); track item.url; let i = $index) {
         <figure class="preview" [style.--i]="i">
           <img [src]="item.url" [alt]="item.file.name" />
-          <button type="button" class="remove" [attr.aria-label]="'เอารูป ' + item.file.name + ' ออก'" (click)="remove(i)">
+          <button
+            type="button"
+            class="remove"
+            [attr.aria-label]="'เอารูป ' + item.file.name + ' ออก'"
+            (click)="remove(i)"
+          >
             <span class="e-icons e-close" aria-hidden="true"></span>
           </button>
         </figure>
@@ -119,7 +131,8 @@ export class PhotoPicker {
 
   protected readonly previews = computed(() => {
     const next = new Map<File, string>();
-    for (const file of this.files()) next.set(file, this.urls.get(file) ?? URL.createObjectURL(file));
+    for (const file of this.files())
+      next.set(file, this.urls.get(file) ?? URL.createObjectURL(file));
     for (const [file, url] of this.urls) if (!next.has(file)) URL.revokeObjectURL(url);
     this.urls = next;
     return [...next].map(([file, url]) => ({ file, url }));

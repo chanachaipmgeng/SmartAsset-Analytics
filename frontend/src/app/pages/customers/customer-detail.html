@@ -1,18 +1,34 @@
 <div class="page">
   @if (customer.error()) {
-    <app-error-state title="ไม่พบข้อมูลลูกค้า" message="ลูกค้าอาจถูกลบหรือคุณไม่มีสิทธิ์เข้าถึง" (retry)="customer.reload()" />
+    <app-error-state
+      title="ไม่พบข้อมูลลูกค้า"
+      message="ลูกค้าอาจถูกลบหรือคุณไม่มีสิทธิ์เข้าถึง"
+      (retry)="customer.reload()"
+    />
   } @else if (customer.value(); as c) {
-    <app-page-header [title]="c.company_name" [subtitle]="tenantName() ?? 'รายละเอียดลูกค้า จุดติดตั้ง และประวัติอุปกรณ์'">
-      <a ejs-button cssClass="e-outline" iconCss="e-icons e-arrow-left" routerLink="/customers">กลับไปรายชื่อลูกค้า</a>
+    <app-page-header
+      [title]="c.company_name"
+      [subtitle]="tenantName() ?? 'รายละเอียดลูกค้า จุดติดตั้ง และประวัติอุปกรณ์'"
+    >
+      <a ejs-button cssClass="e-outline" iconCss="e-icons e-arrow-left" routerLink="/customers"
+        >กลับไปรายชื่อลูกค้า</a
+      >
     </app-page-header>
 
     <section class="panel profile">
       <div class="profile-head">
-        <span class="tone-chip" [attr.data-tone]="c.is_active ? 'success' : 'neutral'">{{ c.is_active ? 'ใช้งาน' : 'ระงับ' }}</span>
-        <span class="tone-chip" data-tone="primary">ระดับบริการ{{ levelLabels[c.service_level] }}</span>
+        <span class="tone-chip" [attr.data-tone]="c.is_active ? 'success' : 'neutral'">{{
+          c.is_active ? 'ใช้งาน' : 'ระงับ'
+        }}</span>
+        <span class="tone-chip" data-tone="primary"
+          >ระดับบริการ{{ levelLabels[c.service_level] }}</span
+        >
       </div>
       <dl class="facts">
-        <div><dt>ผู้ติดต่อ</dt><dd>{{ c.contact_person || '-' }}</dd></div>
+        <div>
+          <dt>ผู้ติดต่อ</dt>
+          <dd>{{ c.contact_person || '-' }}</dd>
+        </div>
         <div>
           <dt>โทรศัพท์</dt>
           <dd>
@@ -33,19 +49,49 @@
             }
           </dd>
         </div>
-        <div><dt>เลขประจำตัวผู้เสียภาษี</dt><dd class="mono">{{ c.tax_id || '-' }}</dd></div>
-        <div class="wide"><dt>ที่อยู่</dt><dd>{{ c.address || '-' }}</dd></div>
+        <div>
+          <dt>เลขประจำตัวผู้เสียภาษี</dt>
+          <dd class="mono">{{ c.tax_id || '-' }}</dd>
+        </div>
+        <div class="wide">
+          <dt>ที่อยู่</dt>
+          <dd>{{ c.address || '-' }}</dd>
+        </div>
         @if (c.notes) {
-          <div class="wide"><dt>หมายเหตุ</dt><dd>{{ c.notes }}</dd></div>
+          <div class="wide">
+            <dt>หมายเหตุ</dt>
+            <dd>{{ c.notes }}</dd>
+          </div>
         }
       </dl>
     </section>
 
     <div class="stats">
-      <app-stat-card label="จุดติดตั้งที่ใช้งาน" [value]="c.summary.active_installations" icon="e-icons e-location" variant="gradient" />
-      <app-stat-card label="ติดตั้งทั้งหมด (รวมที่ถอนแล้ว)" [value]="c.summary.total_installations" icon="e-icons e-box" variant="info" />
-      <app-stat-card label="อยู่ในประกัน" [value]="c.summary.under_warranty" icon="e-icons e-check-box" variant="success" hint="เฉพาะเครื่องที่ติดตั้งอยู่" />
-      <app-stat-card label="อยู่ระหว่างซ่อม" [value]="repairCount()" icon="e-icons e-settings" variant="error" />
+      <app-stat-card
+        label="จุดติดตั้งที่ใช้งาน"
+        [value]="c.summary.active_installations"
+        icon="e-icons e-location"
+        variant="gradient"
+      />
+      <app-stat-card
+        label="ติดตั้งทั้งหมด (รวมที่ถอนแล้ว)"
+        [value]="c.summary.total_installations"
+        icon="e-icons e-box"
+        variant="info"
+      />
+      <app-stat-card
+        label="อยู่ในประกัน"
+        [value]="c.summary.under_warranty"
+        icon="e-icons e-check-box"
+        variant="success"
+        hint="เฉพาะเครื่องที่ติดตั้งอยู่"
+      />
+      <app-stat-card
+        label="อยู่ระหว่างซ่อม"
+        [value]="repairCount()"
+        icon="e-icons e-settings"
+        variant="error"
+      />
     </div>
 
     @if (statusChips().length) {
@@ -92,7 +138,9 @@
         (retry)="installations.reload()"
       >
         <ng-template gridCell="serial_number" let-row>
-          <a class="link mono" [routerLink]="['/devices', row.device_id]">{{ row.serial_number }}</a>
+          <a class="link mono" [routerLink]="['/devices', row.device_id]">{{
+            row.serial_number
+          }}</a>
         </ng-template>
         <ng-template gridCell="state_label" let-row>
           <span class="tone-chip" [attr.data-tone]="row.state_tone">{{ row.state_label }}</span>
@@ -106,13 +154,28 @@
         @for (g of photoGroups(); track g.installation.id) {
           <div class="site">
             <div class="site-head">
-              <a class="link mono" [routerLink]="['/devices', g.installation.device_id]">{{ g.installation.serial_number }}</a>
-              <span class="muted">{{ g.installation.address || g.installation.model_name }} · ติดตั้ง {{ g.installation.install_date | date: 'd MMM y' }}</span>
+              <a class="link mono" [routerLink]="['/devices', g.installation.device_id]">{{
+                g.installation.serial_number
+              }}</a>
+              <span class="muted"
+                >{{ g.installation.address || g.installation.model_name }} · ติดตั้ง
+                {{ g.installation.install_date | date: 'd MMM y' }}</span
+              >
             </div>
             <div class="thumbs">
               @for (p of g.photos; track p.id) {
-                <a [href]="p.url | photoSrc" target="_blank" rel="noopener" [title]="p.caption ?? 'เปิดรูปขนาดเต็ม'">
-                  <img [src]="p.thumb_url | photoSrc" [alt]="p.caption ?? 'รูปหน้างาน'" loading="lazy" decoding="async" />
+                <a
+                  [href]="p.url | photoSrc"
+                  target="_blank"
+                  rel="noopener"
+                  [title]="p.caption ?? 'เปิดรูปขนาดเต็ม'"
+                >
+                  <img
+                    [src]="p.thumb_url | photoSrc"
+                    [alt]="p.caption ?? 'รูปหน้างาน'"
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </a>
               }
             </div>

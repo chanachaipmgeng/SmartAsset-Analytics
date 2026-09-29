@@ -12,7 +12,8 @@ export function checkPhotoFiles(files: File[]): { ok: File[]; problem: string | 
   const ok: File[] = [];
   const problems: string[] = [];
   for (const file of files) {
-    if (!PHOTO_ACCEPT.split(',').includes(file.type)) problems.push(`${file.name}: รองรับเฉพาะ JPG, PNG หรือ WebP`);
+    if (!PHOTO_ACCEPT.split(',').includes(file.type))
+      problems.push(`${file.name}: รองรับเฉพาะ JPG, PNG หรือ WebP`);
     else if (file.size > MAX_PHOTO_BYTES) problems.push(`${file.name}: ขนาดเกิน 8 MB`);
     else ok.push(file);
   }
@@ -36,12 +37,16 @@ export class AvatarStore {
   private readonly photos = httpResource<Photo[]>(
     () => {
       const id = this.auth.user()?.id;
-      return id ? { url: '/api/v1/photos', params: { owner_type: 'user', owner_id: id } } : undefined;
+      return id
+        ? { url: '/api/v1/photos', params: { owner_type: 'user', owner_id: id } }
+        : undefined;
     },
     { defaultValue: [] },
   );
 
-  readonly photo = computed(() => (this.photos.hasValue() ? (this.photos.value()[0] ?? null) : null));
+  readonly photo = computed(() =>
+    this.photos.hasValue() ? (this.photos.value()[0] ?? null) : null,
+  );
 
   reload(): void {
     this.photos.reload();

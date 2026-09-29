@@ -1,16 +1,41 @@
 <div class="page">
   <app-page-header title="แดชบอร์ด" subtitle="ภาพรวมอุปกรณ์ สถานะ ความเคลื่อนไหว และจุดติดตั้ง">
     @if (auth.canWrite()) {
-      <a ejs-button [isPrimary]="true" iconCss="e-icons e-plus" routerLink="/devices" [queryParams]="{ action: 'new' }">รับเข้า</a>
-      <a ejs-button iconCss="e-icons e-upload-1" routerLink="/devices" [queryParams]="{ action: 'import' }">นำเข้า</a>
+      <a
+        ejs-button
+        [isPrimary]="true"
+        iconCss="e-icons e-plus"
+        routerLink="/devices"
+        [queryParams]="{ action: 'new' }"
+        >รับเข้า</a
+      >
+      <a
+        ejs-button
+        iconCss="e-icons e-upload-1"
+        routerLink="/devices"
+        [queryParams]="{ action: 'import' }"
+        >นำเข้า</a
+      >
     }
     <a ejs-button iconCss="e-icons e-zoom-in" routerLink="/scan">สแกน</a>
-    <button ejs-button cssClass="e-flat" iconCss="e-icons e-refresh" title="รีเฟรช" aria-label="รีเฟรช" (click)="summary.reload()"></button>
+    <button
+      ejs-button
+      cssClass="e-flat"
+      iconCss="e-icons e-refresh"
+      title="รีเฟรช"
+      aria-label="รีเฟรช"
+      (click)="summary.reload()"
+    ></button>
   </app-page-header>
 
   @if (summary.error()) {
     <div class="panel">
-      <app-empty-state tone="error" icon="e-icons e-warning" title="โหลดข้อมูลแดชบอร์ดไม่สำเร็จ" message="ตรวจสอบการเชื่อมต่อแล้วลองใหม่อีกครั้ง">
+      <app-empty-state
+        tone="error"
+        icon="e-icons e-warning"
+        title="โหลดข้อมูลแดชบอร์ดไม่สำเร็จ"
+        message="ตรวจสอบการเชื่อมต่อแล้วลองใหม่อีกครั้ง"
+      >
         <button ejs-button [isPrimary]="true" (click)="summary.reload()">ลองใหม่</button>
       </app-empty-state>
     </div>
@@ -54,7 +79,9 @@
     <section class="backlog panel" aria-label="งานค้าง">
       <div class="backlog-head">
         <span class="panel-title">งานค้าง</span>
-        <span class="panel-sub">{{ backlogTotal() ? backlogTotal() + ' รายการที่ต้องติดตาม' : 'ไม่มีงานค้าง' }}</span>
+        <span class="panel-sub">{{
+          backlogTotal() ? backlogTotal() + ' รายการที่ต้องติดตาม' : 'ไม่มีงานค้าง'
+        }}</span>
       </div>
       <div class="backlog-items">
         @for (b of backlog(); track b.key) {
@@ -80,7 +107,12 @@
     </section>
 
     <div class="layout-host">
-      <ejs-dashboardlayout [columns]="6" [cellSpacing]="cellSpacing" [cellAspectRatio]="1.4" [allowResizing]="false">
+      <ejs-dashboardlayout
+        [columns]="6"
+        [cellSpacing]="cellSpacing"
+        [cellAspectRatio]="1.4"
+        [allowResizing]="false"
+      >
         <e-panels>
           <e-panel [row]="0" [col]="0" [sizeX]="4" [sizeY]="2">
             <ng-template #header>
@@ -141,7 +173,14 @@
             <ng-template #header><div class="panel-title">สัดส่วนตามสถานะ</div></ng-template>
             <ng-template #content>
               @for (chartTheme of [theme.chartTheme()]; track chartTheme) {
-                <ejs-accumulationchart [theme]="chartTheme" background="transparent" height="100%" width="100%" [legendSettings]="legend" [tooltip]="tooltip">
+                <ejs-accumulationchart
+                  [theme]="chartTheme"
+                  background="transparent"
+                  height="100%"
+                  width="100%"
+                  [legendSettings]="legend"
+                  [tooltip]="tooltip"
+                >
                   <e-accumulation-series-collection>
                     <e-accumulation-series
                       [dataSource]="statusChart()"
@@ -158,10 +197,21 @@
           </e-panel>
 
           <e-panel [row]="2" [col]="2" [sizeX]="2" [sizeY]="2">
-            <ng-template #header><div class="panel-title">จำนวนตามรุ่น (ไม่รวมปลดระวาง)</div></ng-template>
+            <ng-template #header
+              ><div class="panel-title">จำนวนตามรุ่น (ไม่รวมปลดระวาง)</div></ng-template
+            >
             <ng-template #content>
               @for (chartTheme of [theme.chartTheme()]; track chartTheme) {
-                <ejs-chart [theme]="chartTheme" background="transparent" height="100%" width="100%" [primaryXAxis]="primaryXAxis" [primaryYAxis]="primaryYAxis" [tooltip]="tooltip" [legendSettings]="{ visible: false }">
+                <ejs-chart
+                  [theme]="chartTheme"
+                  background="transparent"
+                  height="100%"
+                  width="100%"
+                  [primaryXAxis]="primaryXAxis"
+                  [primaryYAxis]="primaryYAxis"
+                  [tooltip]="tooltip"
+                  [legendSettings]="{ visible: false }"
+                >
                   <e-series-collection>
                     <e-series
                       [dataSource]="modelChart()"
@@ -180,7 +230,11 @@
           </e-panel>
 
           <e-panel [row]="4" [col]="0" [sizeX]="4" [sizeY]="3">
-            <ng-template #header><div class="panel-title">แผนที่จุดติดตั้ง ({{ installations().length }} จุด)</div></ng-template>
+            <ng-template #header
+              ><div class="panel-title">
+                แผนที่จุดติดตั้ง ({{ installations().length }} จุด)
+              </div></ng-template
+            >
             <ng-template #content>
               <app-installation-map [installations]="installations()" height="100%" />
             </ng-template>
@@ -193,12 +247,21 @@
                 <ejs-grid [dataSource]="warranty()" height="100%" [allowSorting]="true">
                   <e-columns>
                     <e-column field="serial_number" headerText="ซีเรียล" width="130"></e-column>
-                    <e-column field="warranty_end" headerText="หมดประกัน" type="date" format="dd/MM/yyyy" width="110"></e-column>
+                    <e-column
+                      field="warranty_end"
+                      headerText="หมดประกัน"
+                      type="date"
+                      format="dd/MM/yyyy"
+                      width="110"
+                    ></e-column>
                     <e-column field="tenant_name" headerText="กลุ่มลูกค้า" width="140"></e-column>
                   </e-columns>
                 </ejs-grid>
               } @else {
-                <app-empty-state icon="e-icons e-circle-check" title="ไม่มีอุปกรณ์ที่ประกันใกล้หมด" />
+                <app-empty-state
+                  icon="e-icons e-circle-check"
+                  title="ไม่มีอุปกรณ์ที่ประกันใกล้หมด"
+                />
               }
             </ng-template>
           </e-panel>

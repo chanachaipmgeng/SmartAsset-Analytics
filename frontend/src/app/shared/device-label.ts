@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { BarcodeGeneratorModule, QRCodeGeneratorModule } from '@syncfusion/ej2-angular-barcode-generator';
+import {
+  BarcodeGeneratorModule,
+  QRCodeGeneratorModule,
+} from '@syncfusion/ej2-angular-barcode-generator';
 import { labelUrl } from '../core/scan-code';
 
 export interface LabelDevice {
@@ -118,6 +121,8 @@ export class DeviceLabel {
   readonly size = input<LabelSize>('sheet');
 
   protected readonly url = computed(() => labelUrl(this.device().serial_number));
-  protected readonly model = computed(() => [this.device().brand, this.device().model_name].filter(Boolean).join(' '));
+  protected readonly model = computed(() =>
+    [this.device().brand, this.device().model_name].filter(Boolean).join(' '),
+  );
   protected readonly dims = computed(() => SIZES[this.size()]);
 }

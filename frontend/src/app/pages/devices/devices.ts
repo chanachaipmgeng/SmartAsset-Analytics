@@ -17,7 +17,12 @@ import { SidebarModule } from '@syncfusion/ej2-angular-navigations';
 import { DropDownButtonModule, MenuEventArgs } from '@syncfusion/ej2-angular-splitbuttons';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
-import { DeviceActionId, availableActions, commonBulkActions, isBulkAction } from '../../core/device-actions';
+import {
+  DeviceActionId,
+  availableActions,
+  commonBulkActions,
+  isBulkAction,
+} from '../../core/device-actions';
 import { STATUS_LABELS, SERVICE_LEVEL_LABELS, toDate, toIsoDate } from '../../core/labels';
 import {
   CountItem,
@@ -32,7 +37,14 @@ import {
 } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { AssetTimeline } from '../../shared/asset-timeline';
-import { DataGrid, GridCell, GridColumn, GridQuery, GridRowAction, GridRowActionId } from '../../shared/data-grid';
+import {
+  DataGrid,
+  GridCell,
+  GridColumn,
+  GridQuery,
+  GridRowAction,
+  GridRowActionId,
+} from '../../shared/data-grid';
 import { DeviceActionDialogs } from '../../shared/device-action-dialogs';
 import { FilterChips } from '../../shared/filter-chips';
 import { InstallationMap } from '../../shared/installation-map';
@@ -55,9 +67,31 @@ const COLUMNS: GridColumn[] = [
   { field: 'status_label', headerText: 'สถานะ', width: 140 },
   { field: 'tenant_label', headerText: 'กลุ่มลูกค้า', width: 200, hideAtMedia: WIDE },
   { field: 'mac_address', headerText: 'MAC', width: 160, hideAtMedia: WIDE },
-  { field: 'purchase_date', headerText: 'วันที่ซื้อ', type: 'date', format: 'dd/MM/yyyy', width: 120, hideAtMedia: WIDE },
-  { field: 'warranty_end', headerText: 'หมดประกัน', type: 'date', format: 'dd/MM/yyyy', width: 120, hideAtMedia: WIDE },
-  { field: 'cost', headerText: 'ต้นทุน', type: 'number', format: 'N2', textAlign: 'Right', width: 120, hideAtMedia: WIDE },
+  {
+    field: 'purchase_date',
+    headerText: 'วันที่ซื้อ',
+    type: 'date',
+    format: 'dd/MM/yyyy',
+    width: 120,
+    hideAtMedia: WIDE,
+  },
+  {
+    field: 'warranty_end',
+    headerText: 'หมดประกัน',
+    type: 'date',
+    format: 'dd/MM/yyyy',
+    width: 120,
+    hideAtMedia: WIDE,
+  },
+  {
+    field: 'cost',
+    headerText: 'ต้นทุน',
+    type: 'number',
+    format: 'N2',
+    textAlign: 'Right',
+    width: 120,
+    hideAtMedia: WIDE,
+  },
   { field: 'firmware_version', headerText: 'เฟิร์มแวร์', width: 110, hidden: true },
   { field: 'supplier_name', headerText: 'ผู้จำหน่าย', width: 180, hidden: true },
 ];
@@ -159,7 +193,10 @@ export class DevicesPage {
   protected readonly devices = httpResource<Device[]>(() => {
     const q = this.gridQuery();
     if (!q) return undefined;
-    return { url: '/api/v1/devices', params: { ...this.listFilters(), skip: q.skip, take: q.take } };
+    return {
+      url: '/api/v1/devices',
+      params: { ...this.listFilters(), skip: q.skip, take: q.take },
+    };
   });
   /** Keeps the previous page on screen while the next one loads. */
   private readonly page = linkedSignal<Device[] | undefined, Device[]>({
@@ -174,7 +211,9 @@ export class DevicesPage {
     defaultValue: [],
   });
 
-  protected readonly models = httpResource<DeviceModel[]>(() => '/api/v1/device-models', { defaultValue: [] });
+  protected readonly models = httpResource<DeviceModel[]>(() => '/api/v1/device-models', {
+    defaultValue: [],
+  });
   protected readonly tenants = httpResource<Tenant[]>(
     () => (this.auth.isSuperadmin() ? '/api/v1/tenants' : undefined),
     { defaultValue: [] },
@@ -194,23 +233,33 @@ export class DevicesPage {
   });
 
   protected readonly rows = computed(() => this.page().map(toRow));
-  protected readonly exportAll = async () => (await this.api.listDevices(this.listFilters())).map(toRow);
+  protected readonly exportAll = async () =>
+    (await this.api.listDevices(this.listFilters())).map(toRow);
 
   // ---- selection / detail panel ----
-  private readonly detail = httpResource<Device>(() => (this.id() ? `/api/v1/devices/${this.id()}` : undefined));
+  private readonly detail = httpResource<Device>(() =>
+    this.id() ? `/api/v1/devices/${this.id()}` : undefined,
+  );
   protected readonly selected = computed(() => {
     const id = this.id();
-    return id && this.detail.hasValue() && this.detail.value().id === id ? this.detail.value() : null;
+    return id && this.detail.hasValue() && this.detail.value().id === id
+      ? this.detail.value()
+      : null;
   });
   protected readonly detailOpen = computed(() => !!this.selected());
 
   protected readonly actions = computed(() =>
-    availableActions(this.selected(), { canWrite: this.auth.canWrite(), isSuperadmin: this.auth.isSuperadmin() }),
+    availableActions(this.selected(), {
+      canWrite: this.auth.canWrite(),
+      isSuperadmin: this.auth.isSuperadmin(),
+    }),
   );
   protected readonly actionItems = computed(() =>
     this.actions().map((a) => ({ id: a.id, text: a.text, iconCss: a.iconCss })),
   );
-  protected readonly canEdit = computed(() => this.auth.canWrite() && this.selected()?.status !== 'RETIRED');
+  protected readonly canEdit = computed(
+    () => this.auth.canWrite() && this.selected()?.status !== 'RETIRED',
+  );
 
   // ---- checkbox selection / bulk actions ----
   protected readonly checked = signal<DeviceRow[]>([]);
@@ -222,13 +271,16 @@ export class DevicesPage {
   );
 
   protected readonly history = httpResource<InventoryTransaction[]>(
-    () => (this.id() ? `/api/v1/inventory/transactions?device_id=${this.id()}&limit=100` : undefined),
+    () =>
+      this.id() ? `/api/v1/inventory/transactions?device_id=${this.id()}&limit=100` : undefined,
     { defaultValue: [] },
   );
   protected readonly txPhotos = httpResource<Photo[]>(
     () => {
       const ids = this.history.value().map((t) => t.id);
-      return ids.length ? { url: '/api/v1/photos', params: { owner_type: 'transaction', owner_id: ids } } : undefined;
+      return ids.length
+        ? { url: '/api/v1/photos', params: { owner_type: 'transaction', owner_id: ids } }
+        : undefined;
     },
     { defaultValue: [] },
   );
@@ -255,7 +307,8 @@ export class DevicesPage {
     if (!due) return null;
     const days = Math.ceil((due.getTime() - Date.now()) / DAY_MS);
     if (days < 0) return { tone: 'error', text: `เกินกำหนด ${-days} วัน` };
-    if (days <= 3) return { tone: 'warning', text: days === 0 ? 'ครบกำหนดวันนี้' : `เหลือ ${days} วัน` };
+    if (days <= 3)
+      return { tone: 'warning', text: days === 0 ? 'ครบกำหนดวันนี้' : `เหลือ ${days} วัน` };
     return { tone: 'tertiary', text: `เหลือ ${days} วัน` };
   });
 
@@ -279,9 +332,12 @@ export class DevicesPage {
   protected readonly modelOptions = computed(() =>
     this.models.value().map((m) => ({ value: m.id, text: `${m.brand} ${m.name}` })),
   );
-  protected readonly suppliers = httpResource<Supplier[]>(() => (this.formOpen() ? '/api/v1/suppliers' : undefined), {
-    defaultValue: [],
-  });
+  protected readonly suppliers = httpResource<Supplier[]>(
+    () => (this.formOpen() ? '/api/v1/suppliers' : undefined),
+    {
+      defaultValue: [],
+    },
+  );
   protected readonly supplierOptions = computed(() =>
     this.suppliers.value().map((s) => ({ value: s.id, text: s.name })),
   );
@@ -289,7 +345,9 @@ export class DevicesPage {
   protected readonly modelFirmware = computed(
     () => this.models.value().find((m) => m.id === this.modelId())?.firmware_version ?? null,
   );
-  protected readonly tenantOptions = computed(() => this.tenants.value().map((t) => ({ value: t.id, text: t.name })));
+  protected readonly tenantOptions = computed(() =>
+    this.tenants.value().map((t) => ({ value: t.id, text: t.name })),
+  );
   protected readonly formValid = computed(
     () => (this.editingId() !== null || this.formSerial().trim().length >= 3) && !!this.modelId(),
   );
@@ -297,7 +355,8 @@ export class DevicesPage {
   constructor() {
     effect(() => {
       const status = this.status();
-      if (status && status in STATUS_LABELS) untracked(() => this.onStatusFilter(status as DeviceStatus));
+      if (status && status in STATUS_LABELS)
+        untracked(() => this.onStatusFilter(status as DeviceStatus));
     });
 
     effect(() => {

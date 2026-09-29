@@ -11,7 +11,13 @@
   cssClass="import-dialog"
 >
   <ng-template #content>
-    <ejs-stepper class="import-stepper" [steps]="steps" [activeStep]="step()" [linear]="true" labelPosition="Bottom"></ejs-stepper>
+    <ejs-stepper
+      class="import-stepper"
+      [steps]="steps"
+      [activeStep]="step()"
+      [linear]="true"
+      labelPosition="Bottom"
+    ></ejs-stepper>
 
     @switch (step()) {
       @case (0) {
@@ -19,9 +25,19 @@
           <div class="template-row">
             <div>
               <div class="font-semibold">1. ดาวน์โหลดไฟล์แม่แบบ</div>
-              <div class="text-sm text-on-surface-variant">มีคอลัมน์ ซีเรียล, รุ่น, MAC, วันที่ซื้อ, ต้นทุน, หมดประกัน, หมายเหตุ และแท็บรายชื่อรุ่นที่ใช้ได้</div>
+              <div class="text-sm text-on-surface-variant">
+                มีคอลัมน์ ซีเรียล, รุ่น, MAC, วันที่ซื้อ, ต้นทุน, หมดประกัน, หมายเหตุ
+                และแท็บรายชื่อรุ่นที่ใช้ได้
+              </div>
             </div>
-            <button ejs-button cssClass="e-outline" iconCss="e-icons e-download" (click)="downloadTemplate()">ไฟล์แม่แบบ .xlsx</button>
+            <button
+              ejs-button
+              cssClass="e-outline"
+              iconCss="e-icons e-download"
+              (click)="downloadTemplate()"
+            >
+              ไฟล์แม่แบบ .xlsx
+            </button>
           </div>
 
           <div class="font-semibold">2. อัปโหลดไฟล์ที่กรอกแล้ว</div>
@@ -32,7 +48,9 @@
             } @else {
               <span class="e-icons e-upload-1 drop-icon"></span>
               <div class="font-semibold">ลากไฟล์มาวางที่นี่</div>
-              <div class="text-sm text-on-surface-variant">.xlsx หรือ .csv ไม่เกิน 2 MB, สูงสุด 1,000 แถว</div>
+              <div class="text-sm text-on-surface-variant">
+                .xlsx หรือ .csv ไม่เกิน 2 MB, สูงสุด 1,000 แถว
+              </div>
             }
             <ejs-uploader
               [autoUpload]="false"
@@ -47,7 +65,9 @@
             ></ejs-uploader>
           </div>
           @if (uploadError()) {
-            <div class="upload-error"><span class="e-icons e-warning"></span>{{ uploadError() }}</div>
+            <div class="upload-error">
+              <span class="e-icons e-warning"></span>{{ uploadError() }}
+            </div>
           }
         </div>
       }
@@ -63,7 +83,11 @@
               <span class="grow"></span>
               @if (r.invalid) {
                 <label class="errors-toggle">
-                  <input type="checkbox" [checked]="errorsOnly()" (change)="errorsOnly.set($any($event.target).checked)" />
+                  <input
+                    type="checkbox"
+                    [checked]="errorsOnly()"
+                    (change)="errorsOnly.set($any($event.target).checked)"
+                  />
                   แสดงเฉพาะแถวที่ผิด
                 </label>
               }
@@ -94,7 +118,9 @@
                       <td class="mono">{{ row.asset_tag || '' }}</td>
                       <td>{{ row.supplier || '' }}</td>
                       <td>{{ row.purchase_date || '' }}</td>
-                      <td class="num">{{ row.cost !== null ? (+row.cost | number: '1.2-2') : '' }}</td>
+                      <td class="num">
+                        {{ row.cost !== null ? (+row.cost | number: '1.2-2') : '' }}
+                      </td>
                       <td>{{ row.warranty_end || '' }}</td>
                       <td>
                         @if (row.errors.length) {
@@ -113,7 +139,10 @@
               </table>
             </div>
             @if (r.invalid) {
-              <p class="m-0 text-sm text-on-surface-variant">แก้ไขแถวที่ผิดในไฟล์ แล้วเลือกไฟล์ใหม่อีกครั้ง ระบบจะนำเข้าเมื่อทุกแถวถูกต้องเท่านั้น</p>
+              <p class="m-0 text-sm text-on-surface-variant">
+                แก้ไขแถวที่ผิดในไฟล์ แล้วเลือกไฟล์ใหม่อีกครั้ง
+                ระบบจะนำเข้าเมื่อทุกแถวถูกต้องเท่านั้น
+              </p>
             }
           </div>
         }
@@ -122,7 +151,9 @@
         <div class="done">
           <div class="done-mark"><span class="e-icons e-check"></span></div>
           <div class="text-xl font-bold">นำเข้าสำเร็จ {{ result()?.valid | number }} เครื่อง</div>
-          <div class="text-sm text-on-surface-variant">อุปกรณ์ทั้งหมดอยู่ในสถานะ "อยู่ในคลัง" และมีประวัติรับเข้าแล้ว</div>
+          <div class="text-sm text-on-surface-variant">
+            อุปกรณ์ทั้งหมดอยู่ในสถานะ "อยู่ในคลัง" และมีประวัติรับเข้าแล้ว
+          </div>
         </div>
       }
     }
@@ -134,7 +165,9 @@
         <button ejs-button (click)="close()">ยกเลิก</button>
       }
       @case (1) {
-        <button ejs-button iconCss="e-icons e-chevron-left" (click)="reset()" [disabled]="busy()">เลือกไฟล์ใหม่</button>
+        <button ejs-button iconCss="e-icons e-chevron-left" (click)="reset()" [disabled]="busy()">
+          เลือกไฟล์ใหม่
+        </button>
         <button
           ejs-button
           [isPrimary]="true"
@@ -143,7 +176,13 @@
           [attr.title]="result()?.invalid ? 'ระบบนำเข้าเมื่อทุกแถวถูกต้องเท่านั้น' : null"
           (click)="commit()"
         >
-          {{ busy() ? 'กำลังนำเข้า…' : result()?.invalid ? 'แก้ไขแถวที่ผิดก่อน' : 'นำเข้า ' + (result()?.valid ?? 0) + ' เครื่อง' }}
+          {{
+            busy()
+              ? 'กำลังนำเข้า…'
+              : result()?.invalid
+                ? 'แก้ไขแถวที่ผิดก่อน'
+                : 'นำเข้า ' + (result()?.valid ?? 0) + ' เครื่อง'
+          }}
         </button>
       }
       @case (2) {

@@ -10,7 +10,13 @@ import { NotifyService } from '../../core/notify.service';
 import { AuditHistory } from '../../shared/audit-history';
 import { InstallationMap, LatLng } from '../../shared/installation-map';
 import { PageHeader } from '../../shared/page-header';
-import { DataGrid, GridCell, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
+import {
+  DataGrid,
+  GridCell,
+  GridColumn,
+  GridRowAction,
+  GridRowActionId,
+} from '../../shared/data-grid';
 import { PhotoGallery } from '../../shared/photo-gallery';
 import { RecordField, RecordView } from '../../shared/record-view';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
@@ -57,14 +63,21 @@ export class InstallationsPage {
   protected readonly nearby = httpResource<Installation[]>(() => {
     const q = this.nearbyQuery();
     return q
-      ? { url: '/api/v1/installations/nearby', params: { lat: q.lat, lng: q.lng, radius_m: q.radius } }
+      ? {
+          url: '/api/v1/installations/nearby',
+          params: { lat: q.lat, lng: q.lng, radius_m: q.radius },
+        }
       : undefined;
   });
 
   protected readonly searchLat = signal<number | null>(13.7563);
   protected readonly searchLng = signal<number | null>(100.5018);
   protected readonly searchRadiusKm = signal(10);
-  protected readonly radiusTooltip = { isVisible: true, placement: 'Before' as const, format: 'N0' };
+  protected readonly radiusTooltip = {
+    isVisible: true,
+    placement: 'Before' as const,
+    format: 'N0',
+  };
   protected readonly searchPin = computed(() => {
     const latitude = this.searchLat();
     const longitude = this.searchLng();
@@ -84,13 +97,41 @@ export class InstallationsPage {
     { field: 'model_name', headerText: 'รุ่น', width: 140 },
     { field: 'customer_name', headerText: 'ลูกค้า', width: 200 },
     { field: 'level_label', headerText: 'ระดับบริการ', width: 110 },
-    { field: 'install_date', headerText: 'วันที่ติดตั้ง', type: 'date', format: 'dd/MM/yyyy', width: 120 },
+    {
+      field: 'install_date',
+      headerText: 'วันที่ติดตั้ง',
+      type: 'date',
+      format: 'dd/MM/yyyy',
+      width: 120,
+    },
     ...(this.nearbyQuery()
-      ? [{ field: 'distance_km', headerText: 'ระยะ (กม.)', type: 'number' as const, format: 'N2', width: 110 }]
+      ? [
+          {
+            field: 'distance_km',
+            headerText: 'ระยะ (กม.)',
+            type: 'number' as const,
+            format: 'N2',
+            width: 110,
+          },
+        ]
       : []),
     { field: 'state_label', headerText: 'สถานะ', width: 150 },
-    { field: 'latitude', headerText: 'ละติจูด', type: 'number', format: 'N6', width: 120, hidden: true },
-    { field: 'longitude', headerText: 'ลองจิจูด', type: 'number', format: 'N6', width: 120, hidden: true },
+    {
+      field: 'latitude',
+      headerText: 'ละติจูด',
+      type: 'number',
+      format: 'N6',
+      width: 120,
+      hidden: true,
+    },
+    {
+      field: 'longitude',
+      headerText: 'ลองจิจูด',
+      type: 'number',
+      format: 'N6',
+      width: 120,
+      hidden: true,
+    },
     { field: 'address', headerText: 'ที่อยู่', width: 260 },
     { field: 'site_contact', headerText: 'ผู้ติดต่อหน้างาน', width: 160, hidden: true },
     { field: 'site_phone', headerText: 'โทรหน้างาน', width: 130, hidden: true },
@@ -163,15 +204,24 @@ export class InstallationsPage {
   protected readonly viewFields = computed<RecordField[]>(() => {
     const i = this.selected();
     if (!i) return [];
-    const date = (value: string | null) => toDate(value)?.toLocaleDateString('th-TH', { dateStyle: 'medium' });
+    const date = (value: string | null) =>
+      toDate(value)?.toLocaleDateString('th-TH', { dateStyle: 'medium' });
     return [
       { label: 'ซีเรียล', value: i.serial_number, mono: true },
       { label: 'รุ่น', value: i.model_name },
       { label: 'ลูกค้า', value: i.customer_name },
       { label: 'ระดับบริการ', value: SERVICE_LEVEL_LABELS[i.service_level] },
       { label: 'วันที่ติดตั้ง', value: date(i.install_date) },
-      { label: 'สถานะ', value: i.removed_at ? `ถอนการติดตั้งแล้ว (${date(i.removed_at)})` : 'ใช้งานอยู่' },
-      { label: 'พิกัด', value: `${i.latitude.toFixed(6)}, ${i.longitude.toFixed(6)}`, mono: true, wide: true },
+      {
+        label: 'สถานะ',
+        value: i.removed_at ? `ถอนการติดตั้งแล้ว (${date(i.removed_at)})` : 'ใช้งานอยู่',
+      },
+      {
+        label: 'พิกัด',
+        value: `${i.latitude.toFixed(6)}, ${i.longitude.toFixed(6)}`,
+        mono: true,
+        wide: true,
+      },
       { label: 'ที่อยู่', value: i.address, wide: true },
       { label: 'ผู้ติดต่อหน้างาน', value: i.site_contact },
       { label: 'โทรศัพท์หน้างาน', value: i.site_phone },

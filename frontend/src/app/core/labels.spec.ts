@@ -31,7 +31,14 @@ describe('labels', () => {
   });
 
   it('uses non-empty Thai text for user-facing labels', () => {
-    const records = [STATUS_LABELS, TX_LABELS, ROLE_LABELS, SERVICE_LEVEL_LABELS, AUDIT_ENTITY_LABELS, AUDIT_ACTION_LABELS];
+    const records = [
+      STATUS_LABELS,
+      TX_LABELS,
+      ROLE_LABELS,
+      SERVICE_LEVEL_LABELS,
+      AUDIT_ENTITY_LABELS,
+      AUDIT_ACTION_LABELS,
+    ];
     for (const record of records) {
       for (const [key, text] of Object.entries(record)) {
         expect(text.trim(), key).not.toBe('');

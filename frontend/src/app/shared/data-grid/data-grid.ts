@@ -185,7 +185,10 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
 
   protected readonly effectiveColumns = computed(() => {
     const hidden = this.saved()?.hidden;
-    return this.columns().map((c) => ({ ...c, visible: hidden ? !hidden.includes(c.field) : !c.hidden }));
+    return this.columns().map((c) => ({
+      ...c,
+      visible: hidden ? !hidden.includes(c.field) : !c.hidden,
+    }));
   });
 
   protected readonly pageSettings = computed(() => ({
@@ -234,7 +237,8 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
   private lastQuery: GridQuery | null = null;
 
   ngOnInit(): void {
-    if (this.serverPaging()) this.emitQuery({ skip: 0, take: this.pageSettings().pageSize, sort: null, search: '' });
+    if (this.serverPaging())
+      this.emitQuery({ skip: 0, take: this.pageSettings().pageSize, sort: null, search: '' });
   }
 
   /** Server paging: jump back to page 1, e.g. after the parent changes an external filter. */
@@ -246,13 +250,25 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
 
   protected readonly filterSettings = { type: 'Excel' as const };
   protected readonly selectionSettings = computed(() =>
-    this.multiSelect() ? { type: 'Multiple' as const, checkboxOnly: true } : { type: 'Single' as const },
+    this.multiSelect()
+      ? { type: 'Multiple' as const, checkboxOnly: true }
+      : { type: 'Single' as const },
   );
   protected readonly toolbar = [
-    { text: 'Excel', tooltipText: 'ส่งออกเป็น Excel', prefixIcon: 'e-icons e-export-excel', id: 'excel' },
+    {
+      text: 'Excel',
+      tooltipText: 'ส่งออกเป็น Excel',
+      prefixIcon: 'e-icons e-export-excel',
+      id: 'excel',
+    },
     { text: 'PDF', tooltipText: 'ส่งออกเป็น PDF', prefixIcon: 'e-icons e-export-pdf', id: 'pdf' },
     'ColumnChooser',
-    { text: 'รีเซ็ต', tooltipText: 'คืนค่าคอลัมน์ ตัวกรอง และการค้นหา', prefixIcon: 'e-icons e-refresh', id: 'reset' },
+    {
+      text: 'รีเซ็ต',
+      tooltipText: 'คืนค่าคอลัมน์ ตัวกรอง และการค้นหา',
+      prefixIcon: 'e-icons e-refresh',
+      id: 'reset',
+    },
     'Search',
   ];
 
@@ -300,7 +316,8 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
         this.clearPerspective();
         this.version.update((v) => v + 1);
         this.selectionChange.emit(null);
-        if (this.serverPaging()) this.emitQuery({ skip: 0, take: PAGE_SIZES[0], sort: null, search: '' });
+        if (this.serverPaging())
+          this.emitQuery({ skip: 0, take: PAGE_SIZES[0], sort: null, search: '' });
         break;
     }
   }
@@ -317,7 +334,9 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
     this.emitQuery({
       skip: args.skip ?? 0,
       take,
-      sort: sorted?.name ? { field: sorted.name, descending: sorted.direction === 'descending' } : null,
+      sort: sorted?.name
+        ? { field: sorted.name, descending: sorted.direction === 'descending' }
+        : null,
       search: args.search?.[0]?.key?.trim() ?? '',
     });
     if (pageSizeChanged) this.savePerspective();
@@ -338,7 +357,10 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
   protected onActionComplete(args: { requestType?: string }): void {
     if (args.requestType === 'columnstate' || args.requestType === 'paging') this.savePerspective();
     // Selection covers the rows on screen; paging, sorting or searching replaces them.
-    if (this.multiSelect() && ['paging', 'sorting', 'searching', 'filtering'].includes(args.requestType ?? '')) {
+    if (
+      this.multiSelect() &&
+      ['paging', 'sorting', 'searching', 'filtering'].includes(args.requestType ?? '')
+    ) {
       this.multiSelectionChange.emit([]);
     }
   }
@@ -374,7 +396,11 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
 
   /** Visible data columns only, so the action column and `noExport` columns never land in Excel/PDF. */
   private exportColumns() {
-    const skip = new Set(this.columns().filter((c) => c.noExport).map((c) => c.field));
+    const skip = new Set(
+      this.columns()
+        .filter((c) => c.noExport)
+        .map((c) => c.field),
+    );
     return this.grid()
       ?.getColumns()
       .filter((c) => c.field && c.visible !== false && !skip.has(c.field));
@@ -385,7 +411,10 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
     const grid = this.grid();
     if (!key || !grid) return;
     const perspective: Perspective = {
-      hidden: grid.getColumns().filter((c) => c.visible === false).map((c) => c.field),
+      hidden: grid
+        .getColumns()
+        .filter((c) => c.visible === false)
+        .map((c) => c.field),
       pageSize: grid.pageSettings.pageSize ?? PAGE_SIZES[0],
     };
     try {

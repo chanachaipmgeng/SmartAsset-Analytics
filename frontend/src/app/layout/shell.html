@@ -17,12 +17,21 @@
   </a>
 
   <div class="ml-4 hidden min-w-0 md:block">
-    <ejs-breadcrumb [items]="breadcrumb()" [enableNavigation]="false" (itemClick)="onCrumb($event)"></ejs-breadcrumb>
+    <ejs-breadcrumb
+      [items]="breadcrumb()"
+      [enableNavigation]="false"
+      (itemClick)="onCrumb($event)"
+    ></ejs-breadcrumb>
   </div>
 
   <div class="e-appbar-spacer"></div>
 
-  <button type="button" class="search-trigger" (click)="paletteOpen.set(true)" aria-label="ค้นหาและคำสั่ง (Ctrl+K)">
+  <button
+    type="button"
+    class="search-trigger"
+    (click)="paletteOpen.set(true)"
+    aria-label="ค้นหาและคำสั่ง (Ctrl+K)"
+  >
     <span class="search-glow"></span>
     <span class="e-icons e-search"></span>
     <span class="hidden md:inline">ค้นหา...</span>
@@ -48,7 +57,11 @@
     >
       <span class="flex items-center gap-2">
         <span class="avatar-ring">
-          <app-avatar [name]="auth.user()?.full_name ?? ''" [src]="avatar.photo()?.thumb_url" [size]="32" />
+          <app-avatar
+            [name]="auth.user()?.full_name ?? ''"
+            [src]="avatar.photo()?.thumb_url"
+            [size]="32"
+          />
         </span>
         <span class="hidden text-left leading-tight lg:block">
           <span class="block text-sm font-medium text-on-surface">{{ user.full_name }}</span>
@@ -59,7 +72,11 @@
   }
 </ejs-appbar>
 
-<div class="body" [class.sidebar-docked]="docked()" [class.sidebar-expanded]="isDesktop() && sidebarOpen()">
+<div
+  class="body"
+  [class.sidebar-docked]="docked()"
+  [class.sidebar-expanded]="isDesktop() && sidebarOpen()"
+>
   <ejs-sidebar
     class="sidebar"
     [type]="isDesktop() ? 'Push' : 'Over'"
@@ -79,7 +96,11 @@
         @if (group.items.length) {
           <div class="section">{{ group.label }}</div>
           @for (item of group.items; track item.path) {
-            <a [routerLink]="item.path" routerLinkActive="active" [attr.title]="docked() ? item.label : null">
+            <a
+              [routerLink]="item.path"
+              routerLinkActive="active"
+              [attr.title]="docked() ? item.label : null"
+            >
               <span class="nav-icon" [class]="item.icon"></span>
               <span class="label">{{ item.label }}</span>
               <span class="active-indicator"></span>

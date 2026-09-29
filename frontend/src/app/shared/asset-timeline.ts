@@ -29,9 +29,14 @@ import { SkeletonBlock } from './skeleton-block';
               <div class="head">
                 <b>{{ labels[tx.transaction_type] }}</b>
                 @if (showDevice()) {
-                  <a class="serial" [routerLink]="['/devices', tx.device_id]">{{ tx.serial_number }}</a>
+                  <a class="serial" [routerLink]="['/devices', tx.device_id]">{{
+                    tx.serial_number
+                  }}</a>
                 }
-                <time [attr.datetime]="tx.occurred_at" [title]="tx.occurred_at | date: 'd MMM y HH:mm'">
+                <time
+                  [attr.datetime]="tx.occurred_at"
+                  [title]="tx.occurred_at | date: 'd MMM y HH:mm'"
+                >
                   {{ relative(tx.occurred_at) }}
                 </time>
               </div>
@@ -51,8 +56,18 @@ import { SkeletonBlock } from './skeleton-block';
               @if (photosByTx().get(tx.id); as txPhotos) {
                 <div class="tx-photos">
                   @for (p of txPhotos; track p.id) {
-                    <a [href]="p.url | photoSrc" target="_blank" rel="noopener" [title]="p.caption ?? 'เปิดรูปขนาดเต็ม'">
-                      <img [src]="p.thumb_url | photoSrc" alt="รูปประกอบรายการ" loading="lazy" decoding="async" />
+                    <a
+                      [href]="p.url | photoSrc"
+                      target="_blank"
+                      rel="noopener"
+                      [title]="p.caption ?? 'เปิดรูปขนาดเต็ม'"
+                    >
+                      <img
+                        [src]="p.thumb_url | photoSrc"
+                        alt="รูปประกอบรายการ"
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </a>
                   }
                 </div>

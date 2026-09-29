@@ -25,8 +25,22 @@ const BALANCE_COLUMNS: GridColumn[] = [
   { field: 'model', headerText: 'รุ่น', width: 200 },
   { field: 'tenant', headerText: 'กลุ่มลูกค้า', width: 200 },
   { field: 'status_label', headerText: 'สถานะ', width: 140 },
-  { field: 'count', headerText: 'จำนวน', type: 'number', format: 'N0', textAlign: 'Right', width: 100 },
-  { field: 'total_cost', headerText: 'ต้นทุนรวม (บาท)', type: 'number', format: 'N2', textAlign: 'Right', width: 150 },
+  {
+    field: 'count',
+    headerText: 'จำนวน',
+    type: 'number',
+    format: 'N0',
+    textAlign: 'Right',
+    width: 100,
+  },
+  {
+    field: 'total_cost',
+    headerText: 'ต้นทุนรวม (บาท)',
+    type: 'number',
+    format: 'N2',
+    textAlign: 'Right',
+    width: 150,
+  },
 ];
 const BALANCE_TOTALS: GridAggregate[] = [
   { field: 'count', type: 'Sum', format: 'N0' },
@@ -38,25 +52,55 @@ const AGING_COLUMNS: GridColumn[] = [
   { field: 'model', headerText: 'รุ่น', width: 180 },
   { field: 'tenant', headerText: 'กลุ่มลูกค้า', width: 180, hideAtMedia: '(min-width: 768px)' },
   { field: 'status_label', headerText: 'สถานะ', width: 140 },
-  { field: 'since', headerText: 'อยู่ในสถานะตั้งแต่', type: 'date', format: 'dd/MM/yyyy', width: 150 },
-  { field: 'days', headerText: 'จำนวนวัน', type: 'number', format: 'N0', textAlign: 'Right', width: 110 },
+  {
+    field: 'since',
+    headerText: 'อยู่ในสถานะตั้งแต่',
+    type: 'date',
+    format: 'dd/MM/yyyy',
+    width: 150,
+  },
+  {
+    field: 'days',
+    headerText: 'จำนวนวัน',
+    type: 'number',
+    format: 'N0',
+    textAlign: 'Right',
+    width: 110,
+  },
 ];
 const AGING_TOTALS: GridAggregate[] = [
   { field: 'serial_number', type: 'Count' },
   { field: 'days', type: 'Max', format: 'N0' },
 ];
 
-const AGING_STATUSES: DeviceStatus[] = ['IN_STOCK', 'CHECKED_OUT', 'INSTALLED', 'ON_LOAN', 'UNDER_QC', 'IN_REPAIR'];
+const AGING_STATUSES: DeviceStatus[] = [
+  'IN_STOCK',
+  'CHECKED_OUT',
+  'INSTALLED',
+  'ON_LOAN',
+  'UNDER_QC',
+  'IN_REPAIR',
+];
 
 @Component({
   selector: 'app-reports',
   imports: [PageHeader, DataGrid, FilterChips, CheckBoxModule],
   template: `
     <div class="page">
-      <app-page-header title="รายงาน" subtitle="ยอดคงเหลือตามรุ่นและกลุ่มลูกค้า และอายุอุปกรณ์ในสถานะปัจจุบัน ส่งออก Excel/PDF ได้จากแถบเครื่องมือของตาราง" />
+      <app-page-header
+        title="รายงาน"
+        subtitle="ยอดคงเหลือตามรุ่นและกลุ่มลูกค้า และอายุอุปกรณ์ในสถานะปัจจุบัน ส่งออก Excel/PDF ได้จากแถบเครื่องมือของตาราง"
+      />
       <nav class="tabs" role="tablist" aria-label="ประเภทรายงาน">
         @for (t of tabs; track t.key) {
-          <button type="button" role="tab" class="tab" [class.active]="activeTab() === t.key" [attr.aria-selected]="activeTab() === t.key" (click)="selectTab(t.key)">
+          <button
+            type="button"
+            role="tab"
+            class="tab"
+            [class.active]="activeTab() === t.key"
+            [attr.aria-selected]="activeTab() === t.key"
+            (click)="selectTab(t.key)"
+          >
             <span [class]="t.icon"></span>{{ t.label }}
           </button>
         }
@@ -64,7 +108,11 @@ const AGING_STATUSES: DeviceStatus[] = ['IN_STOCK', 'CHECKED_OUT', 'INSTALLED', 
       <div class="panel" role="tabpanel">
         @if (activeTab() === 'balance') {
           <div class="tab-body">
-            <ejs-checkbox label="รวมอุปกรณ์ที่ปลดระวาง" [checked]="includeRetired()" (change)="includeRetired.set($event.checked)"></ejs-checkbox>
+            <ejs-checkbox
+              label="รวมอุปกรณ์ที่ปลดระวาง"
+              [checked]="includeRetired()"
+              (change)="includeRetired.set($event.checked)"
+            ></ejs-checkbox>
             <app-data-grid
               [data]="balanceRows()"
               [columns]="balanceColumns"
@@ -144,7 +192,9 @@ export class ReportsPage {
 
   /** `?tab=aging` from the query string. */
   readonly tab = input<string>();
-  protected readonly activeTab = computed<Tab>(() => (this.tab() === 'aging' ? 'aging' : 'balance'));
+  protected readonly activeTab = computed<Tab>(() =>
+    this.tab() === 'aging' ? 'aging' : 'balance',
+  );
   protected readonly tabs: { key: Tab; label: string; icon: string }[] = [
     { key: 'balance', label: 'ยอดคงเหลือ', icon: 'e-icons e-table-2' },
     { key: 'aging', label: 'อายุในสถานะ', icon: 'e-icons e-month' },
@@ -157,7 +207,10 @@ export class ReportsPage {
 
   protected readonly includeRetired = signal(false);
   protected readonly balance = httpResource<StockBalanceRow[]>(
-    () => ({ url: '/api/v1/reports/stock-balance', params: { include_retired: this.includeRetired() } }),
+    () => ({
+      url: '/api/v1/reports/stock-balance',
+      params: { include_retired: this.includeRetired() },
+    }),
     { defaultValue: [] },
   );
   protected readonly balanceRows = computed(() =>

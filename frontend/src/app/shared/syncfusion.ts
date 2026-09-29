@@ -1,7 +1,11 @@
 import { ButtonModule, CheckBoxModule } from '@syncfusion/ej2-angular-buttons';
 import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
 import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
-import { NumericTextBoxModule, TextAreaModule, TextBoxModule } from '@syncfusion/ej2-angular-inputs';
+import {
+  NumericTextBoxModule,
+  TextAreaModule,
+  TextBoxModule,
+} from '@syncfusion/ej2-angular-inputs';
 import { DialogModule } from '@syncfusion/ej2-angular-popups';
 import { LiveValue } from './live-value';
 

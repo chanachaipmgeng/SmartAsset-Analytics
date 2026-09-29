@@ -1,12 +1,6 @@
 export type Role = 'superadmin' | 'tenant_admin' | 'staff' | 'viewer';
 export type DeviceStatus =
-  | 'IN_STOCK'
-  | 'CHECKED_OUT'
-  | 'INSTALLED'
-  | 'ON_LOAN'
-  | 'UNDER_QC'
-  | 'IN_REPAIR'
-  | 'RETIRED';
+  'IN_STOCK' | 'CHECKED_OUT' | 'INSTALLED' | 'ON_LOAN' | 'UNDER_QC' | 'IN_REPAIR' | 'RETIRED';
 export type TransactionType =
   | 'CHECK_IN'
   | 'TRANSFER'
@@ -22,7 +16,8 @@ export type TransactionType =
   | 'EDIT';
 export type ServiceLevel = 'BASIC' | 'STANDARD' | 'PREMIUM';
 export type PhotoOwner = 'device' | 'installation' | 'transaction' | 'user' | 'device_model';
-export type AuditEntity = 'tenant' | 'user' | 'device_model' | 'supplier' | 'customer' | 'installation' | 'photo';
+export type AuditEntity =
+  'tenant' | 'user' | 'device_model' | 'supplier' | 'customer' | 'installation' | 'photo';
 export type AuditAction = 'create' | 'update' | 'delete' | 'deactivate';
 
 export interface AuditEntry {

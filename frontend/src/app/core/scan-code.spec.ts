@@ -7,7 +7,9 @@ describe('parseScanCode', () => {
   });
 
   it('extracts the serial from a label URL', () => {
-    expect(parseScanCode('https://assets.example.com/scan?serial=zk-mb460-1002')).toBe('ZK-MB460-1002');
+    expect(parseScanCode('https://assets.example.com/scan?serial=zk-mb460-1002')).toBe(
+      'ZK-MB460-1002',
+    );
     expect(parseScanCode('http://localhost/scan?serial=A%2FB%201')).toBe('A/B 1');
   });
 

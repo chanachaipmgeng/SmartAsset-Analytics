@@ -8,7 +8,13 @@ import { PhotoSrcPipe } from '../../core/photos';
 import { AuditHistory } from '../../shared/audit-history';
 import { ConfirmService } from '../../shared/confirm.service';
 import { PageHeader } from '../../shared/page-header';
-import { DataGrid, GridCell, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
+import {
+  DataGrid,
+  GridCell,
+  GridColumn,
+  GridRowAction,
+  GridRowActionId,
+} from '../../shared/data-grid';
 import { PhotoGallery } from '../../shared/photo-gallery';
 import { RecordField, RecordView } from '../../shared/record-view';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
@@ -24,7 +30,16 @@ const COLUMNS: GridColumn[] = [
 
 @Component({
   selector: 'app-device-models',
-  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell, RecordView, PhotoGallery, PhotoSrcPipe, AuditHistory],
+  imports: [
+    ...FORM_IMPORTS,
+    PageHeader,
+    DataGrid,
+    GridCell,
+    RecordView,
+    PhotoGallery,
+    PhotoSrcPipe,
+    AuditHistory,
+  ],
   styles: `
     .model-thumb {
       display: inline-grid;
@@ -46,12 +61,28 @@ const COLUMNS: GridColumn[] = [
     <div class="page">
       <app-page-header
         title="รุ่นอุปกรณ์"
-        [subtitle]="auth.isSuperadmin() ? 'ยี่ห้อ รุ่น และเวอร์ชันเฟิร์มแวร์ที่ใช้ร่วมกันทุกกลุ่มลูกค้า' : 'รุ่นอุปกรณ์จัดการโดยผู้ดูแลแพลตฟอร์มเท่านั้น'"
+        [subtitle]="
+          auth.isSuperadmin()
+            ? 'ยี่ห้อ รุ่น และเวอร์ชันเฟิร์มแวร์ที่ใช้ร่วมกันทุกกลุ่มลูกค้า'
+            : 'รุ่นอุปกรณ์จัดการโดยผู้ดูแลแพลตฟอร์มเท่านั้น'
+        "
       >
         @if (auth.isSuperadmin()) {
-          <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มรุ่น</button>
-          <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
-          <button ejs-button cssClass="e-danger" iconCss="e-icons e-trash" [disabled]="!selected() || busy()" (click)="remove()">ลบ</button>
+          <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">
+            เพิ่มรุ่น
+          </button>
+          <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">
+            แก้ไข
+          </button>
+          <button
+            ejs-button
+            cssClass="e-danger"
+            iconCss="e-icons e-trash"
+            [disabled]="!selected() || busy()"
+            (click)="remove()"
+          >
+            ลบ
+          </button>
         }
       </app-page-header>
       <div class="panel">
@@ -70,7 +101,13 @@ const COLUMNS: GridColumn[] = [
         >
           <ng-template gridCell="image" let-row>
             @if (row.image) {
-              <img class="model-thumb" [src]="row.image | photoSrc" [alt]="row.name" loading="lazy" decoding="async" />
+              <img
+                class="model-thumb"
+                [src]="row.image | photoSrc"
+                [alt]="row.name"
+                loading="lazy"
+                decoding="async"
+              />
             } @else {
               <span class="model-thumb empty e-icons e-image" aria-hidden="true"></span>
             }
@@ -121,7 +158,11 @@ const COLUMNS: GridColumn[] = [
           </div>
           <div>
             <label>ประเภท *</label>
-            <ejs-textbox [(value)]="deviceType" [liveValue]="deviceType" placeholder="เช่น สแกนใบหน้า"></ejs-textbox>
+            <ejs-textbox
+              [(value)]="deviceType"
+              [liveValue]="deviceType"
+              placeholder="เช่น สแกนใบหน้า"
+            ></ejs-textbox>
           </div>
           <div>
             <label>เวอร์ชันเฟิร์มแวร์</label>
@@ -135,7 +176,9 @@ const COLUMNS: GridColumn[] = [
       </ng-template>
       <ng-template #footerTemplate>
         <button ejs-button (click)="formOpen.set(false)">ยกเลิก</button>
-        <button ejs-button [isPrimary]="true" [disabled]="!formValid() || busy()" (click)="save()">บันทึก</button>
+        <button ejs-button [isPrimary]="true" [disabled]="!formValid() || busy()" (click)="save()">
+          บันทึก
+        </button>
       </ng-template>
     </ejs-dialog>
   `,
@@ -149,7 +192,9 @@ export class DeviceModelsPage {
 
   protected readonly columns = COLUMNS;
   protected readonly animation = DIALOG_ANIMATION;
-  protected readonly models = httpResource<DeviceModel[]>(() => '/api/v1/device-models', { defaultValue: [] });
+  protected readonly models = httpResource<DeviceModel[]>(() => '/api/v1/device-models', {
+    defaultValue: [],
+  });
   protected readonly photos = httpResource<Photo[]>(
     () => ({ url: '/api/v1/photos', params: { owner_type: 'device_model' } }),
     { defaultValue: [] },

@@ -31,7 +31,9 @@ export class AuthStore {
   readonly user = computed(() => this.session()?.user ?? null);
   readonly isAuthenticated = computed(() => this.session() !== null);
   readonly isSuperadmin = computed(() => this.user()?.role === 'superadmin');
-  readonly isAdmin = computed(() => ['superadmin', 'tenant_admin'].includes(this.user()?.role ?? ''));
+  readonly isAdmin = computed(() =>
+    ['superadmin', 'tenant_admin'].includes(this.user()?.role ?? ''),
+  );
   readonly canWrite = computed(() => this.user() !== null && this.user()!.role !== 'viewer');
 
   accessToken(): string | null {
@@ -43,7 +45,9 @@ export class AuthStore {
   }
 
   async login(email: string, password: string): Promise<void> {
-    const res = await firstValueFrom(this.http.post<TokenResponse>('/api/v1/auth/login', { email, password }));
+    const res = await firstValueFrom(
+      this.http.post<TokenResponse>('/api/v1/auth/login', { email, password }),
+    );
     this.store(res);
   }
 
@@ -72,7 +76,11 @@ export class AuthStore {
   }
 
   private store(res: TokenResponse): void {
-    const session: Session = { accessToken: res.access_token, refreshToken: res.refresh_token, user: res.user };
+    const session: Session = {
+      accessToken: res.access_token,
+      refreshToken: res.refresh_token,
+      user: res.user,
+    };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
     this.session.set(session);
   }

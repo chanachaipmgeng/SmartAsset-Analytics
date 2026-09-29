@@ -38,9 +38,12 @@ export class ProfilePage {
   protected readonly avatarBusy = signal(false);
   protected readonly photoAccept = PHOTO_ACCEPT;
 
-  private readonly tenants = httpResource<Tenant[]>(() => (this.user()?.tenant_id ? '/api/v1/tenants' : undefined), {
-    defaultValue: [],
-  });
+  private readonly tenants = httpResource<Tenant[]>(
+    () => (this.user()?.tenant_id ? '/api/v1/tenants' : undefined),
+    {
+      defaultValue: [],
+    },
+  );
   protected readonly tenantName = computed(() => {
     const id = this.user()?.tenant_id;
     if (!id) return 'ส่วนกลาง (ทุกกลุ่มลูกค้า)';
@@ -59,8 +62,12 @@ export class ProfilePage {
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  protected readonly newTooShort = computed(() => !!this.newPassword() && this.newPassword().length < MIN_PASSWORD);
-  protected readonly mismatch = computed(() => !!this.confirmPassword() && this.confirmPassword() !== this.newPassword());
+  protected readonly newTooShort = computed(
+    () => !!this.newPassword() && this.newPassword().length < MIN_PASSWORD,
+  );
+  protected readonly mismatch = computed(
+    () => !!this.confirmPassword() && this.confirmPassword() !== this.newPassword(),
+  );
   protected readonly canSubmit = computed(
     () =>
       !!this.currentPassword() &&

@@ -7,7 +7,11 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
     <div class="flex flex-col items-center justify-center gap-2 px-4 py-10 text-center">
       <div
         class="grid size-14 place-items-center rounded-full text-2xl"
-        [class]="tone() === 'error' ? 'bg-error-container text-on-error-container' : 'bg-surface-container text-primary'"
+        [class]="
+          tone() === 'error'
+            ? 'bg-error-container text-on-error-container'
+            : 'bg-surface-container text-primary'
+        "
       >
         <span [class]="icon()"></span>
       </div>

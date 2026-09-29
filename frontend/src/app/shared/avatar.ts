@@ -7,7 +7,13 @@ import { PhotoSrcPipe } from '../core/photos';
   imports: [PhotoSrcPipe],
   template: `
     @if (src() && !failed()) {
-      <img [src]="src() | photoSrc" [alt]="name()" loading="lazy" decoding="async" (error)="failed.set(true)" />
+      <img
+        [src]="src() | photoSrc"
+        [alt]="name()"
+        loading="lazy"
+        decoding="async"
+        (error)="failed.set(true)"
+      />
     } @else {
       <span aria-hidden="true">{{ initial() }}</span>
     }

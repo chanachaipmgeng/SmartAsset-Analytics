@@ -11,7 +11,9 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
           <h1 class="m-0 text-2xl font-semibold leading-tight text-on-surface">{{ title() }}</h1>
         </div>
         @if (subtitle()) {
-          <p class="m-0 mt-1.5 text-sm text-on-surface-variant" style="padding-left: 15px;">{{ subtitle() }}</p>
+          <p class="m-0 mt-1.5 text-sm text-on-surface-variant" style="padding-left: 15px;">
+            {{ subtitle() }}
+          </p>
         }
       </div>
       <div class="flex flex-wrap items-center gap-2">
@@ -25,11 +27,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       width: 4px;
       height: 24px;
       border-radius: 2px;
-      background: linear-gradient(
-        180deg,
-        rgb(var(--app-primary)),
-        rgb(var(--app-tertiary))
-      );
+      background: linear-gradient(180deg, rgb(var(--app-primary)), rgb(var(--app-tertiary)));
       flex-shrink: 0;
     }
   `,

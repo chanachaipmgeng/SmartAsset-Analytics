@@ -9,7 +9,10 @@
             <div class="avatar-edit">
               <app-avatar [name]="u.full_name" [src]="avatar.photo()?.thumb_url" [size]="72" />
               <label class="avatar-btn" [class.busy]="avatarBusy()" title="เปลี่ยนรูปโปรไฟล์">
-                <span class="e-icons" [class]="avatarBusy() ? 'e-refresh animate-spin' : 'e-image'"></span>
+                <span
+                  class="e-icons"
+                  [class]="avatarBusy() ? 'e-refresh animate-spin' : 'e-image'"
+                ></span>
                 <input
                   type="file"
                   class="sr-only"
@@ -24,7 +27,14 @@
               <h2 class="m-0 truncate text-lg font-semibold text-on-surface">{{ u.full_name }}</h2>
               <p class="m-0 truncate text-sm text-on-surface-variant">{{ u.email }}</p>
               @if (avatar.photo()) {
-                <button type="button" class="link-btn" [disabled]="avatarBusy()" (click)="removeAvatar()">ลบรูปโปรไฟล์</button>
+                <button
+                  type="button"
+                  class="link-btn"
+                  [disabled]="avatarBusy()"
+                  (click)="removeAvatar()"
+                >
+                  ลบรูปโปรไฟล์
+                </button>
               }
             </div>
           </div>
@@ -34,7 +44,9 @@
             <dt class="text-on-surface-variant">กลุ่มลูกค้า</dt>
             <dd class="m-0 text-on-surface">{{ tenantName() }}</dd>
           </dl>
-          <p class="m-0 text-xs text-on-surface-variant">หากต้องการแก้ไขชื่อ อีเมล หรือบทบาท โปรดติดต่อผู้ดูแลระบบ</p>
+          <p class="m-0 text-xs text-on-surface-variant">
+            หากต้องการแก้ไขชื่อ อีเมล หรือบทบาท โปรดติดต่อผู้ดูแลระบบ
+          </p>
         }
       </section>
 
@@ -69,7 +81,9 @@
       <form class="flex max-w-md flex-col gap-4" (submit)="changePassword($event)">
         <div>
           <h2 class="m-0 text-base font-semibold text-on-surface">เปลี่ยนรหัสผ่าน</h2>
-          <p class="m-0 text-sm text-on-surface-variant">รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร และไม่ซ้ำกับรหัสเดิม</p>
+          <p class="m-0 text-sm text-on-surface-variant">
+            รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร และไม่ซ้ำกับรหัสเดิม
+          </p>
         </div>
 
         @if (error(); as message) {
@@ -116,7 +130,13 @@
         </div>
 
         <div>
-          <button ejs-button type="submit" [isPrimary]="true" [disabled]="!canSubmit()" cssClass="submit">
+          <button
+            ejs-button
+            type="submit"
+            [isPrimary]="true"
+            [disabled]="!canSubmit()"
+            cssClass="submit"
+          >
             @if (saving()) {
               <span class="e-icons e-refresh inline-block animate-spin"></span>
               กำลังบันทึก...

@@ -391,7 +391,8 @@ body {
 }
 
 @keyframes glow-pulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 20px -6px rgba(var(--app-primary), 0.3);
   }
   50% {
@@ -400,14 +401,25 @@ body {
 }
 
 @keyframes float-y {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-6px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 @keyframes gradient-shift {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 // Children enter one after another; cap the delay so long lists don't feel slow.

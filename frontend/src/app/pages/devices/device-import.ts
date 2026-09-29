@@ -1,5 +1,13 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, model, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  model,
+  output,
+  signal,
+} from '@angular/core';
 import { ButtonModule } from '@syncfusion/ej2-angular-buttons';
 import { SelectedEventArgs, UploaderModule } from '@syncfusion/ej2-angular-inputs';
 import { StepperModule } from '@syncfusion/ej2-angular-navigations';

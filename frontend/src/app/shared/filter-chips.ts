@@ -102,7 +102,12 @@ export interface FilterChip<K extends string = string> {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.35) 50%, transparent 65%);
+      background: linear-gradient(
+        105deg,
+        transparent 35%,
+        rgb(255 255 255 / 0.35) 50%,
+        transparent 65%
+      );
       transform: translateX(-100%);
       animation: chip-sweep 700ms ease-out 80ms both;
       pointer-events: none;

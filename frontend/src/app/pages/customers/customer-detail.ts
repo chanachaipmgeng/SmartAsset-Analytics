@@ -5,7 +5,15 @@ import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from '@syncfusion/ej2-angular-buttons';
 import { AuthStore } from '../../core/auth.store';
 import { SERVICE_LEVEL_LABELS, STATUS_TONES, toDate } from '../../core/labels';
-import { CountItem, Customer, DeviceStatus, Installation, InventoryTransaction, Photo, Tenant } from '../../core/models';
+import {
+  CountItem,
+  Customer,
+  DeviceStatus,
+  Installation,
+  InventoryTransaction,
+  Photo,
+  Tenant,
+} from '../../core/models';
 import { PhotoSrcPipe } from '../../core/photos';
 import { AssetTimeline } from '../../shared/asset-timeline';
 import { AuditHistory } from '../../shared/audit-history';
@@ -34,11 +42,24 @@ const INSTALL_COLUMNS: GridColumn[] = [
   { field: 'serial_number', headerText: 'ซีเรียล', width: 150 },
   { field: 'model_name', headerText: 'รุ่น', width: 150 },
   { field: 'state_label', headerText: 'สถานะ', width: 110 },
-  { field: 'install_date', headerText: 'วันที่ติดตั้ง', type: 'date', format: 'dd/MM/yyyy', width: 120 },
+  {
+    field: 'install_date',
+    headerText: 'วันที่ติดตั้ง',
+    type: 'date',
+    format: 'dd/MM/yyyy',
+    width: 120,
+  },
   { field: 'address', headerText: 'ที่อยู่', width: 240, hideAtMedia: WIDE },
   { field: 'site_contact', headerText: 'ผู้ติดต่อหน้างาน', width: 150, hideAtMedia: WIDE },
   { field: 'site_phone', headerText: 'โทรศัพท์หน้างาน', width: 130, hidden: true },
-  { field: 'removed_at', headerText: 'วันที่ถอน', type: 'date', format: 'dd/MM/yyyy', width: 120, hideAtMedia: WIDE },
+  {
+    field: 'removed_at',
+    headerText: 'วันที่ถอน',
+    type: 'date',
+    format: 'dd/MM/yyyy',
+    width: 120,
+    hideAtMedia: WIDE,
+  },
   { field: 'removal_reason', headerText: 'เหตุผลที่ถอน', width: 200, hideAtMedia: WIDE },
 ];
 
@@ -75,20 +96,30 @@ export class CustomerDetailPage {
   protected readonly columns = INSTALL_COLUMNS;
   protected readonly levelLabels = SERVICE_LEVEL_LABELS;
 
-  protected readonly customer = httpResource<CustomerDetail>(() => `/api/v1/customers/${this.id()}`);
-  private readonly tenants = httpResource<Tenant[]>(() => (this.auth.isSuperadmin() ? '/api/v1/tenants' : undefined), {
-    defaultValue: [],
-  });
+  protected readonly customer = httpResource<CustomerDetail>(
+    () => `/api/v1/customers/${this.id()}`,
+  );
+  private readonly tenants = httpResource<Tenant[]>(
+    () => (this.auth.isSuperadmin() ? '/api/v1/tenants' : undefined),
+    {
+      defaultValue: [],
+    },
+  );
   protected readonly tenantName = computed(() => {
     const c = this.customer.value();
     return c ? (this.tenants.value().find((t) => t.id === c.tenant_id)?.name ?? null) : null;
   });
 
   protected readonly installations = httpResource<Installation[]>(
-    () => ({ url: '/api/v1/installations', params: { customer_id: this.id(), active_only: 'false' } }),
+    () => ({
+      url: '/api/v1/installations',
+      params: { customer_id: this.id(), active_only: 'false' },
+    }),
     { defaultValue: [] },
   );
-  protected readonly activeInstallations = computed(() => this.installations.value().filter((i) => !i.removed_at));
+  protected readonly activeInstallations = computed(() =>
+    this.installations.value().filter((i) => !i.removed_at),
+  );
   protected readonly installRows = computed(() =>
     this.installations.value().map((i) => ({
       ...i,
@@ -109,7 +140,9 @@ export class CustomerDetailPage {
   protected readonly txPhotos = httpResource<Photo[]>(
     () => {
       const ids = this.transactions.value().map((t) => t.id);
-      return ids.length ? { url: '/api/v1/photos', params: { owner_type: 'transaction', owner_id: ids } } : undefined;
+      return ids.length
+        ? { url: '/api/v1/photos', params: { owner_type: 'transaction', owner_id: ids } }
+        : undefined;
     },
     { defaultValue: [] },
   );
@@ -117,13 +150,16 @@ export class CustomerDetailPage {
   protected readonly sitePhotos = httpResource<Photo[]>(
     () => {
       const ids = this.activeInstallations().map((i) => i.id);
-      return ids.length ? { url: '/api/v1/photos', params: { owner_type: 'installation', owner_id: ids } } : undefined;
+      return ids.length
+        ? { url: '/api/v1/photos', params: { owner_type: 'installation', owner_id: ids } }
+        : undefined;
     },
     { defaultValue: [] },
   );
   protected readonly photoGroups = computed(() => {
     const byOwner = new Map<string, Photo[]>();
-    for (const p of this.sitePhotos.value()) byOwner.set(p.owner_id, [...(byOwner.get(p.owner_id) ?? []), p]);
+    for (const p of this.sitePhotos.value())
+      byOwner.set(p.owner_id, [...(byOwner.get(p.owner_id) ?? []), p]);
     return this.activeInstallations()
       .filter((i) => byOwner.has(i.id))
       .map((i) => ({ installation: i, photos: byOwner.get(i.id)! }));
@@ -138,7 +174,9 @@ export class CustomerDetailPage {
   );
 
   private statusCount(status: DeviceStatus): number {
-    return this.customer.value()?.summary.devices_by_status.find((c) => c.key === status)?.count ?? 0;
+    return (
+      this.customer.value()?.summary.devices_by_status.find((c) => c.key === status)?.count ?? 0
+    );
   }
 
   protected onInstallAction({ row }: GridRowAction<{ device_id: string }>): void {

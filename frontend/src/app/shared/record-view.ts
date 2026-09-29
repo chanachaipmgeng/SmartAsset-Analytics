@@ -31,7 +31,9 @@ export interface RecordField {
           @for (f of fields(); track f.label) {
             <div [class.wide]="f.wide">
               <dt>{{ f.label }}</dt>
-              <dd [class.mono]="f.mono">{{ f.value === null || f.value === undefined || f.value === '' ? '-' : f.value }}</dd>
+              <dd [class.mono]="f.mono">
+                {{ f.value === null || f.value === undefined || f.value === '' ? '-' : f.value }}
+              </dd>
             </div>
           }
         </dl>
@@ -39,7 +41,9 @@ export interface RecordField {
       </ng-template>
       <ng-template #footerTemplate>
         @if (editable()) {
-          <button ejs-button iconCss="e-icons e-edit" (click)="open.set(false); edit.emit()">แก้ไข</button>
+          <button ejs-button iconCss="e-icons e-edit" (click)="open.set(false); edit.emit()">
+            แก้ไข
+          </button>
         }
         <button ejs-button [isPrimary]="true" (click)="open.set(false)">ปิด</button>
       </ng-template>

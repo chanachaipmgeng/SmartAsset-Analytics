@@ -28,12 +28,28 @@ const COLUMNS: GridColumn[] = [
     <div class="page">
       <app-page-header
         title="ผู้จำหน่าย / ผู้ซ่อม"
-        [subtitle]="auth.isSuperadmin() ? 'รายชื่อร้านซ่อมและผู้จำหน่ายที่ใช้ร่วมกันทุกกลุ่มลูกค้า เลือกได้ตอนส่งซ่อม' : 'รายชื่อจัดการโดยผู้ดูแลแพลตฟอร์ม เลือกได้ตอนส่งซ่อม'"
+        [subtitle]="
+          auth.isSuperadmin()
+            ? 'รายชื่อร้านซ่อมและผู้จำหน่ายที่ใช้ร่วมกันทุกกลุ่มลูกค้า เลือกได้ตอนส่งซ่อม'
+            : 'รายชื่อจัดการโดยผู้ดูแลแพลตฟอร์ม เลือกได้ตอนส่งซ่อม'
+        "
       >
         @if (auth.isSuperadmin()) {
-          <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มผู้จำหน่าย</button>
-          <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
-          <button ejs-button cssClass="e-danger" iconCss="e-icons e-trash" [disabled]="!selected() || busy()" (click)="remove()">ลบ</button>
+          <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">
+            เพิ่มผู้จำหน่าย
+          </button>
+          <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">
+            แก้ไข
+          </button>
+          <button
+            ejs-button
+            cssClass="e-danger"
+            iconCss="e-icons e-trash"
+            [disabled]="!selected() || busy()"
+            (click)="remove()"
+          >
+            ลบ
+          </button>
         }
       </app-page-header>
       <div class="panel">
@@ -77,7 +93,11 @@ const COLUMNS: GridColumn[] = [
         <div class="form-grid">
           <div class="full">
             <label>ชื่อ *</label>
-            <ejs-textbox [(value)]="name" [liveValue]="name" placeholder="เช่น ศูนย์บริการ ZKTeco"></ejs-textbox>
+            <ejs-textbox
+              [(value)]="name"
+              [liveValue]="name"
+              placeholder="เช่น ศูนย์บริการ ZKTeco"
+            ></ejs-textbox>
           </div>
           <div>
             <label>ผู้ติดต่อ</label>
@@ -93,13 +113,20 @@ const COLUMNS: GridColumn[] = [
           </div>
           <div class="full">
             <label>หมายเหตุ</label>
-            <ejs-textarea [(value)]="notes" [liveValue]="notes" rows="2" placeholder="เช่น รับซ่อมเฉพาะ ZKTeco, ระยะเวลาซ่อมโดยประมาณ"></ejs-textarea>
+            <ejs-textarea
+              [(value)]="notes"
+              [liveValue]="notes"
+              rows="2"
+              placeholder="เช่น รับซ่อมเฉพาะ ZKTeco, ระยะเวลาซ่อมโดยประมาณ"
+            ></ejs-textarea>
           </div>
         </div>
       </ng-template>
       <ng-template #footerTemplate>
         <button ejs-button (click)="formOpen.set(false)">ยกเลิก</button>
-        <button ejs-button [isPrimary]="true" [disabled]="!formValid() || busy()" (click)="save()">บันทึก</button>
+        <button ejs-button [isPrimary]="true" [disabled]="!formValid() || busy()" (click)="save()">
+          บันทึก
+        </button>
       </ng-template>
     </ejs-dialog>
   `,
@@ -113,7 +140,9 @@ export class SuppliersPage {
 
   protected readonly columns = COLUMNS;
   protected readonly animation = DIALOG_ANIMATION;
-  protected readonly suppliers = httpResource<Supplier[]>(() => '/api/v1/suppliers', { defaultValue: [] });
+  protected readonly suppliers = httpResource<Supplier[]>(() => '/api/v1/suppliers', {
+    defaultValue: [],
+  });
 
   protected readonly selected = signal<Supplier | null>(null);
   protected readonly busy = signal(false);

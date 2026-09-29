@@ -1,5 +1,8 @@
 <div class="page">
-  <app-page-header title="สถานีสแกน" subtitle="ยิงบาร์โค้ดหรือพิมพ์หมายเลขซีเรียล แล้วทำรายการได้ทันที" />
+  <app-page-header
+    title="สถานีสแกน"
+    subtitle="ยิงบาร์โค้ดหรือพิมพ์หมายเลขซีเรียล แล้วทำรายการได้ทันที"
+  />
 
   <div class="scan-layout">
     <div class="flex min-w-0 flex-col gap-4">
@@ -21,7 +24,9 @@
               (input)="text.set($any($event.target).value)"
             />
           </div>
-          <button ejs-button type="submit" [isPrimary]="true" iconCss="e-icons e-search">ค้นหา</button>
+          <button ejs-button type="submit" [isPrimary]="true" iconCss="e-icons e-search">
+            ค้นหา
+          </button>
           @if (cameraSupported) {
             <button
               ejs-button
@@ -29,10 +34,16 @@
               [cssClass]="cameraOn() ? 'e-danger' : 'e-outline'"
               iconCss="e-icons e-zoom-in"
               (click)="toggleCamera()"
-            >{{ cameraOn() ? 'ปิดกล้อง' : 'ใช้กล้อง' }}</button>
+            >
+              {{ cameraOn() ? 'ปิดกล้อง' : 'ใช้กล้อง' }}
+            </button>
           }
         </form>
-        <p class="hint">รองรับเครื่องยิงบาร์โค้ดแบบคีย์บอร์ด (ยิงแล้วกด Enter อัตโนมัติ){{ cameraSupported ? ' และกล้องของอุปกรณ์' : '' }}</p>
+        <p class="hint">
+          รองรับเครื่องยิงบาร์โค้ดแบบคีย์บอร์ด (ยิงแล้วกด Enter อัตโนมัติ){{
+            cameraSupported ? ' และกล้องของอุปกรณ์' : ''
+          }}
+        </p>
         @if (auth.canWrite()) {
           <ejs-checkbox
             label="โหมดสแกนต่อเนื่อง (สะสมหลายเครื่องแล้วทำรายการพร้อมกัน)"
@@ -65,8 +76,12 @@
               @for (d of batch(); track d.id) {
                 <li>
                   <span class="min-w-0 flex-1">
-                    <span class="block truncate font-mono text-sm font-semibold">{{ d.serial_number }}</span>
-                    <span class="block truncate text-xs text-on-surface-variant">{{ d.brand }} · {{ d.model_name }}</span>
+                    <span class="block truncate font-mono text-sm font-semibold">{{
+                      d.serial_number
+                    }}</span>
+                    <span class="block truncate text-xs text-on-surface-variant"
+                      >{{ d.brand }} · {{ d.model_name }}</span
+                    >
                   </span>
                   <app-status-chip [status]="d.status" />
                   <button
@@ -81,16 +96,32 @@
             </ul>
             <div class="actions">
               @for (a of batchActions(); track a.id) {
-                <button ejs-button [cssClass]="a.danger ? 'e-outline e-danger' : 'e-outline'" [iconCss]="a.iconCss" (click)="runBatch(a.id)">
+                <button
+                  ejs-button
+                  [cssClass]="a.danger ? 'e-outline e-danger' : 'e-outline'"
+                  [iconCss]="a.iconCss"
+                  (click)="runBatch(a.id)"
+                >
                   {{ a.text }} ({{ batch().length }})
                 </button>
               } @empty {
-                <p class="m-0 text-sm text-on-surface-variant">ไม่มีรายการที่ทำได้กับทุกเครื่องในรายการ</p>
+                <p class="m-0 text-sm text-on-surface-variant">
+                  ไม่มีรายการที่ทำได้กับทุกเครื่องในรายการ
+                </p>
               }
-              <button ejs-button cssClass="e-flat" iconCss="e-icons e-print" (click)="labels().open(batch())">พิมพ์ฉลาก</button>
+              <button
+                ejs-button
+                cssClass="e-flat"
+                iconCss="e-icons e-print"
+                (click)="labels().open(batch())"
+              >
+                พิมพ์ฉลาก
+              </button>
             </div>
           } @else {
-            <p class="m-0 text-sm text-on-surface-variant">สแกนต่อไปเรื่อย ๆ เครื่องที่พบจะถูกเพิ่มในรายการนี้</p>
+            <p class="m-0 text-sm text-on-surface-variant">
+              สแกนต่อไปเรื่อย ๆ เครื่องที่พบจะถูกเพิ่มในรายการนี้
+            </p>
           }
         </section>
       }
@@ -98,7 +129,11 @@
       <section class="panel result" aria-live="polite">
         @switch (lookup().kind) {
           @case ('idle') {
-            <app-empty-state icon="e-icons e-zoom-in" title="พร้อมสแกน" message="ผลการค้นหาและปุ่มทำรายการจะแสดงที่นี่" />
+            <app-empty-state
+              icon="e-icons e-zoom-in"
+              title="พร้อมสแกน"
+              message="ผลการค้นหาและปุ่มทำรายการจะแสดงที่นี่"
+            />
           }
           @case ('loading') {
             <div class="flex flex-col gap-3 p-2">
@@ -112,25 +147,43 @@
               <div class="found">
                 <div class="flex flex-wrap items-start justify-between gap-3">
                   <div class="min-w-0">
-                    <div class="text-sm text-on-surface-variant">{{ d.brand }} · {{ d.model_name }}</div>
+                    <div class="text-sm text-on-surface-variant">
+                      {{ d.brand }} · {{ d.model_name }}
+                    </div>
                     <div class="serial">{{ d.serial_number }}</div>
-                    <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-on-surface-variant">
+                    <div
+                      class="mt-1 flex flex-wrap items-center gap-2 text-sm text-on-surface-variant"
+                    >
                       <app-status-chip [status]="d.status" />
                       <span>{{ d.tenant_name ?? 'คลังกลาง' }}</span>
                     </div>
                   </div>
-                  <a ejs-button cssClass="e-flat" iconCss="e-icons e-arrow-right" iconPosition="Right" [routerLink]="['/devices', d.id]">รายละเอียด</a>
+                  <a
+                    ejs-button
+                    cssClass="e-flat"
+                    iconCss="e-icons e-arrow-right"
+                    iconPosition="Right"
+                    [routerLink]="['/devices', d.id]"
+                    >รายละเอียด</a
+                  >
                 </div>
                 @if (actions().length) {
                   <div class="actions stagger">
                     @for (a of actions(); track a.id) {
-                      <button ejs-button [cssClass]="a.danger ? 'e-outline e-danger' : 'e-outline'" [iconCss]="a.iconCss" (click)="runAction(a.id)">
+                      <button
+                        ejs-button
+                        [cssClass]="a.danger ? 'e-outline e-danger' : 'e-outline'"
+                        [iconCss]="a.iconCss"
+                        (click)="runAction(a.id)"
+                      >
                         {{ a.text }}
                       </button>
                     }
                   </div>
                 } @else {
-                  <p class="m-0 mt-4 text-sm text-on-surface-variant">ไม่มีรายการที่ทำได้ในสถานะนี้</p>
+                  <p class="m-0 mt-4 text-sm text-on-surface-variant">
+                    ไม่มีรายการที่ทำได้ในสถานะนี้
+                  </p>
                 }
               </div>
             }
@@ -142,14 +195,25 @@
               message="เครื่องนี้ยังไม่อยู่ในระบบ หรืออยู่ในกลุ่มลูกค้าอื่น"
             >
               @if (auth.canWrite()) {
-                <a ejs-button [isPrimary]="true" iconCss="e-icons e-plus" routerLink="/devices" [queryParams]="{ action: 'new', serial: serial() }">
+                <a
+                  ejs-button
+                  [isPrimary]="true"
+                  iconCss="e-icons e-plus"
+                  routerLink="/devices"
+                  [queryParams]="{ action: 'new', serial: serial() }"
+                >
                   รับเข้าใหม่ด้วยซีเรียลนี้
                 </a>
               }
             </app-empty-state>
           }
           @case ('error') {
-            <app-empty-state tone="error" icon="e-icons e-warning" title="ค้นหาไม่สำเร็จ" [message]="errorText()">
+            <app-empty-state
+              tone="error"
+              icon="e-icons e-warning"
+              title="ค้นหาไม่สำเร็จ"
+              [message]="errorText()"
+            >
               <button ejs-button (click)="scan(serial())">ลองอีกครั้ง</button>
             </app-empty-state>
           }
@@ -161,7 +225,9 @@
       <div class="history-head">
         <div>
           <h2>ประวัติการสแกน</h2>
-          <div class="text-xs text-on-surface-variant">พบ {{ foundCount() }} / ทั้งหมด {{ history().length }}</div>
+          <div class="text-xs text-on-surface-variant">
+            พบ {{ foundCount() }} / ทั้งหมด {{ history().length }}
+          </div>
         </div>
         @if (history().length) {
           <button ejs-button cssClass="e-flat e-small" (click)="clearHistory()">ล้าง</button>
@@ -177,7 +243,11 @@
                 </span>
                 <span class="min-w-0 flex-1">
                   <span class="block truncate font-mono text-sm font-semibold">{{ h.serial }}</span>
-                  <span class="block text-xs text-on-surface-variant" [title]="h.at | date: 'd MMM y HH:mm:ss'">{{ relative(h.at) }}</span>
+                  <span
+                    class="block text-xs text-on-surface-variant"
+                    [title]="h.at | date: 'd MMM y HH:mm:ss'"
+                    >{{ relative(h.at) }}</span
+                  >
                 </span>
                 @if (h.status) {
                   <app-status-chip [status]="h.status" />
@@ -189,7 +259,11 @@
           }
         </ul>
       } @else {
-        <app-empty-state icon="e-icons e-history" title="ยังไม่มีการสแกน" message="เก็บไว้จนกว่าจะปิดแท็บนี้" />
+        <app-empty-state
+          icon="e-icons e-history"
+          title="ยังไม่มีการสแกน"
+          message="เก็บไว้จนกว่าจะปิดแท็บนี้"
+        />
       }
     </aside>
   </div>

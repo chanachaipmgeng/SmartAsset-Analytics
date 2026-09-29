@@ -5,7 +5,12 @@ import { SkeletonModule } from '@syncfusion/ej2-angular-notifications';
   selector: 'app-skeleton-block',
   imports: [SkeletonModule],
   template: `
-    <ejs-skeleton [shape]="shape()" [width]="width()" [height]="height()" shimmerEffect="Wave"></ejs-skeleton>
+    <ejs-skeleton
+      [shape]="shape()"
+      [width]="width()"
+      [height]="height()"
+      shimmerEffect="Wave"
+    ></ejs-skeleton>
   `,
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
