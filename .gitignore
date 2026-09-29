@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .venv/
 .pytest_cache/
+backend/media/
 node_modules/
 dist/
 .angular/

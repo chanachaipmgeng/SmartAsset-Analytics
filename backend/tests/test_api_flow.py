@@ -7,6 +7,7 @@ from collections.abc import AsyncIterator
 import httpx
 import pytest
 from openpyxl import Workbook, load_workbook
+from PIL import Image
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -39,6 +40,8 @@ async def _cleanup(tenant_ids: list[str], model_id: str, tag: str) -> None:
     device_filter = "SELECT id FROM devices WHERE model_id = CAST(:model AS uuid)"
     async with engine.begin() as conn:
         for stmt in (
+            "DELETE FROM photos WHERE tenant_id = ANY(CAST(:tenants AS uuid[])) OR owner_id = CAST(:model AS uuid) "
+            f"OR owner_id IN ({device_filter})",
             f"DELETE FROM installations WHERE device_id IN ({device_filter})",
             f"DELETE FROM inventory_transactions WHERE device_id IN ({device_filter})",
             "DELETE FROM devices WHERE model_id = CAST(:model AS uuid)",
@@ -522,3 +525,75 @@ async def test_suppliers_crud_and_send_repair(client: httpx.AsyncClient, world: 
     assert res.status_code == 409
     spare = (await client.post("/suppliers", headers=su, json={"name": f"Spare {tag}"})).json()
     assert (await client.delete(f"/suppliers/{spare['id']}", headers=su)).status_code == 204
+
+
+def _png(size: tuple[int, int] = (640, 480)) -> bytes:
+    out = io.BytesIO()
+    Image.new("RGB", size, (200, 40, 40)).save(out, format="PNG")
+    return out.getvalue()
+
+
+async def _upload(client: httpx.AsyncClient, headers: dict, owner_type: str, owner_id: str, **extra) -> httpx.Response:
+    content = extra.pop("content", None) or _png()
+    return await client.post(
+        "/photos",
+        headers=headers,
+        data={"owner_type": owner_type, "owner_id": owner_id, **extra},
+        files={"file": ("photo.png", content, "image/png")},
+    )
+
+
+async def test_photos(client: httpx.AsyncClient, world: dict, tmp_path) -> None:
+    app.state.container.media.root = tmp_path
+    a, b, su, tag = world["a"], world["b"], world["su"], world["tag"]
+    device = (
+        await client.post("/inventory/check-in", headers=a, json={"serial_number": f"PIC-{tag}", "model_id": world["model"]["id"]})
+    ).json()
+
+    # Large images are shrunk to 1600px WebP with a thumbnail, served through signed links.
+    res = await _upload(client, a, "device", device["id"], caption="หน้าเครื่อง", content=_png((3000, 2000)))
+    assert res.status_code == 201, res.text
+    photo = res.json()
+    assert (photo["width"], photo["caption"]) == (1600, "หน้าเครื่อง")
+    thumb = await client.get(photo["thumb_url"].removeprefix("/api/v1"))
+    assert thumb.status_code == 200 and thumb.headers["content-type"] == "image/webp"
+    assert max(Image.open(io.BytesIO(thumb.content)).size) == 400
+    tampered = photo["url"].removeprefix("/api/v1").replace("sig=", "sig=0")
+    assert (await client.get(tampered)).status_code == 404
+
+    params = {"owner_type": "device", "owner_id": device["id"]}
+    assert [p["id"] for p in (await client.get("/photos", headers=a, params=params)).json()] == [photo["id"]]
+    assert (await client.get("/photos", headers=b, params=params)).json() == []
+    assert (await _upload(client, b, "device", device["id"])).status_code == 404
+    assert (await client.delete(f"/photos/{photo['id']}", headers=b)).status_code == 404
+    assert (await _upload(client, world["viewer"], "device", device["id"])).status_code == 403
+    bad = await _upload(client, a, "device", device["id"], content=b"not an image")
+    assert bad.status_code == 422 and bad.json()["detail"] == "ไฟล์รูปภาพไม่ถูกต้องหรือเสียหาย"
+
+    # Avatars and model images keep one photo: a new upload replaces the old one.
+    me = (await client.get("/auth/me", headers=a)).json()
+    for _ in range(2):
+        assert (await _upload(client, a, "user", me["id"])).status_code == 201
+    assert len((await client.get("/photos", headers=a, params={"owner_type": "user", "owner_id": me["id"]})).json()) == 1
+
+    model_id = world["model"]["id"]
+    assert (await _upload(client, a, "device_model", model_id)).status_code == 403
+    assert (await _upload(client, su, "device_model", model_id)).status_code == 201
+    shared = (await client.get("/photos", headers=b, params={"owner_type": "device_model", "owner_id": model_id})).json()
+    assert len(shared) == 1
+
+    # Central-stock photos follow the device when it is transferred.
+    central = (
+        await client.post("/inventory/check-in", headers=su, json={"serial_number": f"PIC-{tag}-C", "model_id": model_id})
+    ).json()
+    assert (await _upload(client, su, "device", central["id"])).status_code == 201
+    central_params = {"owner_type": "device", "owner_id": central["id"]}
+    assert (await client.get("/photos", headers=a, params=central_params)).json() == []
+    res = await client.post(
+        "/inventory/transfer", headers=su, json={"device_id": central["id"], "target_tenant_id": world["tenant_a"]["id"]}
+    )
+    assert res.status_code == 200, res.text
+    assert len((await client.get("/photos", headers=a, params=central_params)).json()) == 1
+
+    assert (await client.delete(f"/photos/{photo['id']}", headers=a)).status_code == 204
+    assert (await client.get(photo["thumb_url"].removeprefix("/api/v1"))).status_code == 404

@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
 
-from app.domain.enums import DeviceStatus, Role, ServiceLevel, TransactionType
+from app.domain.enums import DeviceStatus, PhotoOwner, Role, ServiceLevel, TransactionType
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 Text = Annotated[str, StringConstraints(max_length=2000)]
@@ -351,3 +351,18 @@ class DashboardOut(Out):
     pending_qc: int
     loan_overdue: list[DeviceOut]
     repair_aging: list[AgedDeviceOut]
+
+
+# ---- photos ----
+class PhotoOut(BaseModel):
+    id: UUID
+    owner_type: PhotoOwner
+    owner_id: UUID
+    caption: str | None
+    width: int
+    height: int
+    size_bytes: int
+    uploaded_by: UUID
+    created_at: datetime | None
+    url: str
+    thumb_url: str

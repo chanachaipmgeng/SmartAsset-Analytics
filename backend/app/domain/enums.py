@@ -34,6 +34,14 @@ class TransactionType(StrEnum):
     EDIT = "EDIT"
 
 
+class PhotoOwner(StrEnum):
+    DEVICE = "device"
+    INSTALLATION = "installation"
+    TRANSACTION = "transaction"
+    USER = "user"
+    DEVICE_MODEL = "device_model"
+
+
 class ServiceLevel(StrEnum):
     BASIC = "BASIC"
     STANDARD = "STANDARD"

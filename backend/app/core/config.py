@@ -17,6 +17,8 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:4200"
 
+    media_root: str = "media"
+
     seed_admin_email: str = "admin@example.com"
     seed_admin_password: str = ""
 

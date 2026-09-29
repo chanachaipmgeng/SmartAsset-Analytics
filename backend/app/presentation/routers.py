@@ -2,10 +2,12 @@ from datetime import date
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, File, Path, Query, Response, UploadFile, status
+from fastapi import APIRouter, File, Form, Path, Query, Response, UploadFile, status
+from fastapi.responses import FileResponse
 
-from app.application import admin, auth, customers, dashboard, device_import, inventory, reports
-from app.domain.enums import DeviceStatus, TransactionType
+from app.application import admin, auth, customers, dashboard, device_import, inventory, photos, reports
+from app.domain.entities import Photo
+from app.domain.enums import DeviceStatus, PhotoOwner, TransactionType
 from app.domain.errors import NotFoundError, ValidationError
 from app.infrastructure import spreadsheet
 from app.presentation import schemas as s
@@ -97,8 +99,8 @@ async def update_device_model(model_id: UUID, body: s.DeviceModelPatch, actor: A
 
 
 @router.delete("/device-models/{model_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["device-models"])
-async def delete_device_model(model_id: UUID, actor: ActorDep, uow: UowDep):
-    await admin.delete_device_model(uow, actor, model_id)
+async def delete_device_model(model_id: UUID, actor: ActorDep, uow: UowDep, c: ContainerDep):
+    await admin.delete_device_model(uow, c.media, actor, model_id)
 
 
 # ---- suppliers ----
@@ -349,3 +351,79 @@ async def aging_report(
     actor: ActorDep, uow: UowDep, status_: Annotated[DeviceStatus | None, Query(alias="status")] = None
 ):
     return await reports.aging(uow, actor, status=status_)
+
+
+# ---- photos ----
+MAX_PHOTO_BYTES = 8 * 1024 * 1024
+
+
+def _photo_out(photo: Photo, c: ContainerDep) -> s.PhotoOut:
+    base = f"/api/v1/photos/{photo.id}/file?"
+    return s.PhotoOut(
+        id=photo.id,
+        owner_type=photo.owner_type,
+        owner_id=photo.owner_id,
+        caption=photo.caption,
+        width=photo.width,
+        height=photo.height,
+        size_bytes=photo.size_bytes,
+        uploaded_by=photo.uploaded_by,
+        created_at=photo.created_at,
+        url=base + c.media.signed_query(photo.id, "full"),
+        thumb_url=base + c.media.signed_query(photo.id, "thumb"),
+    )
+
+
+@router.get("/photos", response_model=list[s.PhotoOut], tags=["photos"])
+async def list_photos(
+    actor: ActorDep,
+    uow: UowDep,
+    c: ContainerDep,
+    owner_type: PhotoOwner,
+    owner_id: Annotated[list[UUID] | None, Query(max_length=500)] = None,
+):
+    """Photos of one or more records; without `owner_id` every visible photo of that owner type."""
+    return [_photo_out(p, c) for p in await photos.list_photos(uow, actor, owner_type, owner_id)]
+
+
+@router.post("/photos", response_model=s.PhotoOut, status_code=status.HTTP_201_CREATED, tags=["photos"])
+async def upload_photo(
+    actor: ActorDep,
+    uow: UowDep,
+    c: ContainerDep,
+    owner_type: Annotated[PhotoOwner, Form()],
+    owner_id: Annotated[UUID, Form()],
+    file: Annotated[UploadFile, File(description="JPG, PNG หรือ WebP ไม่เกิน 8 MB")],
+    caption: Annotated[str | None, Form(max_length=200)] = None,
+):
+    # Pillow decides the real format; this only rejects obvious non-images early.
+    if file.content_type and not file.content_type.startswith("image/"):
+        raise ValidationError("รองรับเฉพาะไฟล์รูปภาพ JPG, PNG หรือ WebP")
+    content = await file.read(MAX_PHOTO_BYTES + 1)
+    if len(content) > MAX_PHOTO_BYTES:
+        raise ValidationError("ไฟล์รูปต้องมีขนาดไม่เกิน 8 MB")
+    photo = await photos.upload_photo(
+        uow, c.media, actor, owner_type=owner_type, owner_id=owner_id, data=content, caption=caption
+    )
+    return _photo_out(photo, c)
+
+
+@router.delete("/photos/{photo_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["photos"])
+async def delete_photo(photo_id: UUID, actor: ActorDep, uow: UowDep, c: ContainerDep):
+    await photos.delete_photo(uow, c.media, actor, photo_id)
+
+
+@router.get("/photos/{photo_id}/file", tags=["photos"], response_class=FileResponse)
+async def photo_file(
+    photo_id: UUID,
+    c: ContainerDep,
+    v: Annotated[str, Query(pattern="^(full|thumb)$")],
+    exp: int,
+    sig: Annotated[str, Query(max_length=64)],
+):
+    """Signed link from `PhotoOut.url`, so it works in <img> without a bearer token."""
+    variant = "thumb" if v == "thumb" else "full"
+    path = c.media.path(photo_id, variant)
+    if not c.media.verify(photo_id, variant, exp, sig) or not path.is_file():
+        raise NotFoundError("ไม่พบรูปภาพหรือลิงก์หมดอายุ")
+    return FileResponse(path, media_type="image/webp", headers={"Cache-Control": "private, max-age=86400"})

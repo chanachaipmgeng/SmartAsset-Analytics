@@ -3,7 +3,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
-from app.domain.enums import DeviceStatus, Role, ServiceLevel, TransactionType
+from app.domain.enums import DeviceStatus, PhotoOwner, Role, ServiceLevel, TransactionType
 
 
 @dataclass
@@ -109,3 +109,23 @@ class Installation:
     @property
     def is_active(self) -> bool:
         return self.removed_at is None
+
+
+@dataclass
+class Photo:
+    """Image attached to a device, installation, transaction, user (avatar) or device model.
+
+    `tenant_id` follows the owner so RLS applies; the files live in media storage under `id`.
+    """
+
+    owner_type: PhotoOwner
+    owner_id: UUID
+    content_type: str
+    size_bytes: int
+    width: int
+    height: int
+    uploaded_by: UUID
+    tenant_id: UUID | None = None
+    caption: str | None = None
+    id: UUID = field(default_factory=uuid4)
+    created_at: datetime | None = None

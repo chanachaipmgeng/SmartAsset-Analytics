@@ -5,10 +5,11 @@ from typing import Any
 from uuid import UUID
 
 from app.application.context import Actor
+from app.application.photos import delete_owner_photos
 from app.domain.entities import DeviceModel, Supplier, Tenant, User
-from app.domain.enums import Role
+from app.domain.enums import PhotoOwner, Role
 from app.domain.errors import ConflictError, NotFoundError, PermissionDeniedError
-from app.domain.ports import PasswordHasher, UnitOfWork
+from app.domain.ports import PasswordHasher, PhotoStorage, UnitOfWork
 from app.domain.rules import require_admin, require_superadmin, validate_user_scope
 
 
@@ -123,14 +124,14 @@ async def update_device_model(uow: UnitOfWork, actor: Actor, model_id: UUID, cha
     return model
 
 
-async def delete_device_model(uow: UnitOfWork, actor: Actor, model_id: UUID) -> None:
+async def delete_device_model(uow: UnitOfWork, storage: PhotoStorage, actor: Actor, model_id: UUID) -> None:
     require_superadmin(actor.role)
     if await uow.device_models.get(model_id) is None:
         raise NotFoundError("ไม่พบรุ่นอุปกรณ์")
     if await uow.device_models.is_in_use(model_id):
         raise ConflictError("มีอุปกรณ์ใช้งานรุ่นนี้อยู่ ไม่สามารถลบได้")
     await uow.device_models.delete(model_id)
-    await uow.flush()
+    await delete_owner_photos(uow, storage, PhotoOwner.DEVICE_MODEL, model_id)
 
 
 async def list_suppliers(uow: UnitOfWork, actor: Actor) -> list[Supplier]:

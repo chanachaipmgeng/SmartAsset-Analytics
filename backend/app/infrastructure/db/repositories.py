@@ -4,7 +4,7 @@ from typing import Any, TypeVar
 from uuid import UUID
 
 from geoalchemy2 import Geography
-from sqlalchemy import Select, cast, func, or_, select
+from sqlalchemy import Select, cast, delete, func, or_, select, update
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,11 +14,12 @@ from app.domain.entities import (
     DeviceModel,
     Installation,
     InventoryTransaction,
+    Photo,
     Supplier,
     Tenant,
     User,
 )
-from app.domain.enums import DeviceStatus, Role, ServiceLevel, TransactionType
+from app.domain.enums import DeviceStatus, PhotoOwner, Role, ServiceLevel, TransactionType
 from app.domain.errors import ConflictError, PermissionDeniedError
 from app.domain.read_models import (
     CountItem,
@@ -35,6 +36,7 @@ from app.infrastructure.db.models import (
     DeviceORM,
     InstallationORM,
     InventoryTransactionORM,
+    PhotoORM,
     SupplierORM,
     TenantORM,
     UserORM,
@@ -49,6 +51,7 @@ ENUM_FIELDS: dict[str, type] = {
     "transaction_type": TransactionType,
     "from_status": DeviceStatus,
     "to_status": DeviceStatus,
+    "owner_type": PhotoOwner,
 }
 
 CONSTRAINT_MESSAGES = {
@@ -368,6 +371,9 @@ class SqlDeviceRepository(_Repo):
 class SqlTransactionRepository(_Repo):
     orm, entity = InventoryTransactionORM, InventoryTransaction
 
+    async def get(self, tx_id: UUID) -> InventoryTransaction | None:
+        return await self._get(tx_id)
+
     async def list_views(
         self,
         *,
@@ -530,9 +536,40 @@ class SqlInstallationRepository(_Repo):
         return [self._view(r) for r in (await self.s.execute(stmt)).all()]
 
 
+MAX_PHOTOS_LISTED = 1000
+
+
+class SqlPhotoRepository(_Repo):
+    orm, entity = PhotoORM, Photo
+
+    async def get(self, photo_id: UUID) -> Photo | None:
+        return await self._get(photo_id)
+
+    async def list(self, owner_type: PhotoOwner, owner_ids: list[UUID] | None = None) -> list[Photo]:
+        stmt = select(PhotoORM).where(PhotoORM.owner_type == owner_type.value)
+        if owner_ids:
+            stmt = stmt.where(PhotoORM.owner_id.in_(owner_ids))
+        return await self._list(stmt.order_by(PhotoORM.created_at, PhotoORM.id).limit(MAX_PHOTOS_LISTED))
+
+    async def count(self, owner_type: PhotoOwner, owner_id: UUID) -> int:
+        stmt = select(func.count()).where(PhotoORM.owner_type == owner_type.value, PhotoORM.owner_id == owner_id)
+        return int(await self.s.scalar(stmt) or 0)
+
+    async def delete(self, photo_id: UUID) -> None:
+        await self.s.execute(delete(PhotoORM).where(PhotoORM.id == photo_id))
+
+    async def retenant(self, owner_type: PhotoOwner, owner_id: UUID, tenant_id: UUID | None) -> None:
+        await self.s.execute(
+            update(PhotoORM)
+            .where(PhotoORM.owner_type == owner_type.value, PhotoORM.owner_id == owner_id)
+            .values(tenant_id=tenant_id)
+        )
+
+
 class SqlUnitOfWork:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
+        self.photos = SqlPhotoRepository(session)
         self.tenants = SqlTenantRepository(session)
         self.users = SqlUserRepository(session)
         self.device_models = SqlDeviceModelRepository(session)

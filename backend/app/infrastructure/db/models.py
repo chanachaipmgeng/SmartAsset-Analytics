@@ -127,3 +127,19 @@ class InstallationORM(Base):
     address: Mapped[str | None]
     removed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class PhotoORM(Base):
+    __tablename__ = "photos"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    tenant_id: Mapped[UUID | None] = mapped_column(ForeignKey("tenants.id"))
+    owner_type: Mapped[str] = mapped_column(String)
+    owner_id: Mapped[UUID]
+    content_type: Mapped[str]
+    size_bytes: Mapped[int]
+    width: Mapped[int]
+    height: Mapped[int]
+    caption: Mapped[str | None]
+    uploaded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

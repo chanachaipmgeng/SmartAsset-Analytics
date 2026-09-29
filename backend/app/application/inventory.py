@@ -13,7 +13,7 @@ from uuid import UUID
 from app.application.context import Actor
 from app.application.dashboard import BUSINESS_OFFSET
 from app.domain.entities import Device, Installation, InventoryTransaction
-from app.domain.enums import DeviceStatus, TransactionType
+from app.domain.enums import DeviceStatus, PhotoOwner, TransactionType
 from app.domain.errors import NotFoundError, ValidationError
 from app.domain.ports import UnitOfWork
 from app.domain.read_models import DEVICE_SORT_FIELDS, CountItem, DeviceView, InstallationView, TransactionView
@@ -188,6 +188,7 @@ async def transfer(
     from_status, from_tenant = device.status, device.tenant_id
     device = replace(device, status=next_status(device, TransactionType.TRANSFER), tenant_id=target_tenant_id)
     await uow.devices.update(device)
+    await uow.photos.retenant(PhotoOwner.DEVICE, device.id, target_tenant_id)
     await _record(uow, actor, device, TransactionType.TRANSFER, from_status, from_tenant_id=from_tenant, note=note)
     return await _view(uow, device.id)
 

@@ -20,7 +20,12 @@ COPY app ./app
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh \
     && chmod +x /usr/local/bin/docker-entrypoint.sh \
-    && useradd --system --uid 10001 --no-create-home app
+    && useradd --system --uid 10001 --no-create-home app \
+    && mkdir -p /data/media \
+    && chown app /data/media
+
+# A new named volume copies this directory's ownership, so the app user can write photos.
+ENV MEDIA_ROOT=/data/media
 
 USER app
 EXPOSE 8000

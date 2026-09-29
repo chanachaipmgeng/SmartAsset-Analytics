@@ -1,5 +1,6 @@
+from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 from uuid import UUID
 
 from app.domain.entities import (
@@ -8,11 +9,12 @@ from app.domain.entities import (
     DeviceModel,
     Installation,
     InventoryTransaction,
+    Photo,
     Supplier,
     Tenant,
     User,
 )
-from app.domain.enums import DeviceStatus, TransactionType
+from app.domain.enums import DeviceStatus, PhotoOwner, TransactionType
 from app.domain.read_models import (
     CountItem,
     DailyCount,
@@ -90,6 +92,7 @@ class DeviceRepository(Protocol):
 
 
 class TransactionRepository(Protocol):
+    async def get(self, tx_id: UUID) -> InventoryTransaction | None: ...
     async def add(self, tx: InventoryTransaction) -> None: ...
     async def list_views(
         self,
@@ -122,6 +125,15 @@ class InstallationRepository(Protocol):
     async def update(self, installation: Installation) -> None: ...
 
 
+class PhotoRepository(Protocol):
+    async def get(self, photo_id: UUID) -> Photo | None: ...
+    async def list(self, owner_type: PhotoOwner, owner_ids: list[UUID] | None = None) -> list[Photo]: ...
+    async def count(self, owner_type: PhotoOwner, owner_id: UUID) -> int: ...
+    async def add(self, photo: Photo) -> None: ...
+    async def delete(self, photo_id: UUID) -> None: ...
+    async def retenant(self, owner_type: PhotoOwner, owner_id: UUID, tenant_id: UUID | None) -> None: ...
+
+
 class UnitOfWork(Protocol):
     tenants: TenantRepository
     users: UserRepository
@@ -131,8 +143,27 @@ class UnitOfWork(Protocol):
     transactions: TransactionRepository
     customers: CustomerRepository
     installations: InstallationRepository
+    photos: PhotoRepository
 
     async def flush(self) -> None: ...
+
+
+PhotoVariant = Literal["full", "thumb"]
+
+
+@dataclass(frozen=True)
+class StoredImage:
+    content_type: str
+    size_bytes: int
+    width: int
+    height: int
+
+
+class PhotoStorage(Protocol):
+    """Normalises uploads (orientation, size, WebP) and keeps a full image plus a thumbnail per photo."""
+
+    async def save(self, photo_id: UUID, data: bytes) -> StoredImage: ...
+    async def delete(self, photo_id: UUID) -> None: ...
 
 
 class PasswordHasher(Protocol):
