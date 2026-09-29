@@ -40,6 +40,10 @@ async def _cleanup(tenant_ids: list[str], model_id: str, tag: str) -> None:
     device_filter = "SELECT id FROM devices WHERE model_id = CAST(:model AS uuid)"
     async with engine.begin() as conn:
         for stmt in (
+            "DELETE FROM audit_logs WHERE tenant_id = ANY(CAST(:tenants AS uuid[])) "
+            "OR entity_id = ANY(CAST(:tenants AS uuid[])) OR entity_id = CAST(:model AS uuid) "
+            "OR entity_label LIKE :supplier "
+            "OR user_id IN (SELECT id FROM users WHERE tenant_id = ANY(CAST(:tenants AS uuid[])))",
             "DELETE FROM photos WHERE tenant_id = ANY(CAST(:tenants AS uuid[])) OR owner_id = CAST(:model AS uuid) "
             f"OR owner_id IN ({device_filter})",
             f"DELETE FROM installations WHERE device_id IN ({device_filter})",
@@ -448,6 +452,44 @@ async def test_import_devices(client: httpx.AsyncClient, world: dict) -> None:
     assert template.status_code == 200 and template.headers["content-type"] == XLSX
     sheet = load_workbook(io.BytesIO(template.content)).worksheets[0]
     assert [c.value for c in sheet[1]] == [*header, "รหัสทรัพย์สิน", "เฟิร์มแวร์", "ผู้จำหน่าย"]
+
+
+async def test_audit_log(client: httpx.AsyncClient, world: dict) -> None:
+    a, b, su, tag = world["a"], world["b"], world["su"], world["tag"]
+
+    supplier = (await client.post("/suppliers", headers=su, json={"name": f"Audit {tag}"})).json()
+    await client.patch(f"/suppliers/{supplier['id']}", headers=su, json={"phone": "02-111-1111"})
+    await client.patch(f"/suppliers/{supplier['id']}", headers=su, json={"phone": "02-111-1111"})
+    assert (await client.delete(f"/suppliers/{supplier['id']}", headers=su)).status_code == 204
+    entries = (await client.get("/audit", headers=su, params={"entity_id": supplier["id"]})).json()
+    # The no-op second patch is not logged.
+    assert [e["action"] for e in entries] == ["delete", "update", "create"]
+    assert entries[1]["changes"] == {"phone": [None, "02-111-1111"]}
+    assert entries[0]["entity_label"] == f"Audit {tag}" and entries[0]["tenant_id"] is None
+
+    email = f"audit.{tag.lower()}@example.com"
+    user = (
+        await client.post(
+            "/users",
+            headers=a,
+            json={"email": email, "full_name": "Audit", "role": "staff", "password": "first-password-1"},
+        )
+    ).json()
+    await client.patch(f"/users/{user['id']}", headers=a, json={"password": "second-password-2", "full_name": "Audit 2"})
+    await client.patch(f"/users/{user['id']}", headers=a, json={"is_active": False})
+    entries = (await client.get("/audit", headers=a, params={"entity_id": user["id"]})).json()
+    assert [e["action"] for e in entries] == ["deactivate", "update", "create"]
+    assert entries[1]["changes"] == {"full_name": ["Audit", "Audit 2"], "password": "changed"}
+    assert "password" not in entries[2]["changes"] and "password_hash" not in entries[2]["changes"]
+
+    customer = (await client.post("/customers", headers=a, json={"company_name": f"Audit Co {tag}"})).json()
+    visible = (await client.get("/audit", headers=a, params={"entity_type": "customer"})).json()
+    assert visible[0]["entity_id"] == customer["id"] and visible[0]["action"] == "create"
+    # Other tenants, viewers and platform-wide rows stay hidden.
+    assert (await client.get("/audit", headers=b, params={"entity_id": customer["id"]})).json() == []
+    assert (await client.get("/audit", headers=world["viewer"])).status_code == 403
+    assert all(e["tenant_id"] == world["tenant_a"]["id"] for e in (await client.get("/audit", headers=a)).json())
+    assert len((await client.get("/audit", headers=su, params={"entity_id": customer["id"]})).json()) == 1
 
 
 async def test_extra_fields(client: httpx.AsyncClient, world: dict) -> None:

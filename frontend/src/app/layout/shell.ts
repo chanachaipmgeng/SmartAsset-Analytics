@@ -114,6 +114,7 @@ export class Shell {
     }
     if (this.auth.isAdmin()) {
       settings.push({ path: '/admin/users', label: 'ผู้ใช้งาน', icon: 'e-icons e-user' });
+      settings.push({ path: '/admin/audit', label: 'ประวัติการแก้ไข', icon: 'e-icons e-history' });
     }
     return [
       {

@@ -1,5 +1,5 @@
 import { cssColor } from './theme.service';
-import { DeviceStatus, Role, ServiceLevel, TransactionType } from './models';
+import { AuditAction, AuditEntity, DeviceStatus, Role, ServiceLevel, TransactionType } from './models';
 
 export const STATUS_LABELS: Record<DeviceStatus, string> = {
   IN_STOCK: 'อยู่ในคลัง',
@@ -115,6 +115,70 @@ export const SERVICE_LEVEL_LABELS: Record<ServiceLevel, string> = {
   BASIC: 'พื้นฐาน',
   STANDARD: 'มาตรฐาน',
   PREMIUM: 'พรีเมียม',
+};
+
+export const AUDIT_ENTITY_LABELS: Record<AuditEntity, string> = {
+  tenant: 'กลุ่มลูกค้า',
+  user: 'ผู้ใช้งาน',
+  device_model: 'รุ่นอุปกรณ์',
+  supplier: 'ผู้จำหน่าย / ผู้ซ่อม',
+  customer: 'ลูกค้า',
+  installation: 'จุดติดตั้ง',
+  photo: 'รูปภาพ',
+};
+
+export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
+  create: 'สร้าง',
+  update: 'แก้ไข',
+  delete: 'ลบ',
+  deactivate: 'ระงับการใช้งาน',
+};
+
+export const AUDIT_ACTION_TONES: Record<AuditAction, StatusTone> = {
+  create: 'success',
+  update: 'info',
+  delete: 'error',
+  deactivate: 'warning',
+};
+
+/** Thai names for fields that appear in audit diffs; unknown keys fall back to the raw name. */
+export const FIELD_LABELS: Record<string, string> = {
+  name: 'ชื่อ',
+  code: 'รหัส',
+  is_active: 'ใช้งาน',
+  email: 'อีเมล',
+  full_name: 'ชื่อ-นามสกุล',
+  role: 'บทบาท',
+  password: 'รหัสผ่าน',
+  tenant_id: 'กลุ่มลูกค้า',
+  brand: 'ยี่ห้อ',
+  device_type: 'ประเภท',
+  firmware_version: 'เฟิร์มแวร์',
+  description: 'รายละเอียด',
+  contact_person: 'ผู้ติดต่อ',
+  phone: 'โทรศัพท์',
+  notes: 'หมายเหตุ',
+  company_name: 'ชื่อบริษัท',
+  service_level: 'ระดับบริการ',
+  address: 'ที่อยู่',
+  tax_id: 'เลขประจำตัวผู้เสียภาษี',
+  install_date: 'วันที่ติดตั้ง',
+  latitude: 'ละติจูด',
+  longitude: 'ลองจิจูด',
+  site_contact: 'ผู้ติดต่อหน้างาน',
+  site_phone: 'โทรศัพท์หน้างาน',
+  removal_reason: 'เหตุผลที่ถอน',
+  removed_at: 'วันที่ถอน',
+  device_id: 'อุปกรณ์',
+  customer_id: 'ลูกค้า',
+  owner_type: 'ประเภทเจ้าของรูป',
+  owner_id: 'เจ้าของรูป',
+  caption: 'คำอธิบาย',
+  content_type: 'ชนิดไฟล์',
+  size_bytes: 'ขนาดไฟล์',
+  width: 'กว้าง',
+  height: 'สูง',
+  uploaded_by: 'ผู้อัปโหลด',
 };
 
 export function toOptions<K extends string>(labels: Record<K, string>): { value: K; text: string }[] {

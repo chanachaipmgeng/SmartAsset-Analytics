@@ -6,6 +6,7 @@ import { ROLE_LABELS, toOptions } from '../../core/labels';
 import { Photo, Role, Tenant, User } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { Avatar } from '../../shared/avatar';
+import { AuditHistory } from '../../shared/audit-history';
 import { PageHeader } from '../../shared/page-header';
 import { DataGrid, GridCell, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
 import { RecordField, RecordView } from '../../shared/record-view';
@@ -13,7 +14,7 @@ import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 
 @Component({
   selector: 'app-users',
-  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell, RecordView, Avatar],
+  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell, RecordView, Avatar, AuditHistory],
   styles: `
     .user-cell {
       display: inline-flex;
@@ -64,7 +65,9 @@ import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
       [fields]="viewFields()"
       [editable]="true"
       (edit)="openEdit()"
-    />
+    >
+      <app-audit-history entityType="user" [entityId]="selected()?.id" [active]="viewOpen()" />
+    </app-record-view>
 
     <ejs-dialog
       [visible]="formOpen()"

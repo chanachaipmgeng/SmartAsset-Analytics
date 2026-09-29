@@ -6,9 +6,10 @@ so a new upload replaces the old image.
 
 from uuid import UUID, uuid4
 
+from app.application import audit
 from app.application.context import Actor
 from app.domain.entities import Photo
-from app.domain.enums import PhotoOwner
+from app.domain.enums import AuditEntity, PhotoOwner
 from app.domain.errors import NotFoundError, PermissionDeniedError, ValidationError
 from app.domain.ports import PhotoStorage, UnitOfWork
 from app.domain.rules import require_admin, require_superadmin, require_write
@@ -119,6 +120,15 @@ async def delete_photo(uow: UnitOfWork, storage: PhotoStorage, actor: Actor, pho
     await _owner_tenant(uow, actor, photo.owner_type, photo.owner_id)
     await uow.photos.delete(photo_id)
     await uow.flush()
+    await audit.record(
+        uow,
+        actor,
+        AuditEntity.PHOTO,
+        photo.id,
+        tenant_id=photo.tenant_id,
+        label=photo.caption,
+        before=photo,
+    )
     await storage.delete(photo_id)
 
 

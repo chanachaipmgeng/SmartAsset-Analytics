@@ -42,6 +42,23 @@ class PhotoOwner(StrEnum):
     DEVICE_MODEL = "device_model"
 
 
+class AuditEntity(StrEnum):
+    TENANT = "tenant"
+    USER = "user"
+    DEVICE_MODEL = "device_model"
+    SUPPLIER = "supplier"
+    CUSTOMER = "customer"
+    INSTALLATION = "installation"
+    PHOTO = "photo"
+
+
+class AuditAction(StrEnum):
+    CREATE = "create"
+    UPDATE = "update"
+    DELETE = "delete"
+    DEACTIVATE = "deactivate"
+
+
 class ServiceLevel(StrEnum):
     BASIC = "BASIC"
     STANDARD = "STANDARD"

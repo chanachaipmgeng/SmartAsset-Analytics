@@ -38,8 +38,18 @@ const DOT_CLASSES: Record<StatusTone, string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatusChip {
-  readonly status = input.required<DeviceStatus>();
-  protected readonly label = computed(() => STATUS_LABELS[this.status()]);
-  protected readonly chipClass = computed(() => CHIP_CLASSES[STATUS_TONES[this.status()]]);
-  protected readonly dotClass = computed(() => DOT_CLASSES[STATUS_TONES[this.status()]]);
+  /** A device status, or pass `tone` + `text` for other labelled states (audit actions and so on). */
+  readonly status = input<DeviceStatus | null>(null);
+  readonly tone = input<StatusTone | null>(null);
+  readonly text = input<string | null>(null);
+  private readonly resolvedTone = computed<StatusTone>(() => {
+    const status = this.status();
+    return this.tone() ?? (status ? STATUS_TONES[status] : 'neutral');
+  });
+  protected readonly label = computed(() => {
+    const status = this.status();
+    return this.text() ?? (status ? STATUS_LABELS[status] : '');
+  });
+  protected readonly chipClass = computed(() => CHIP_CLASSES[this.resolvedTone()]);
+  protected readonly dotClass = computed(() => DOT_CLASSES[this.resolvedTone()]);
 }

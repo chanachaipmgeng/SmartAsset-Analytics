@@ -6,6 +6,7 @@ import { AuthStore } from '../../core/auth.store';
 import { SERVICE_LEVEL_LABELS, toDate, toIsoDate } from '../../core/labels';
 import { Installation } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
+import { AuditHistory } from '../../shared/audit-history';
 import { InstallationMap, LatLng } from '../../shared/installation-map';
 import { PageHeader } from '../../shared/page-header';
 import { DataGrid, GridCell, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
@@ -21,7 +22,17 @@ interface NearbyQuery {
 
 @Component({
   selector: 'app-installations',
-  imports: [...FORM_IMPORTS, SliderModule, InstallationMap, PageHeader, DataGrid, GridCell, RecordView, PhotoGallery],
+  imports: [
+    ...FORM_IMPORTS,
+    SliderModule,
+    InstallationMap,
+    PageHeader,
+    DataGrid,
+    GridCell,
+    RecordView,
+    PhotoGallery,
+    AuditHistory,
+  ],
   templateUrl: './installations.html',
   styleUrl: './installations.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

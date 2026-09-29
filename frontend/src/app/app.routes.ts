@@ -78,6 +78,12 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/users').then((m) => m.UsersPage),
       },
       {
+        path: 'admin/audit',
+        title: 'ประวัติการแก้ไขข้อมูล',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./pages/admin/audit').then((m) => m.AuditPage),
+      },
+      {
         path: 'profile',
         title: 'โปรไฟล์',
         loadComponent: () => import('./pages/profile/profile').then((m) => m.ProfilePage),

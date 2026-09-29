@@ -1,9 +1,11 @@
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
 from geoalchemy2 import Geography
 from sqlalchemy import Computed, Date, DateTime, ForeignKey, Numeric, String, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, deferred, mapped_column
 
 
@@ -153,3 +155,17 @@ class PhotoORM(Base):
     caption: Mapped[str | None]
     uploaded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AuditLogORM(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    tenant_id: Mapped[UUID | None] = mapped_column(ForeignKey("tenants.id"))
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    entity_type: Mapped[str] = mapped_column(String)
+    entity_id: Mapped[UUID]
+    entity_label: Mapped[str | None]
+    action: Mapped[str] = mapped_column(String)
+    changes: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.clock_timestamp())

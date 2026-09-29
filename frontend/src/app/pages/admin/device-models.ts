@@ -5,6 +5,7 @@ import { AuthStore } from '../../core/auth.store';
 import { DeviceModel, Photo } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { PhotoSrcPipe } from '../../core/photos';
+import { AuditHistory } from '../../shared/audit-history';
 import { ConfirmService } from '../../shared/confirm.service';
 import { PageHeader } from '../../shared/page-header';
 import { DataGrid, GridCell, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
@@ -23,7 +24,7 @@ const COLUMNS: GridColumn[] = [
 
 @Component({
   selector: 'app-device-models',
-  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell, RecordView, PhotoGallery, PhotoSrcPipe],
+  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell, RecordView, PhotoGallery, PhotoSrcPipe, AuditHistory],
   styles: `
     .model-thumb {
       display: inline-grid;
@@ -94,6 +95,7 @@ const COLUMNS: GridColumn[] = [
           (changed)="photos.reload()"
           style="--thumb: 140px"
         />
+        <app-audit-history entityType="device_model" [entityId]="m.id" />
       }
     </app-record-view>
 

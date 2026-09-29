@@ -1,9 +1,10 @@
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 from uuid import UUID, uuid4
 
-from app.domain.enums import DeviceStatus, PhotoOwner, Role, ServiceLevel, TransactionType
+from app.domain.enums import AuditAction, AuditEntity, DeviceStatus, PhotoOwner, Role, ServiceLevel, TransactionType
 
 
 @dataclass
@@ -139,3 +140,18 @@ class Photo:
     caption: str | None = None
     id: UUID = field(default_factory=uuid4)
     created_at: datetime | None = None
+
+
+@dataclass
+class AuditLog:
+    """One settings change. `changes` maps field -> [old, new]; secrets are recorded only as "changed"."""
+
+    entity_type: AuditEntity
+    entity_id: UUID
+    action: AuditAction
+    user_id: UUID
+    tenant_id: UUID | None = None
+    entity_label: str | None = None
+    changes: dict[str, Any] = field(default_factory=dict)
+    id: UUID = field(default_factory=uuid4)
+    occurred_at: datetime | None = None

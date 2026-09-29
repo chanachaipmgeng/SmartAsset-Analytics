@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { ApiService } from '../../core/api.service';
 import { Tenant } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
+import { AuditHistory } from '../../shared/audit-history';
 import { PageHeader } from '../../shared/page-header';
 import { DataGrid, GridCell, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
 import { RecordField, RecordView } from '../../shared/record-view';
@@ -16,7 +17,7 @@ const COLUMNS: GridColumn[] = [
 
 @Component({
   selector: 'app-tenants',
-  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell, RecordView],
+  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell, RecordView, AuditHistory],
   template: `
     <div class="page">
       <app-page-header title="กลุ่มลูกค้า" subtitle="องค์กรที่ใช้ระบบ แต่ละกลุ่มเห็นเฉพาะอุปกรณ์และข้อมูลของตนเอง">
@@ -51,7 +52,9 @@ const COLUMNS: GridColumn[] = [
       [fields]="viewFields()"
       [editable]="true"
       (edit)="openEdit()"
-    />
+    >
+      <app-audit-history entityType="tenant" [entityId]="selected()?.id" [active]="viewOpen()" />
+    </app-record-view>
 
     <ejs-dialog
       [visible]="formOpen()"

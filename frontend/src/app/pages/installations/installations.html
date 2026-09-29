@@ -88,6 +88,7 @@
     />
     <h4 class="mb-2 mt-4 text-sm font-semibold">รูปหน้างาน</h4>
     <app-photo-gallery ownerType="installation" [ownerId]="i.id" [editable]="auth.canWrite()" />
+    <app-audit-history entityType="installation" [entityId]="i.id" />
   }
 </app-record-view>
 

@@ -10,10 +10,11 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
+from app.application import audit
 from app.application.context import Actor
 from app.application.dashboard import BUSINESS_OFFSET
 from app.domain.entities import Device, Installation, InventoryTransaction
-from app.domain.enums import DeviceStatus, PhotoOwner, TransactionType
+from app.domain.enums import AuditEntity, DeviceStatus, PhotoOwner, TransactionType
 from app.domain.errors import NotFoundError, ValidationError
 from app.domain.ports import UnitOfWork
 from app.domain.read_models import DEVICE_SORT_FIELDS, CountItem, DeviceView, InstallationView, TransactionView
@@ -409,15 +410,25 @@ async def update_installation(
     uow: UnitOfWork, actor: Actor, installation_id: UUID, changes: dict[str, Any]
 ) -> InstallationView:
     require_write(actor.role)
-    installation = await uow.installations.get(installation_id)
-    if installation is None:
+    before = await uow.installations.get(installation_id)
+    if before is None:
         raise NotFoundError("ไม่พบจุดติดตั้ง")
-    installation = replace(installation, **changes)
+    installation = replace(before, **changes)
     validate_coordinates(installation.latitude, installation.longitude)
     await uow.installations.update(installation)
     await uow.flush()
     view = await uow.installations.get_view(installation.id)
     assert view is not None
+    await audit.record(
+        uow,
+        actor,
+        AuditEntity.INSTALLATION,
+        installation.id,
+        tenant_id=installation.tenant_id,
+        label=f"{view.serial_number} @ {view.customer_name}",
+        before=before,
+        after=installation,
+    )
     return view
 
 

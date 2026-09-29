@@ -4,6 +4,7 @@ import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
 import { Supplier } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
+import { AuditHistory } from '../../shared/audit-history';
 import { ConfirmService } from '../../shared/confirm.service';
 import { PageHeader } from '../../shared/page-header';
 import { DataGrid, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
@@ -22,7 +23,7 @@ const COLUMNS: GridColumn[] = [
 
 @Component({
   selector: 'app-suppliers',
-  imports: [...FORM_IMPORTS, PageHeader, DataGrid, RecordView],
+  imports: [...FORM_IMPORTS, PageHeader, DataGrid, RecordView, AuditHistory],
   template: `
     <div class="page">
       <app-page-header
@@ -58,7 +59,9 @@ const COLUMNS: GridColumn[] = [
       [fields]="viewFields()"
       [editable]="auth.isSuperadmin()"
       (edit)="openEdit()"
-    />
+    >
+      <app-audit-history entityType="supplier" [entityId]="selected()?.id" [active]="viewOpen()" />
+    </app-record-view>
 
     <ejs-dialog
       [visible]="formOpen()"

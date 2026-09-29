@@ -22,6 +22,23 @@ export type TransactionType =
   | 'EDIT';
 export type ServiceLevel = 'BASIC' | 'STANDARD' | 'PREMIUM';
 export type PhotoOwner = 'device' | 'installation' | 'transaction' | 'user' | 'device_model';
+export type AuditEntity = 'tenant' | 'user' | 'device_model' | 'supplier' | 'customer' | 'installation' | 'photo';
+export type AuditAction = 'create' | 'update' | 'delete' | 'deactivate';
+
+export interface AuditEntry {
+  id: string;
+  tenant_id: string | null;
+  tenant_name: string | null;
+  user_id: string;
+  user_name: string;
+  entity_type: AuditEntity;
+  entity_id: string;
+  entity_label: string | null;
+  action: AuditAction;
+  /** field -> [old, new]; secrets appear as the string "changed" instead of a pair. */
+  changes: Record<string, [unknown, unknown] | string>;
+  occurred_at: string;
+}
 
 export interface Photo {
   id: string;

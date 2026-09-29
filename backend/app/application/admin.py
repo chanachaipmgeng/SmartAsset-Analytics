@@ -4,13 +4,18 @@ from dataclasses import replace
 from typing import Any
 from uuid import UUID
 
+from app.application import audit
 from app.application.context import Actor
 from app.application.photos import delete_owner_photos
 from app.domain.entities import DeviceModel, Supplier, Tenant, User
-from app.domain.enums import PhotoOwner, Role
+from app.domain.enums import AuditEntity, PhotoOwner, Role
 from app.domain.errors import ConflictError, NotFoundError, PermissionDeniedError
 from app.domain.ports import PasswordHasher, PhotoStorage, UnitOfWork
 from app.domain.rules import require_admin, require_superadmin, validate_user_scope
+
+
+def _model_label(model: DeviceModel) -> str:
+    return f"{model.brand} {model.name}"
 
 
 async def list_tenants(uow: UnitOfWork, actor: Actor) -> list[Tenant]:
@@ -22,19 +27,23 @@ async def create_tenant(uow: UnitOfWork, actor: Actor, *, name: str, code: str) 
     tenant = Tenant(name=name.strip(), code=code.strip().upper())
     await uow.tenants.add(tenant)
     await uow.flush()
+    await audit.record(uow, actor, AuditEntity.TENANT, tenant.id, tenant_id=None, label=tenant.name, after=tenant)
     return tenant
 
 
 async def update_tenant(uow: UnitOfWork, actor: Actor, tenant_id: UUID, changes: dict[str, Any]) -> Tenant:
     require_superadmin(actor.role)
-    tenant = await uow.tenants.get(tenant_id)
-    if tenant is None:
+    before = await uow.tenants.get(tenant_id)
+    if before is None:
         raise NotFoundError("ไม่พบกลุ่มลูกค้า")
     if "code" in changes and changes["code"]:
         changes["code"] = changes["code"].strip().upper()
-    tenant = replace(tenant, **changes)
+    tenant = replace(before, **changes)
     await uow.tenants.update(tenant)
     await uow.flush()
+    await audit.record(
+        uow, actor, AuditEntity.TENANT, tenant.id, tenant_id=None, label=tenant.name, before=before, after=tenant
+    )
     return tenant
 
 
@@ -76,6 +85,7 @@ async def create_user(
     )
     await uow.users.add(user)
     await uow.flush()
+    await audit.record(uow, actor, AuditEntity.USER, user.id, tenant_id=user.tenant_id, label=user.email, after=user)
     return user
 
 
@@ -98,6 +108,9 @@ async def update_user(
     _check_user_scope(actor, updated.role, updated.tenant_id)
     await uow.users.update(updated)
     await uow.flush()
+    await audit.record(
+        uow, actor, AuditEntity.USER, user.id, tenant_id=updated.tenant_id, label=updated.email, before=user, after=updated
+    )
     return updated
 
 
@@ -110,27 +123,37 @@ async def create_device_model(uow: UnitOfWork, actor: Actor, **data: Any) -> Dev
     model = DeviceModel(**data)
     await uow.device_models.add(model)
     await uow.flush()
+    await audit.record(
+        uow, actor, AuditEntity.DEVICE_MODEL, model.id, tenant_id=None, label=_model_label(model), after=model
+    )
     return model
 
 
 async def update_device_model(uow: UnitOfWork, actor: Actor, model_id: UUID, changes: dict[str, Any]) -> DeviceModel:
     require_superadmin(actor.role)
-    model = await uow.device_models.get(model_id)
-    if model is None:
+    before = await uow.device_models.get(model_id)
+    if before is None:
         raise NotFoundError("ไม่พบรุ่นอุปกรณ์")
-    model = replace(model, **changes)
+    model = replace(before, **changes)
     await uow.device_models.update(model)
     await uow.flush()
+    await audit.record(
+        uow, actor, AuditEntity.DEVICE_MODEL, model.id, tenant_id=None, label=_model_label(model), before=before, after=model
+    )
     return model
 
 
 async def delete_device_model(uow: UnitOfWork, storage: PhotoStorage, actor: Actor, model_id: UUID) -> None:
     require_superadmin(actor.role)
-    if await uow.device_models.get(model_id) is None:
+    model = await uow.device_models.get(model_id)
+    if model is None:
         raise NotFoundError("ไม่พบรุ่นอุปกรณ์")
     if await uow.device_models.is_in_use(model_id):
         raise ConflictError("มีอุปกรณ์ใช้งานรุ่นนี้อยู่ ไม่สามารถลบได้")
     await uow.device_models.delete(model_id)
+    await audit.record(
+        uow, actor, AuditEntity.DEVICE_MODEL, model_id, tenant_id=None, label=_model_label(model), before=model
+    )
     await delete_owner_photos(uow, storage, PhotoOwner.DEVICE_MODEL, model_id)
 
 
@@ -143,27 +166,33 @@ async def create_supplier(uow: UnitOfWork, actor: Actor, **data: Any) -> Supplie
     supplier = Supplier(**{**data, "name": data["name"].strip()})
     await uow.suppliers.add(supplier)
     await uow.flush()
+    await audit.record(uow, actor, AuditEntity.SUPPLIER, supplier.id, tenant_id=None, label=supplier.name, after=supplier)
     return supplier
 
 
 async def update_supplier(uow: UnitOfWork, actor: Actor, supplier_id: UUID, changes: dict[str, Any]) -> Supplier:
     require_superadmin(actor.role)
-    supplier = await uow.suppliers.get(supplier_id)
-    if supplier is None:
+    before = await uow.suppliers.get(supplier_id)
+    if before is None:
         raise NotFoundError("ไม่พบผู้จำหน่าย/ผู้ซ่อม")
     if changes.get("name"):
         changes["name"] = changes["name"].strip()
-    supplier = replace(supplier, **changes)
+    supplier = replace(before, **changes)
     await uow.suppliers.update(supplier)
     await uow.flush()
+    await audit.record(
+        uow, actor, AuditEntity.SUPPLIER, supplier.id, tenant_id=None, label=supplier.name, before=before, after=supplier
+    )
     return supplier
 
 
 async def delete_supplier(uow: UnitOfWork, actor: Actor, supplier_id: UUID) -> None:
     require_superadmin(actor.role)
-    if await uow.suppliers.get(supplier_id) is None:
+    supplier = await uow.suppliers.get(supplier_id)
+    if supplier is None:
         raise NotFoundError("ไม่พบผู้จำหน่าย/ผู้ซ่อม")
     if await uow.suppliers.is_in_use(supplier_id):
         raise ConflictError("มีอุปกรณ์หรือประวัติการส่งซ่อมอ้างถึงผู้จำหน่าย/ผู้ซ่อมรายนี้ ไม่สามารถลบได้")
     await uow.suppliers.delete(supplier_id)
     await uow.flush()
+    await audit.record(uow, actor, AuditEntity.SUPPLIER, supplier_id, tenant_id=None, label=supplier.name, before=supplier)

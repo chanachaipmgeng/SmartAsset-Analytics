@@ -1,11 +1,11 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
 
-from app.domain.enums import DeviceStatus, PhotoOwner, Role, ServiceLevel, TransactionType
+from app.domain.enums import AuditAction, AuditEntity, DeviceStatus, PhotoOwner, Role, ServiceLevel, TransactionType
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 Text = Annotated[str, StringConstraints(max_length=2000)]
@@ -403,3 +403,18 @@ class PhotoOut(BaseModel):
     created_at: datetime | None
     url: str
     thumb_url: str
+
+
+# ---- audit ----
+class AuditOut(Out):
+    id: UUID
+    tenant_id: UUID | None
+    tenant_name: str | None
+    user_id: UUID
+    user_name: str
+    entity_type: AuditEntity
+    entity_id: UUID
+    entity_label: str | None
+    action: AuditAction
+    changes: dict[str, Any]
+    occurred_at: datetime

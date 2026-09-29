@@ -4,11 +4,12 @@ from typing import Any, TypeVar
 from uuid import UUID
 
 from geoalchemy2 import Geography
-from sqlalchemy import Select, cast, delete, func, or_, select, update
+from sqlalchemy import Select, cast, delete, func, insert, or_, select, update
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities import (
+    AuditLog,
     Customer,
     Device,
     DeviceModel,
@@ -19,9 +20,10 @@ from app.domain.entities import (
     Tenant,
     User,
 )
-from app.domain.enums import DeviceStatus, PhotoOwner, Role, ServiceLevel, TransactionType
+from app.domain.enums import AuditAction, AuditEntity, DeviceStatus, PhotoOwner, Role, ServiceLevel, TransactionType
 from app.domain.errors import ConflictError, PermissionDeniedError
 from app.domain.read_models import (
+    AuditView,
     CountItem,
     DailyCount,
     DeviceView,
@@ -31,6 +33,7 @@ from app.domain.read_models import (
 )
 from app.domain.rules import STATUS_LABELS_TH
 from app.infrastructure.db.models import (
+    AuditLogORM,
     CustomerORM,
     DeviceModelORM,
     DeviceORM,
@@ -582,9 +585,64 @@ class SqlPhotoRepository(_Repo):
         )
 
 
+class SqlAuditRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self.s = session
+
+    async def add(self, entry: AuditLog) -> None:
+        # A Core insert without RETURNING: staff may append entries they are not allowed to read back.
+        await self.s.execute(insert(AuditLogORM).values(**_to_columns(entry, AuditLogORM)))
+
+    async def list_views(
+        self,
+        *,
+        entity_type: AuditEntity | None = None,
+        entity_id: UUID | None = None,
+        user_id: UUID | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
+        limit: int = 500,
+    ) -> list[AuditView]:
+        a = AuditLogORM
+        stmt = (
+            select(a, UserORM.full_name, TenantORM.name)
+            .outerjoin(UserORM, UserORM.id == a.user_id)
+            .outerjoin(TenantORM, TenantORM.id == a.tenant_id)
+            .order_by(a.occurred_at.desc())
+            .limit(limit)
+        )
+        if entity_type:
+            stmt = stmt.where(a.entity_type == entity_type.value)
+        if entity_id:
+            stmt = stmt.where(a.entity_id == entity_id)
+        if user_id:
+            stmt = stmt.where(a.user_id == user_id)
+        if since:
+            stmt = stmt.where(a.occurred_at >= since)
+        if until:
+            stmt = stmt.where(a.occurred_at < until)
+        return [
+            AuditView(
+                id=row.id,
+                tenant_id=row.tenant_id,
+                tenant_name=tenant_name,
+                user_id=row.user_id,
+                user_name=user_name or "ผู้ดูแลแพลตฟอร์ม",
+                entity_type=AuditEntity(row.entity_type),
+                entity_id=row.entity_id,
+                entity_label=row.entity_label,
+                action=AuditAction(row.action),
+                changes=row.changes,
+                occurred_at=row.occurred_at,
+            )
+            for row, user_name, tenant_name in (await self.s.execute(stmt)).all()
+        ]
+
+
 class SqlUnitOfWork:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
+        self.audit = SqlAuditRepository(session)
         self.photos = SqlPhotoRepository(session)
         self.tenants = SqlTenantRepository(session)
         self.users = SqlUserRepository(session)

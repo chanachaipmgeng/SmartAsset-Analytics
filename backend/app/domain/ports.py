@@ -4,6 +4,7 @@ from typing import Any, Literal, Protocol
 from uuid import UUID
 
 from app.domain.entities import (
+    AuditLog,
     Customer,
     Device,
     DeviceModel,
@@ -14,8 +15,9 @@ from app.domain.entities import (
     Tenant,
     User,
 )
-from app.domain.enums import DeviceStatus, PhotoOwner, TransactionType
+from app.domain.enums import AuditEntity, DeviceStatus, PhotoOwner, TransactionType
 from app.domain.read_models import (
+    AuditView,
     CountItem,
     DailyCount,
     DeviceView,
@@ -134,6 +136,20 @@ class PhotoRepository(Protocol):
     async def retenant(self, owner_type: PhotoOwner, owner_id: UUID, tenant_id: UUID | None) -> None: ...
 
 
+class AuditRepository(Protocol):
+    async def add(self, entry: AuditLog) -> None: ...
+    async def list_views(
+        self,
+        *,
+        entity_type: AuditEntity | None = None,
+        entity_id: UUID | None = None,
+        user_id: UUID | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
+        limit: int = 500,
+    ) -> list[AuditView]: ...
+
+
 class UnitOfWork(Protocol):
     tenants: TenantRepository
     users: UserRepository
@@ -144,6 +160,7 @@ class UnitOfWork(Protocol):
     customers: CustomerRepository
     installations: InstallationRepository
     photos: PhotoRepository
+    audit: AuditRepository
 
     async def flush(self) -> None: ...
 

@@ -5,9 +5,9 @@ from uuid import UUID
 from fastapi import APIRouter, File, Form, Path, Query, Response, UploadFile, status
 from fastapi.responses import FileResponse
 
-from app.application import admin, auth, customers, dashboard, device_import, inventory, photos, reports
+from app.application import admin, audit, auth, customers, dashboard, device_import, inventory, photos, reports
 from app.domain.entities import Photo
-from app.domain.enums import DeviceStatus, PhotoOwner, TransactionType
+from app.domain.enums import AuditEntity, DeviceStatus, PhotoOwner, TransactionType
 from app.domain.errors import NotFoundError, ValidationError
 from app.infrastructure import spreadsheet
 from app.presentation import schemas as s
@@ -335,6 +335,30 @@ async def create_installation(body: s.InstallationIn, actor: ActorDep, uow: UowD
 @router.patch("/installations/{installation_id}", response_model=s.InstallationOut, tags=["installations"])
 async def update_installation(installation_id: UUID, body: s.InstallationPatch, actor: ActorDep, uow: UowDep):
     return await inventory.update_installation(uow, actor, installation_id, body.model_dump(exclude_unset=True))
+
+
+# ---- audit ----
+@router.get("/audit", response_model=list[s.AuditOut], tags=["audit"])
+async def list_audit(
+    actor: ActorDep,
+    uow: UowDep,
+    entity_type: AuditEntity | None = None,
+    entity_id: UUID | None = None,
+    user_id: UUID | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    limit: Annotated[int, Query(ge=1, le=5000)] = 500,
+):
+    return await audit.list_audit(
+        uow,
+        actor,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        user_id=user_id,
+        date_from=date_from,
+        date_to=date_to,
+        limit=limit,
+    )
 
 
 # ---- dashboard ----

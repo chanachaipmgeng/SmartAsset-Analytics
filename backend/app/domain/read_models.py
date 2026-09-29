@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
-from app.domain.enums import DeviceStatus, ServiceLevel, TransactionType
+from app.domain.enums import AuditAction, AuditEntity, DeviceStatus, ServiceLevel, TransactionType
 
 
 @dataclass(frozen=True)
@@ -93,6 +94,21 @@ class InstallationView:
     site_phone: str | None = None
     notes: str | None = None
     removal_reason: str | None = None
+
+
+@dataclass(frozen=True)
+class AuditView:
+    id: UUID
+    tenant_id: UUID | None
+    tenant_name: str | None
+    user_id: UUID
+    user_name: str
+    entity_type: AuditEntity
+    entity_id: UUID
+    entity_label: str | None
+    action: AuditAction
+    changes: dict[str, Any]
+    occurred_at: datetime
 
 
 @dataclass(frozen=True)
