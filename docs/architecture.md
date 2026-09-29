@@ -104,16 +104,21 @@ docs/                เอกสารนี้ + คู่มือผู้�
 | auth | `POST /auth/login`, `/auth/refresh`, `/auth/change-password`, `GET /auth/me` |
 | tenants, users, device-models, suppliers | CRUD (tenants, device-models, suppliers เขียนได้เฉพาะ superadmin) |
 | devices | `GET /devices?search=&status=&model_id=&sort=&skip=&take=`, `GET /devices/status-counts`, `GET /devices/by-serial/{serial}`, `GET/PATCH/DELETE /devices/{id}` (DELETE = ปลดระวาง) |
-| inventory | `POST /inventory/check-in`, `check-out`, `transfer`, `loan`, `return`, `qc-pass`, `qc-fail`, `send-repair`, `repair-done`, `import?dry_run=`, `GET import/template`, `transactions`, `summary` |
-| customers | `GET`, `POST`, `PATCH`, `DELETE` (= ระงับ) |
-| installations | `GET /installations?active_only=`, `GET /installations/nearby?lat=&lng=&radius_m=` (PostGIS `ST_DWithin`, สูงสุด 500 กม.), `POST`, `PATCH` |
+| inventory | `POST /inventory/check-in`, `check-out`, `transfer`, `loan`, `return`, `qc-pass`, `qc-fail`, `send-repair`, `repair-done`, `import?dry_run=`, `GET import/template`, `transactions`, `summary`, `bulk` |
+| customers | `GET`, `GET /customers/{id}` (พร้อม `summary` นับจุดติดตั้ง/อุปกรณ์), `POST`, `PATCH`, `DELETE` (= ระงับ) |
+| installations | `GET /installations?active_only=&customer_id=`, `GET /installations/nearby?lat=&lng=&radius_m=` (PostGIS `ST_DWithin`, สูงสุด 500 กม.), `POST`, `PATCH` |
 | dashboard | `GET /dashboard/summary` (การ์ดสถานะ, แนวโน้ม 7/30 วัน, งานค้าง) |
 | reports | `GET /reports/stock-balance?include_retired=` (รุ่น × กลุ่มลูกค้า × สถานะ พร้อมรวมต้นทุน), `GET /reports/aging?status=` (วันในสถานะปัจจุบันนับจาก transaction ล่าสุด) |
 | photos | `GET /photos?owner_type=&owner_id=` (ส่ง `owner_id` ซ้ำได้ ไม่ส่งคือทุกรูปที่เห็นได้ของประเภทนั้น), `POST /photos` (multipart: `owner_type`, `owner_id`, `file` JPG/PNG/WebP ≤ 8 MB, `caption`), `DELETE /photos/{id}`, `GET /photos/{id}/file` (ลิงก์ลงลายเซ็น ไม่ต้อง auth) |
+| audit | `GET /audit?entity_type=&entity_id=&user_id=&date_from=&date_to=&limit=` (superadmin และ tenant_admin เท่านั้น) |
 
 Paging ของ `GET /devices`: ไม่ส่ง `take` จะคืนทุกแถว (ใช้ตอน export), ส่ง `take` (สูงสุด 500) กับ `skip` เพื่อแบ่งหน้า `sort` เป็นชื่อฟิลด์ใน `DEVICE_SORT_FIELDS` ใส่ `-` นำหน้าเพื่อเรียงมากไปน้อย (ค่าเริ่มต้น `-created_at`) และ header `X-Total-Count` บอกจำนวนแถวที่ตรงเงื่อนไขทุกครั้ง
 
-`GET /inventory/transactions` กรองด้วย `device_id`, `date_from`, `date_to`, `transaction_type` (ส่งซ้ำได้หลายค่า), `user_id` และ `limit` (ค่าเริ่มต้น 500 สูงสุด 5,000)
+`GET /inventory/transactions` กรองด้วย `device_id`, `date_from`, `date_to`, `transaction_type` (ส่งซ้ำได้หลายค่า), `user_id`, `customer_id` และ `limit` (ค่าเริ่มต้น 500 สูงสุด 5,000)
+
+`POST /inventory/bulk` รับ `{action, device_ids (ไม่เกิน 200), ...ฟิลด์ของ action}` โดย `action` เป็น `transfer`, `check_out`, `loan`, `return`, `qc_pass`, `send_repair` หรือ `retire` ทำทุกเครื่องใน DB transaction เดียว ถ้ามีเครื่องใดทำไม่ได้จะคืน 422 พร้อม `failures` (serial และเหตุผล) และไม่บันทึกอะไรเลย
+
+ประวัติการแก้ไข: use case ที่สร้าง/แก้/ระงับ/ลบข้อมูลตั้งค่า (tenant ผู้ใช้ รุ่น ผู้จำหน่าย ลูกค้า จุดติดตั้ง รูป) เรียก `audit.record()` ซึ่งเขียนแถว `audit_logs` ใน transaction เดียวกัน (`changes` = `{ฟิลด์: [ค่าเดิม, ค่าใหม่]}` เฉพาะที่เปลี่ยน รหัสผ่านบันทึกแค่ว่า "changed" แก้แล้วไม่มีอะไรเปลี่ยนจะไม่บันทึก) ส่วนการแก้อุปกรณ์ยังเป็นรายการ EDIT ใน `inventory_transactions` ตาราง `audit_logs` app role ทำได้แค่ INSERT/SELECT
 
 นำเข้าไฟล์: `dry_run=true` ตรวจทุกแถวแล้วคืนผล, `dry_run=false` บันทึกแบบทั้งหมดหรือไม่บันทึกเลย จำกัด 2 MB / 1,000 แถว
 
@@ -121,14 +126,14 @@ Paging ของ `GET /devices`: ไม่ส่ง `take` จะคืนทุ
 
 - สร้างไฟล์ `alembic/versions/000N_<ชื่อ>.py` โดย `down_revision` ชี้ไฟล์ก่อนหน้า
 - เปลี่ยน enum ของสถานะหรือประเภทรายการ: แก้ CHECK constraint (ดู `0003_repair_status.py`, `0005_loan_qc.py`) และ enum ใน `domain/enums.py` และ `frontend/src/app/core/models.ts`
-- ประวัติ: `0004_edit_audit` (ประเภท EDIT, `customers.is_active`), `0005_loan_qc` (ON_LOAN/UNDER_QC, LOAN/QC_PASS/QC_FAIL, `devices.loan_due_date`), `0006_suppliers` (ตาราง `suppliers`, `inventory_transactions.supplier_id`), `0007_photos` (ตาราง `photos` + policy RLS)
+- ประวัติ: `0004_edit_audit` (ประเภท EDIT, `customers.is_active`), `0005_loan_qc` (ON_LOAN/UNDER_QC, LOAN/QC_PASS/QC_FAIL, `devices.loan_due_date`), `0006_suppliers` (ตาราง `suppliers`, `inventory_transactions.supplier_id`), `0007_photos` (ตาราง `photos` + policy RLS), `0008_more_fields` (`devices.asset_tag` unique ต่อ tenant, `firmware_version`, `supplier_id`; `customers.address/tax_id` (13 หลัก)/`notes`; `installations.site_contact/site_phone/notes/removal_reason`), `0009_audit_log` (ตาราง `audit_logs` append-only, อ่านได้เฉพาะ superadmin หรือ tenant_admin ของ tenant นั้น)
 - container `api` รัน `alembic upgrade head` ทุกครั้งที่เริ่ม
 
 ### ข้อมูลตัวอย่าง (demo data)
 
 - `python -m app.infrastructure.demo_data` (ใน container `api`) เรียก `seed()` ก่อน แล้วสร้างข้อมูลสาธิตผ่าน use case ใน `application/` เหมือนผู้ใช้จริง state machine และแถว `inventory_transactions` จึงถูกต้องเสมอ ใช้การเชื่อมต่อ owner (`MIGRATION_DATABASE_URL`) แบบเดียวกับ seed
 - `random.Random(20260929)` ทำให้ DB ใหม่ได้ข้อมูลชุดเดิมทุกครั้ง; รันซ้ำจะเจอผู้ใช้ `warehouse@example.com` แล้วข้าม
-- ประวัติย้อนหลัง 90 วัน: หลังรัน use case ของแต่ละเครื่องจะ `UPDATE` เวลาใน `inventory_transactions.occurred_at`, `devices.created_at`, `installations.created_at/removed_at`, `photos.created_at` ตามแผนเวลา (ช่วง 08:30-17:30 น.) และกระจาย `audit_logs` ของรอบนี้ไปตลอดช่วงโดยคงลำดับ ส่วนวันครบกำหนดยืมในอดีต (use case ไม่ยอมรับ) ตั้งตรงใน `devices.loan_due_date` และ note ของรายการ LOAN
+- ประวัติย้อนหลัง 90 วัน: หลังรัน use case ของแต่ละเครื่องจะ `UPDATE` เวลาใน `inventory_transactions.occurred_at`, `devices.created_at`, `installations.created_at/removed_at`, `photos.created_at` ตามแผนเวลา (ช่วง 08:30-17:30 น.) และกระจาย `audit_logs` ของรอบนี้ไปตลอดช่วงโดยคงลำดับและอยู่ในเวลาทำงานเช่นกัน ส่วนวันครบกำหนดยืมในอดีต (use case ไม่ยอมรับ) ตั้งตรงใน `devices.loan_due_date` และ note ของรายการ LOAN
 - รูปทั้งหมดวาดด้วย Pillow ใน `infrastructure/demo_images.py` (รูปรุ่น, avatar, รูปเครื่องบนโต๊ะ/ชำรุด, รูปหน้างาน) แล้วอัปโหลดผ่าน `photos.upload_photo` จึงผ่านการย่อ/แปลง WebP เหมือนรูปจริง
 
 ## Frontend
@@ -147,7 +152,13 @@ Paging ของ `GET /devices`: ไม่ส่ง `take` จะคืนทุ
   - อย่าใส่ child directive แบบ dynamic (`@for` ใน `<e-aggregates>`) ใน grid เพราะ Syncfusion จะพัง ให้ส่งเป็น property แทน
 - รูปภาพ: `<app-photo-gallery ownerType ownerId editable>` (thumbnail, ลากวาง/เลือกไฟล์, lightbox, ลบ), `<app-photo-picker [(files)]>` เลือกรูปก่อนบันทึกฟอร์มแล้วค่อยอัปโหลดหลังได้ id ของรายการ, `<app-avatar name src size>` และ `AvatarStore` ถือรูปโปรไฟล์ของผู้ใช้ปัจจุบัน ลิงก์รูปจาก API เป็น path จึงต้องผ่าน pipe `photoSrc` (เติม `apiBaseUrl`)
 - แผนที่: `<app-installation-map>` (Syncfusion Maps + OSM) รับ `pin`, `radiusKm` (วาดวงกลมและซูมพอดี), `pickable` แล้วส่ง `(pick)` เป็น `{latitude, longitude}` เหตุการณ์ `click` ของ Maps ไม่ทำงานกับ OSM tile จึงคำนวณพิกัดเองจาก DOM click ด้วย `getTileGeoLocation`
+  - `fitPoints(points)` คืน `{focus, radiusKm}` ที่ครอบทุกจุด ใช้ในหน้ารายละเอียดลูกค้าให้เห็นทุกจุดติดตั้ง (วงกลมวาดเฉพาะเมื่อมี `pin`)
 - ปุ่มทำรายการกับอุปกรณ์มาจาก `availableActions()` ใน `core/device-actions.ts` และ dialog กลาง `shared/device-action-dialogs.ts` (ใช้ร่วมหน้าอุปกรณ์และสถานีสแกน)
+  - ทำหลายเครื่อง: grid ติ๊กเลือกแถวได้ แถบด้านล่างแสดง `commonBulkActions()` (action ที่ทุกเครื่องที่เลือกทำได้ และอยู่ใน `BULK_ACTIONS`) แล้วเรียก `POST /inventory/bulk`
+- ฉลาก: `<app-label-print-dialog>` แสดงตัวอย่างและพิมพ์ `<app-device-label>` (QR ของ `labelUrl(serial)` + Code128) แบบแผ่น A4 หรือม้วน Syncfusion Barcode/QR วัด `offsetWidth/offsetHeight` ของ host ตอน render จึงห้าม render ตอนซ่อนด้วย `display: none` (ใน dialog รอ `open` ก่อน ส่วนพิมพ์วางไว้นอกจอด้วย `visibility: hidden`)
+- สแกน: `parseScanCode()` ใน `core/scan-code.ts` รับได้ทั้ง serial และ URL จากฉลาก; สถานีสแกนมีโหมดต่อเนื่องสำหรับสแกนเป็นชุด
+- login รับ `returnUrl` (ผ่าน `safeReturnUrl()` ใน `core/guards.ts` ยอมเฉพาะ path ภายในแอป) เพื่อให้สแกน QR ตอนยังไม่ login แล้วกลับไปหน้าอุปกรณ์ได้
+- ประวัติการแก้ไข: หน้า `/audit` (ผู้ดูแล), `<app-audit-history entityType entityId>` ใน record view และ `<app-audit-diff>` แสดงค่าเดิม/ค่าใหม่ ชื่อฟิลด์ภาษาไทยอยู่ใน `FIELD_LABELS`
 - ข้อความ UI เป็นภาษาไทย ป้ายสถานะ/ประเภทรายการอยู่ใน `core/labels.ts` คำแปล Syncfusion อยู่ใน `core/locale.ts`
 
 ### สไตล์
