@@ -8,7 +8,9 @@ import { Installation } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { InstallationMap, LatLng } from '../../shared/installation-map';
 import { PageHeader } from '../../shared/page-header';
-import { DataGrid, GridCell, GridColumn } from '../../shared/data-grid';
+import { DataGrid, GridCell, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
+import { PhotoGallery } from '../../shared/photo-gallery';
+import { RecordField, RecordView } from '../../shared/record-view';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 
 interface NearbyQuery {
@@ -19,7 +21,7 @@ interface NearbyQuery {
 
 @Component({
   selector: 'app-installations',
-  imports: [...FORM_IMPORTS, SliderModule, InstallationMap, PageHeader, DataGrid, GridCell],
+  imports: [...FORM_IMPORTS, SliderModule, InstallationMap, PageHeader, DataGrid, GridCell, RecordView, PhotoGallery],
   templateUrl: './installations.html',
   styleUrl: './installations.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -132,8 +134,42 @@ export class InstallationsPage {
     if (this.nearbyQuery()) this.searchNearby();
   }
 
+  protected readonly rowActions = computed<GridRowActionId[]>(() =>
+    this.auth.canWrite() ? ['view', 'edit'] : ['view'],
+  );
+  protected readonly canEditSelected = computed(
+    () => this.auth.canWrite() && !!this.selected() && !this.selected()?.removed_at,
+  );
+  protected readonly viewOpen = signal(false);
+  protected readonly viewFields = computed<RecordField[]>(() => {
+    const i = this.selected();
+    if (!i) return [];
+    const date = (value: string | null) => toDate(value)?.toLocaleDateString('th-TH', { dateStyle: 'medium' });
+    return [
+      { label: 'ซีเรียล', value: i.serial_number, mono: true },
+      { label: 'รุ่น', value: i.model_name },
+      { label: 'ลูกค้า', value: i.customer_name },
+      { label: 'ระดับบริการ', value: SERVICE_LEVEL_LABELS[i.service_level] },
+      { label: 'วันที่ติดตั้ง', value: date(i.install_date) },
+      { label: 'สถานะ', value: i.removed_at ? `ถอนการติดตั้งแล้ว (${date(i.removed_at)})` : 'ใช้งานอยู่' },
+      { label: 'พิกัด', value: `${i.latitude.toFixed(6)}, ${i.longitude.toFixed(6)}`, mono: true, wide: true },
+      { label: 'ที่อยู่', value: i.address, wide: true },
+    ];
+  });
+
   protected onRowSelected(row: { id: string } | null): void {
     this.selected.set(row ? (this.displayed().find((i) => i.id === row.id) ?? null) : null);
+  }
+
+  protected onRowAction({ action, row }: GridRowAction<{ id: string }>): void {
+    this.onRowSelected(row);
+    if (action === 'view') {
+      this.viewOpen.set(true);
+    } else if (this.canEditSelected()) {
+      this.openEdit();
+    } else {
+      this.notify.warning('จุดติดตั้งที่ถอนแล้วแก้ไขไม่ได้');
+    }
   }
 
   protected onPickEdit(point: LatLng): void {

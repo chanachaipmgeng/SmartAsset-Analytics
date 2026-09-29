@@ -7,15 +7,16 @@ import { Customer, ServiceLevel, Tenant } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { ConfirmService } from '../../shared/confirm.service';
 import { PageHeader } from '../../shared/page-header';
-import { DataGrid, GridCell, GridColumn } from '../../shared/data-grid';
+import { DataGrid, GridCell, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
 import { FilterChip, FilterChips } from '../../shared/filter-chips';
+import { RecordField, RecordView } from '../../shared/record-view';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 
 type ActiveFilter = 'ACTIVE' | 'INACTIVE' | 'ALL';
 
 @Component({
   selector: 'app-customers',
-  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell, FilterChips],
+  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell, FilterChips, RecordView],
   templateUrl: './customers.html',
   styleUrl: './customers.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -83,8 +84,32 @@ export class CustomersPage {
       (this.editingId() !== null || !this.auth.isSuperadmin() || !!this.tenantId()),
   );
 
+  protected readonly rowActions = computed<GridRowActionId[]>(() =>
+    this.auth.canWrite() ? ['view', 'edit'] : ['view'],
+  );
+  protected readonly viewOpen = signal(false);
+  protected readonly viewFields = computed<RecordField[]>(() => {
+    const c = this.selected();
+    if (!c) return [];
+    return [
+      { label: 'ชื่อบริษัท', value: c.company_name, wide: true },
+      { label: 'ผู้ติดต่อ', value: c.contact_person },
+      { label: 'โทรศัพท์', value: c.phone },
+      { label: 'อีเมล', value: c.email },
+      { label: 'ระดับบริการ', value: SERVICE_LEVEL_LABELS[c.service_level] },
+      { label: 'สถานะ', value: c.is_active ? 'ใช้งาน' : 'ระงับ' },
+      ...(this.auth.isSuperadmin() ? [{ label: 'กลุ่มลูกค้า', value: this.tenantNames().get(c.tenant_id) }] : []),
+    ];
+  });
+
   protected onRowSelected(row: { id: string } | null): void {
     this.selected.set(row ? (this.customers.value().find((c) => c.id === row.id) ?? null) : null);
+  }
+
+  protected onRowAction({ action, row }: GridRowAction<{ id: string }>): void {
+    this.onRowSelected(row);
+    if (action === 'edit') this.openEdit();
+    else this.viewOpen.set(true);
   }
 
   protected editRow(row: { id: string }): void {

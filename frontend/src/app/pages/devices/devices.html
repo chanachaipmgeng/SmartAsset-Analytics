@@ -31,6 +31,8 @@
       [emptyTitle]="statusFilter() === 'ALL' ? 'ยังไม่มีอุปกรณ์' : 'ไม่มีอุปกรณ์ในสถานะนี้'"
       [emptyMessage]="statusFilter() === 'ALL' ? 'กด “รับเข้าใหม่” เพื่อเพิ่มอุปกรณ์เครื่องแรก' : null"
       (selectionChange)="onRowSelected($event)"
+      [rowActions]="rowActions()"
+      (rowAction)="onRowAction($event)"
       (retry)="devices.reload()"
     >
       <ng-template gridCell="serial_number" let-row>
@@ -147,13 +149,22 @@
                 [focus]="{ latitude: inst.latitude, longitude: inst.longitude }"
                 height="200px"
               />
+              <div class="mt-3">
+                <div class="mb-1 text-sm font-semibold">รูปหน้างาน</div>
+                <app-photo-gallery ownerType="installation" [ownerId]="inst.id" [editable]="auth.canWrite()" />
+              </div>
             </div>
           </section>
         }
 
         <section class="section">
+          <h3>รูปภาพอุปกรณ์</h3>
+          <app-photo-gallery ownerType="device" [ownerId]="d.id" [editable]="canEdit()" />
+        </section>
+
+        <section class="section">
           <h3>ประวัติความเคลื่อนไหว</h3>
-          <app-asset-timeline [items]="history.value()" [loading]="history.isLoading()" />
+          <app-asset-timeline [items]="history.value()" [loading]="history.isLoading()" [photos]="txPhotos.value()" />
         </section>
       </div>
     </div>

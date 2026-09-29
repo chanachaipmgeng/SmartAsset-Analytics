@@ -73,7 +73,36 @@
               ></e-column>
             }
           }
+          @if (actionButtons().length) {
+            <e-column
+              headerText="จัดการ"
+              [width]="actionsWidth()"
+              textAlign="Center"
+              [allowSorting]="false"
+              [allowFiltering]="false"
+              [allowResizing]="false"
+              [allowGrouping]="false"
+              [showInColumnChooser]="false"
+              [template]="actionsTpl"
+            ></e-column>
+          }
         </e-columns>
+        <ng-template #actionsTpl let-row>
+          <div class="row-actions">
+            @for (a of actionButtons(); track a.id) {
+              <button
+                type="button"
+                class="row-action"
+                [attr.data-action]="a.id"
+                [title]="a.label"
+                [attr.aria-label]="a.label"
+                (click)="onRowAction($event, a.id, row)"
+              >
+                <span [class]="a.iconCss" aria-hidden="true"></span>
+              </button>
+            }
+          </div>
+        </ng-template>
         <ng-template #emptyRecordTemplate>
           <app-empty-state [title]="emptyTitle()" [message]="emptyMessage()" icon="e-icons e-search" />
         </ng-template>

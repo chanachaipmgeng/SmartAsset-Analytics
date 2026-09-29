@@ -2,14 +2,18 @@ import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
-import { DeviceModel } from '../../core/models';
+import { DeviceModel, Photo } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
+import { PhotoSrcPipe } from '../../core/photos';
 import { ConfirmService } from '../../shared/confirm.service';
 import { PageHeader } from '../../shared/page-header';
-import { DataGrid, GridColumn } from '../../shared/data-grid';
+import { DataGrid, GridCell, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
+import { PhotoGallery } from '../../shared/photo-gallery';
+import { RecordField, RecordView } from '../../shared/record-view';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 
 const COLUMNS: GridColumn[] = [
+  { field: 'image', headerText: 'รูป', width: 76, textAlign: 'Center', noExport: true },
   { field: 'brand', headerText: 'ยี่ห้อ', width: 140 },
   { field: 'name', headerText: 'รุ่น', width: 180 },
   { field: 'device_type', headerText: 'ประเภท', width: 150 },
@@ -19,7 +23,24 @@ const COLUMNS: GridColumn[] = [
 
 @Component({
   selector: 'app-device-models',
-  imports: [...FORM_IMPORTS, PageHeader, DataGrid],
+  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell, RecordView, PhotoGallery, PhotoSrcPipe],
+  styles: `
+    .model-thumb {
+      display: inline-grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      object-fit: cover;
+      vertical-align: middle;
+      box-shadow: 0 0 0 1px rgba(var(--app-outline-variant), 0.9);
+    }
+    .model-thumb.empty {
+      font-size: 16px;
+      color: rgb(var(--app-outline));
+      background: rgb(var(--app-surface-variant));
+    }
+  `,
   template: `
     <div class="page">
       <app-page-header
@@ -34,7 +55,7 @@ const COLUMNS: GridColumn[] = [
       </app-page-header>
       <div class="panel">
         <app-data-grid
-          [data]="models.value()"
+          [data]="rows()"
           [columns]="columns"
           perspectiveKey="device-models"
           exportName="device-models"
@@ -42,11 +63,39 @@ const COLUMNS: GridColumn[] = [
           [error]="models.error()"
           emptyTitle="ยังไม่มีรุ่นอุปกรณ์"
           (selectionChange)="onRowSelected($event)"
+          [rowActions]="rowActions()"
+          (rowAction)="onRowAction($event)"
           (retry)="models.reload()"
-        />
-
+        >
+          <ng-template gridCell="image" let-row>
+            @if (row.image) {
+              <img class="model-thumb" [src]="row.image | photoSrc" [alt]="row.name" loading="lazy" decoding="async" />
+            } @else {
+              <span class="model-thumb empty e-icons e-image" aria-hidden="true"></span>
+            }
+          </ng-template>
+        </app-data-grid>
       </div>
     </div>
+
+    <app-record-view
+      [(open)]="viewOpen"
+      [header]="selected() ? selected()!.brand + ' ' + selected()!.name : 'รุ่นอุปกรณ์'"
+      [fields]="viewFields()"
+      [editable]="auth.isSuperadmin()"
+      (edit)="openEdit()"
+    >
+      @if (viewOpen() && selected(); as m) {
+        <h4 class="mb-2 mt-4 text-sm font-semibold">รูปสินค้า</h4>
+        <app-photo-gallery
+          ownerType="device_model"
+          [ownerId]="m.id"
+          [editable]="auth.isSuperadmin()"
+          (changed)="photos.reload()"
+          style="--thumb: 140px"
+        />
+      }
+    </app-record-view>
 
     <ejs-dialog
       [visible]="formOpen()"
@@ -99,6 +148,14 @@ export class DeviceModelsPage {
   protected readonly columns = COLUMNS;
   protected readonly animation = DIALOG_ANIMATION;
   protected readonly models = httpResource<DeviceModel[]>(() => '/api/v1/device-models', { defaultValue: [] });
+  protected readonly photos = httpResource<Photo[]>(
+    () => ({ url: '/api/v1/photos', params: { owner_type: 'device_model' } }),
+    { defaultValue: [] },
+  );
+  protected readonly rows = computed(() => {
+    const images = new Map(this.photos.value().map((p) => [p.owner_id, p.thumb_url]));
+    return this.models.value().map((m) => ({ ...m, image: images.get(m.id) ?? null }));
+  });
 
   protected readonly selected = signal<DeviceModel | null>(null);
   protected readonly busy = signal(false);
@@ -113,8 +170,30 @@ export class DeviceModelsPage {
     () => !!this.brand().trim() && !!this.name().trim() && !!this.deviceType().trim(),
   );
 
+  protected readonly rowActions = computed<GridRowActionId[]>(() =>
+    this.auth.isSuperadmin() ? ['view', 'edit'] : ['view'],
+  );
+  protected readonly viewOpen = signal(false);
+  protected readonly viewFields = computed<RecordField[]>(() => {
+    const m = this.selected();
+    if (!m) return [];
+    return [
+      { label: 'ยี่ห้อ', value: m.brand },
+      { label: 'รุ่น', value: m.name },
+      { label: 'ประเภท', value: m.device_type },
+      { label: 'เฟิร์มแวร์', value: m.firmware_version },
+      { label: 'รายละเอียด', value: m.description, wide: true },
+    ];
+  });
+
   protected onRowSelected(row: DeviceModel | null): void {
     this.selected.set(row);
+  }
+
+  protected onRowAction({ action, row }: GridRowAction<DeviceModel>): void {
+    this.selected.set(row);
+    if (action === 'edit') this.openEdit();
+    else this.viewOpen.set(true);
   }
 
   protected openCreate(): void {

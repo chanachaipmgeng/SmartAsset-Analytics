@@ -4,6 +4,56 @@
   transition: background-color 120ms ease, border-color 120ms ease;
 }
 
+.avatar-edit {
+  position: relative;
+  flex: none;
+}
+
+.avatar-btn {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 13px;
+  cursor: pointer;
+  color: rgb(var(--app-on-primary));
+  background: rgb(var(--app-primary));
+  box-shadow: 0 0 0 3px rgb(var(--app-surface));
+  transition: transform 140ms ease;
+
+  &:hover:not(.busy) {
+    transform: scale(1.08);
+  }
+
+  &:focus-within {
+    outline: 2px solid rgb(var(--app-primary));
+    outline-offset: 3px;
+  }
+
+  &.busy {
+    cursor: progress;
+  }
+}
+
+.link-btn {
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  color: rgb(var(--app-error));
+  background: none;
+
+  &:hover:not(:disabled) {
+    text-decoration: underline;
+  }
+}
+
 :host ::ng-deep .submit.e-btn {
   min-width: 180px;
   height: 40px;

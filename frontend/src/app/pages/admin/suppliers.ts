@@ -6,7 +6,8 @@ import { Supplier } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { ConfirmService } from '../../shared/confirm.service';
 import { PageHeader } from '../../shared/page-header';
-import { DataGrid, GridColumn } from '../../shared/data-grid';
+import { DataGrid, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
+import { RecordField, RecordView } from '../../shared/record-view';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 
 const WIDE = '(min-width: 768px)';
@@ -21,7 +22,7 @@ const COLUMNS: GridColumn[] = [
 
 @Component({
   selector: 'app-suppliers',
-  imports: [...FORM_IMPORTS, PageHeader, DataGrid],
+  imports: [...FORM_IMPORTS, PageHeader, DataGrid, RecordView],
   template: `
     <div class="page">
       <app-page-header
@@ -44,10 +45,20 @@ const COLUMNS: GridColumn[] = [
           [error]="suppliers.error()"
           emptyTitle="ยังไม่มีผู้จำหน่าย / ผู้ซ่อม"
           (selectionChange)="selected.set($event)"
+          [rowActions]="rowActions()"
+          (rowAction)="onRowAction($event)"
           (retry)="suppliers.reload()"
         />
       </div>
     </div>
+
+    <app-record-view
+      [(open)]="viewOpen"
+      [header]="selected()?.name ?? 'ผู้จำหน่าย / ผู้ซ่อม'"
+      [fields]="viewFields()"
+      [editable]="auth.isSuperadmin()"
+      (edit)="openEdit()"
+    />
 
     <ejs-dialog
       [visible]="formOpen()"
@@ -114,6 +125,28 @@ export class SuppliersPage {
     const email = this.email().trim();
     return !!this.name().trim() && (!email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
   });
+
+  protected readonly rowActions = computed<GridRowActionId[]>(() =>
+    this.auth.isSuperadmin() ? ['view', 'edit'] : ['view'],
+  );
+  protected readonly viewOpen = signal(false);
+  protected readonly viewFields = computed<RecordField[]>(() => {
+    const s = this.selected();
+    if (!s) return [];
+    return [
+      { label: 'ชื่อ', value: s.name, wide: true },
+      { label: 'ผู้ติดต่อ', value: s.contact_person },
+      { label: 'โทรศัพท์', value: s.phone },
+      { label: 'อีเมล', value: s.email, wide: true },
+      { label: 'หมายเหตุ', value: s.notes, wide: true },
+    ];
+  });
+
+  protected onRowAction({ action, row }: GridRowAction<Supplier>): void {
+    this.selected.set(row);
+    if (action === 'edit') this.openEdit();
+    else this.viewOpen.set(true);
+  }
 
   protected openCreate(): void {
     this.fill(null);

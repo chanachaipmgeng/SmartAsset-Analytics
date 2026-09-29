@@ -13,6 +13,14 @@
     }
   </app-page-header>
 
+  <app-record-view
+    [(open)]="viewOpen"
+    [header]="selected()?.company_name ?? 'ลูกค้า'"
+    [fields]="viewFields()"
+    [editable]="auth.canWrite()"
+    (edit)="openEdit()"
+  />
+
   <app-filter-chips [options]="filters()" [(value)]="activeFilter" label="กรองตามสถานะลูกค้า" />
 
   <div class="panel">
@@ -27,6 +35,8 @@
       emptyMessage="เพิ่มลูกค้ารายแรกเพื่อเริ่มบันทึกจุดติดตั้ง"
       (selectionChange)="onRowSelected($event)"
       (rowDoubleClick)="editRow($event)"
+      [rowActions]="rowActions()"
+      (rowAction)="onRowAction($event)"
       (retry)="customers.reload()"
     >
       <ng-template gridCell="level_label" let-row>

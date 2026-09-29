@@ -28,7 +28,9 @@ import { filter, map } from 'rxjs';
 import { AuthStore } from '../core/auth.store';
 import { ROLE_LABELS } from '../core/labels';
 import { NotifyService } from '../core/notify.service';
+import { AvatarStore } from '../core/photos';
 import { ThemeMode, ThemeService } from '../core/theme.service';
+import { Avatar } from '../shared/avatar';
 import { BackToTop } from '../shared/back-to-top';
 import { CommandPalette, PaletteCommand } from '../shared/command-palette';
 
@@ -67,6 +69,7 @@ const THEME_ITEMS: { mode: ThemeMode; text: string }[] = [
     ToastModule,
     BackToTop,
     CommandPalette,
+    Avatar,
   ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
@@ -100,10 +103,7 @@ export class Shell {
     return role ? ROLE_LABELS[role] : '';
   });
 
-  protected readonly initials = computed(() => {
-    const name = this.auth.user()?.full_name.trim() ?? '';
-    return name ? name.slice(0, 1).toUpperCase() : '?';
-  });
+  protected readonly avatar = inject(AvatarStore);
 
   protected readonly menu = computed<MenuGroup[]>(() => {
     const settings: MenuItem[] = [];

@@ -4,7 +4,8 @@ import { ApiService } from '../../core/api.service';
 import { Tenant } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { PageHeader } from '../../shared/page-header';
-import { DataGrid, GridCell, GridColumn } from '../../shared/data-grid';
+import { DataGrid, GridCell, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
+import { RecordField, RecordView } from '../../shared/record-view';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 
 const COLUMNS: GridColumn[] = [
@@ -15,7 +16,7 @@ const COLUMNS: GridColumn[] = [
 
 @Component({
   selector: 'app-tenants',
-  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell],
+  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell, RecordView],
   template: `
     <div class="page">
       <app-page-header title="กลุ่มลูกค้า" subtitle="องค์กรที่ใช้ระบบ แต่ละกลุ่มเห็นเฉพาะอุปกรณ์และข้อมูลของตนเอง">
@@ -33,6 +34,8 @@ const COLUMNS: GridColumn[] = [
           emptyTitle="ยังไม่มีกลุ่มลูกค้า"
           (selectionChange)="onRowSelected($event)"
           (rowDoubleClick)="onRowSelected($event); openEdit()"
+          [rowActions]="rowActions"
+          (rowAction)="onRowAction($event)"
           (retry)="tenants.reload()"
         >
           <ng-template gridCell="active_label" let-row>
@@ -41,6 +44,14 @@ const COLUMNS: GridColumn[] = [
         </app-data-grid>
       </div>
     </div>
+
+    <app-record-view
+      [(open)]="viewOpen"
+      [header]="selected()?.name ?? 'กลุ่มลูกค้า'"
+      [fields]="viewFields()"
+      [editable]="true"
+      (edit)="openEdit()"
+    />
 
     <ejs-dialog
       [visible]="formOpen()"
@@ -99,8 +110,26 @@ export class TenantsPage {
     () => !!this.name().trim() && /^[A-Za-z0-9_-]{2,20}$/.test(this.code().trim()),
   );
 
+  protected readonly rowActions: GridRowActionId[] = ['view', 'edit'];
+  protected readonly viewOpen = signal(false);
+  protected readonly viewFields = computed<RecordField[]>(() => {
+    const t = this.selected();
+    if (!t) return [];
+    return [
+      { label: 'ชื่อกลุ่มลูกค้า', value: t.name, wide: true },
+      { label: 'รหัส', value: t.code, mono: true },
+      { label: 'สถานะ', value: t.is_active ? 'ใช้งาน' : 'ระงับ' },
+    ];
+  });
+
   protected onRowSelected(row: { id: string } | null): void {
     this.selected.set(row ? (this.tenants.value().find((t) => t.id === row.id) ?? null) : null);
+  }
+
+  protected onRowAction({ action, row }: GridRowAction<{ id: string }>): void {
+    this.onRowSelected(row);
+    if (action === 'edit') this.openEdit();
+    else this.viewOpen.set(true);
   }
 
   protected openCreate(): void {

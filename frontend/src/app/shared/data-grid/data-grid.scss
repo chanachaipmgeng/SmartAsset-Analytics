@@ -10,7 +10,7 @@
   height: 3px;
   overflow: hidden;
   border-radius: 3px;
-  background: rgba(var(--color-sf-primary), 0.15);
+  background: rgba(var(--app-primary), 0.15);
 
   &::after {
     content: '';
@@ -18,7 +18,7 @@
     inset: 0 auto 0 0;
     width: 40%;
     border-radius: inherit;
-    background: linear-gradient(90deg, rgb(var(--color-sf-primary)), rgb(var(--color-sf-tertiary)));
+    background: linear-gradient(90deg, rgb(var(--app-primary)), rgb(var(--app-tertiary)));
     animation: grid-progress 1s ease-in-out infinite;
   }
 }
@@ -53,8 +53,8 @@
         color 160ms ease;
 
       &:hover {
-        background: rgba(var(--color-sf-primary), 0.08);
-        color: rgb(var(--color-sf-primary));
+        background: rgba(var(--app-primary), 0.08);
+        color: rgb(var(--app-primary));
 
         .e-icons {
           color: inherit;
@@ -64,7 +64,7 @@
   }
 
   .e-gridheader {
-    border: 1px solid rgba(var(--color-sf-outline-variant), 0.8);
+    border: 1px solid rgba(var(--app-outline-variant), 0.8);
     border-bottom: 0;
     border-radius: 12px 12px 0 0;
     overflow: hidden;
@@ -75,14 +75,14 @@
   .e-grouptopleftcell {
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, rgb(var(--color-sf-surface)) 90%, rgb(var(--color-sf-primary))),
-      color-mix(in srgb, rgb(var(--color-sf-surface)) 95%, rgb(var(--color-sf-tertiary)))
+      color-mix(in srgb, rgb(var(--app-surface)) 90%, rgb(var(--app-primary))),
+      color-mix(in srgb, rgb(var(--app-surface)) 95%, rgb(var(--app-tertiary)))
     );
   }
 
   .e-headertext {
     font-weight: 600;
-    color: rgb(var(--color-sf-on-surface));
+    color: rgb(var(--app-on-surface));
   }
 
   .e-row {
@@ -90,7 +90,7 @@
   }
 
   .e-row:hover .e-rowcell:not(.e-selectionbackground) {
-    background: rgba(var(--color-sf-primary), 0.06);
+    background: rgba(var(--app-primary), 0.06);
   }
 
   // Accent bar on the first cell of the hovered / selected row.
@@ -101,17 +101,17 @@
 
   .e-row:hover .e-rowcell:first-child,
   .e-row[aria-selected='true'] .e-rowcell:first-child {
-    box-shadow: inset 3px 0 0 rgb(var(--color-sf-primary));
+    box-shadow: inset 3px 0 0 rgb(var(--app-primary));
   }
 
   .e-row.e-altrow:not(:hover) .e-rowcell:not(.e-selectionbackground) {
-    background: color-mix(in srgb, rgb(var(--color-sf-surface)) 98%, rgb(var(--color-sf-primary)));
+    background: color-mix(in srgb, rgb(var(--app-surface)) 98%, rgb(var(--app-primary)));
   }
 
   .e-rowcell.e-selectionbackground,
   .e-row[aria-selected='true'] .e-rowcell {
-    background: rgb(var(--color-sf-primary-container));
-    color: rgb(var(--color-sf-on-primary-container));
+    background: rgb(var(--app-primary-container));
+    color: rgb(var(--app-on-primary-container));
   }
 
   // Keep the empty-state centred in the visible width even when columns overflow.
@@ -131,8 +131,57 @@
     width: 100cqi;
   }
 
+  .row-actions {
+    display: inline-flex;
+    gap: 4px;
+  }
+
+  .row-action {
+    display: inline-grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: rgb(var(--app-on-surface-variant));
+    cursor: pointer;
+    transition:
+      background-color 140ms ease,
+      border-color 140ms ease,
+      color 140ms ease,
+      transform 140ms ease;
+
+    .e-icons {
+      font-size: 16px;
+      color: inherit;
+    }
+
+    &:hover {
+      border-color: rgba(var(--app-primary), 0.35);
+      background: rgba(var(--app-primary), 0.1);
+      color: rgb(var(--app-primary));
+    }
+
+    &[data-action='edit']:hover {
+      border-color: rgba(var(--app-tertiary), 0.4);
+      background: rgba(var(--app-tertiary), 0.12);
+      color: rgb(var(--app-tertiary));
+    }
+
+    &:active {
+      transform: scale(0.92);
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgb(var(--app-primary));
+      outline-offset: 1px;
+    }
+  }
+
   .e-gridpager {
-    border-top: 1px solid rgb(var(--color-sf-outline-variant));
+    border-top: 1px solid rgb(var(--app-outline-variant));
     background: transparent;
   }
 }

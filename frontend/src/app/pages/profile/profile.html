@@ -6,12 +6,26 @@
       <section class="panel flex flex-col gap-4 bg-surface p-5">
         @if (user(); as u) {
           <div class="flex items-center gap-4">
-            <span class="grid size-16 shrink-0 place-items-center rounded-full bg-primary-container text-2xl font-semibold text-on-primary-container">
-              {{ initials() }}
-            </span>
+            <div class="avatar-edit">
+              <app-avatar [name]="u.full_name" [src]="avatar.photo()?.thumb_url" [size]="72" />
+              <label class="avatar-btn" [class.busy]="avatarBusy()" title="เปลี่ยนรูปโปรไฟล์">
+                <span class="e-icons" [class]="avatarBusy() ? 'e-refresh animate-spin' : 'e-image'"></span>
+                <input
+                  type="file"
+                  class="sr-only"
+                  [accept]="photoAccept"
+                  [disabled]="avatarBusy()"
+                  (change)="changeAvatar($event)"
+                  aria-label="เปลี่ยนรูปโปรไฟล์"
+                />
+              </label>
+            </div>
             <div class="min-w-0">
               <h2 class="m-0 truncate text-lg font-semibold text-on-surface">{{ u.full_name }}</h2>
               <p class="m-0 truncate text-sm text-on-surface-variant">{{ u.email }}</p>
+              @if (avatar.photo()) {
+                <button type="button" class="link-btn" [disabled]="avatarBusy()" (click)="removeAvatar()">ลบรูปโปรไฟล์</button>
+              }
             </div>
           </div>
           <dl class="m-0 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">

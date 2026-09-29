@@ -8,7 +8,9 @@ import { AuthStore } from '../../core/auth.store';
 import { ROLE_LABELS } from '../../core/labels';
 import { Tenant } from '../../core/models';
 import { errorMessage, NotifyService } from '../../core/notify.service';
+import { AvatarStore, checkPhotoFiles, PHOTO_ACCEPT } from '../../core/photos';
 import { ThemeMode, ThemeService } from '../../core/theme.service';
+import { Avatar } from '../../shared/avatar';
 import { LiveValue } from '../../shared/live-value';
 import { PageHeader } from '../../shared/page-header';
 
@@ -16,7 +18,7 @@ const MIN_PASSWORD = 8;
 
 @Component({
   selector: 'app-profile',
-  imports: [ButtonModule, TextBoxModule, MessageModule, LiveValue, PageHeader],
+  imports: [ButtonModule, TextBoxModule, MessageModule, LiveValue, PageHeader, Avatar],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,15 +34,9 @@ export class ProfilePage {
     const role = this.user()?.role;
     return role ? ROLE_LABELS[role] : '';
   });
-  protected readonly initials = computed(() =>
-    (this.user()?.full_name ?? '')
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0])
-      .join('')
-      .toUpperCase(),
-  );
+  protected readonly avatar = inject(AvatarStore);
+  protected readonly avatarBusy = signal(false);
+  protected readonly photoAccept = PHOTO_ACCEPT;
 
   private readonly tenants = httpResource<Tenant[]>(() => (this.user()?.tenant_id ? '/api/v1/tenants' : undefined), {
     defaultValue: [],
@@ -72,6 +68,40 @@ export class ProfilePage {
       this.confirmPassword() === this.newPassword() &&
       !this.saving(),
   );
+
+  protected async changeAvatar(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const { ok, problem } = checkPhotoFiles([...(input.files ?? [])]);
+    input.value = '';
+    const userId = this.user()?.id;
+    if (problem) this.notify.error(problem);
+    if (!ok.length || !userId) return;
+    this.avatarBusy.set(true);
+    try {
+      await this.api.uploadPhoto('user', userId, ok[0]);
+      this.avatar.reload();
+      this.notify.success('เปลี่ยนรูปโปรไฟล์แล้ว');
+    } catch (err) {
+      this.notify.error(errorMessage(err));
+    } finally {
+      this.avatarBusy.set(false);
+    }
+  }
+
+  protected async removeAvatar(): Promise<void> {
+    const photo = this.avatar.photo();
+    if (!photo) return;
+    this.avatarBusy.set(true);
+    try {
+      await this.api.deletePhoto(photo.id);
+      this.avatar.reload();
+      this.notify.success('ลบรูปโปรไฟล์แล้ว');
+    } catch (err) {
+      this.notify.error(errorMessage(err));
+    } finally {
+      this.avatarBusy.set(false);
+    }
+  }
 
   protected async changePassword(event: Event): Promise<void> {
     event.preventDefault();

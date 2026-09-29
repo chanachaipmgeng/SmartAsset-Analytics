@@ -46,6 +46,8 @@ export interface GridColumn {
   /** Media query the column needs to be shown, e.g. `(min-width: 768px)` for secondary columns. */
   hideAtMedia?: string;
   isPrimaryKey?: boolean;
+  /** Left out of Excel/PDF, e.g. image cells whose value is only a URL. */
+  noExport?: boolean;
 }
 
 /** Page, sort and search requested by the grid in server paging mode. */
@@ -55,6 +57,18 @@ export interface GridQuery {
   sort: { field: string; descending: boolean } | null;
   search: string;
 }
+
+export type GridRowActionId = 'view' | 'edit';
+
+export interface GridRowAction<T> {
+  action: GridRowActionId;
+  row: T;
+}
+
+const ROW_ACTIONS: Record<GridRowActionId, { label: string; iconCss: string }> = {
+  view: { label: 'ดูรายละเอียด', iconCss: 'e-icons e-eye' },
+  edit: { label: 'แก้ไข', iconCss: 'e-icons e-edit' },
+};
 
 export interface GridAggregate {
   field: string;
@@ -137,8 +151,11 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
   readonly total = input(0);
   /** Server paging: loads every matching row so Excel/PDF export isn't limited to one page. */
   readonly exportAll = input<(() => Promise<T[]>) | null>(null);
+  /** Icon buttons in a trailing column; clicks are emitted through `rowAction`. */
+  readonly rowActions = input<GridRowActionId[]>([]);
 
   readonly query = output<GridQuery>();
+  readonly rowAction = output<GridRowAction<T>>();
   readonly selectionChange = output<T | null>();
   readonly rowDoubleClick = output<T>();
   readonly retry = output<void>();
@@ -190,6 +207,11 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
     return columns.length ? [{ columns }] : [];
   });
 
+  protected readonly actionButtons = computed(() =>
+    this.rowActions().map((id) => ({ id, ...ROW_ACTIONS[id] })),
+  );
+  protected readonly actionsWidth = computed(() => 24 + this.rowActions().length * 36);
+
   protected readonly errorText = computed(() => (this.error() ? errorMessage(this.error()) : ''));
 
   protected readonly source = computed(() =>
@@ -238,7 +260,11 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
       case 'excel':
         try {
           const dataSource = await this.exportRows();
-          await grid.excelExport({ fileName: `${fileName}.xlsx`, ...(dataSource ? { dataSource } : {}) });
+          await grid.excelExport({
+            fileName: `${fileName}.xlsx`,
+            columns: this.exportColumns(),
+            ...(dataSource ? { dataSource } : {}),
+          });
         } catch (err) {
           this.notify.error(err);
         }
@@ -253,6 +279,7 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
           await grid.pdfExport({
             ...(dataSource ? { dataSource } : {}),
             fileName: `${fileName}.pdf`,
+            columns: this.exportColumns(),
             pageOrientation: 'Landscape',
             theme: { header: { font: headerFont }, record: { font }, caption: { font } },
           });
@@ -309,6 +336,19 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
 
   protected onDoubleClick(args: { rowData?: unknown }): void {
     if (args.rowData) this.rowDoubleClick.emit(args.rowData as T);
+  }
+
+  protected onRowAction(event: Event, action: GridRowActionId, row: T): void {
+    event.stopPropagation();
+    this.rowAction.emit({ action, row });
+  }
+
+  /** Visible data columns only, so the action column and `noExport` columns never land in Excel/PDF. */
+  private exportColumns() {
+    const skip = new Set(this.columns().filter((c) => c.noExport).map((c) => c.field));
+    return this.grid()
+      ?.getColumns()
+      .filter((c) => c.field && c.visible !== false && !skip.has(c.field));
   }
 
   private savePerspective(): void {

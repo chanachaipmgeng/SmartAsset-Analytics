@@ -4,18 +4,21 @@ import { ApiService } from '../core/api.service';
 import { DeviceActionId, actionTitle } from '../core/device-actions';
 import { toIsoDate } from '../core/labels';
 import { Customer, Device, Supplier, Tenant } from '../core/models';
-import { NotifyService } from '../core/notify.service';
+import { NotifyService, errorMessage } from '../core/notify.service';
 import { InstallationMap, LatLng } from './installation-map';
+import { PhotoPicker } from './photo-picker';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from './syncfusion';
 
 type Movement = Exclude<DeviceActionId, 'install'>;
 
 const CENTRAL_STOCK = '__central__';
+/** Movements whose transaction can carry photos (condition on return, repair and QC evidence). */
+const PHOTO_MOVEMENTS: ReadonlySet<Movement> = new Set(['return', 'send_repair', 'repair_done', 'qc_pass', 'qc_fail']);
 
 /** Movement and install dialogs shared by the devices page and the scan station. */
 @Component({
   selector: 'app-device-action-dialogs',
-  imports: [...FORM_IMPORTS, InstallationMap],
+  imports: [...FORM_IMPORTS, InstallationMap, PhotoPicker],
   template: `
     <ejs-dialog
       [visible]="movement() !== null"
@@ -73,6 +76,12 @@ const CENTRAL_STOCK = '__central__';
               [placeholder]="notePlaceholder()"
             ></ejs-textarea>
           </div>
+          @if (movementTakesPhotos()) {
+            <div class="full">
+              <label>รูปประกอบ <span class="muted">เช่น สภาพเครื่อง ใบรับซ่อม ผล QC</span></label>
+              <app-photo-picker [(files)]="photoFiles" />
+            </div>
+          }
         </div>
       </ng-template>
       <ng-template #footerTemplate>
@@ -131,6 +140,10 @@ const CENTRAL_STOCK = '__central__';
             <label>ที่อยู่จุดติดตั้ง</label>
             <ejs-textarea [(value)]="address" [liveValue]="address" rows="2"></ejs-textarea>
           </div>
+          <div class="full">
+            <label>รูปหน้างาน <span class="muted">จุดติดตั้ง การเดินสาย ป้ายหน้าอาคาร</span></label>
+            <app-photo-picker [(files)]="photoFiles" />
+          </div>
         </div>
       </ng-template>
       <ng-template #footerTemplate>
@@ -174,6 +187,11 @@ export class DeviceActionDialogs {
   );
 
   protected readonly movement = signal<Movement | null>(null);
+  protected readonly movementTakesPhotos = computed(() => {
+    const kind = this.movement();
+    return kind !== null && PHOTO_MOVEMENTS.has(kind);
+  });
+  protected readonly photoFiles = signal<File[]>([]);
   protected readonly note = signal('');
   protected readonly transferTarget = signal<string | null>(null);
   protected readonly noteLabel = computed(() => {
@@ -250,6 +268,7 @@ export class DeviceActionDialogs {
 
   open(action: DeviceActionId, device: Device): void {
     this.device.set(device);
+    this.photoFiles.set([]);
     if (action === 'install') {
       this.needCustomers.set(true);
       this.customer.set(null);
@@ -314,16 +333,33 @@ export class DeviceActionDialogs {
         updated = await this.api.transfer(d.id, target === CENTRAL_STOCK ? null : target, note);
       }
       this.notify.success(`${actionTitle(kind)} สำเร็จ`);
+      if (PHOTO_MOVEMENTS.has(kind) && this.photoFiles().length) {
+        const files = this.photoFiles();
+        await this.attachPhotos(async () => {
+          const tx = await this.api.latestTransaction(d.id);
+          return tx ? this.api.uploadPhotos('transaction', tx.id, files) : 0;
+        });
+      }
       this.movement.set(null);
       return updated;
     });
+  }
+
+  /** The movement is already saved, so a failed upload is a warning, not a failed action. */
+  private async attachPhotos(upload: () => Promise<number>): Promise<void> {
+    try {
+      const saved = await upload();
+      if (saved) this.notify.info(`แนบรูปแล้ว ${saved} รูป`);
+    } catch (err) {
+      this.notify.warning(`บันทึกรายการแล้ว แต่แนบรูปไม่สำเร็จ: ${errorMessage(err)}`);
+    }
   }
 
   protected async confirmInstall(): Promise<void> {
     const d = this.device();
     if (!d || !this.installValid()) return;
     await this.run(async () => {
-      await this.api.install({
+      const installation = await this.api.install({
         device_id: d.id,
         customer_id: this.customer(),
         install_date: toIsoDate(this.installDate()),
@@ -332,6 +368,8 @@ export class DeviceActionDialogs {
         address: this.address().trim() || null,
       });
       this.notify.success('บันทึกการติดตั้งแล้ว');
+      const files = this.photoFiles();
+      if (files.length) await this.attachPhotos(() => this.api.uploadPhotos('installation', installation.id, files));
       this.installOpen.set(false);
       return { ...d, status: 'INSTALLED' as const };
     });

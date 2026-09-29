@@ -1,7 +1,19 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { Customer, Device, DeviceModel, ImportResult, Installation, Supplier, Tenant, User } from './models';
+import {
+  Customer,
+  Device,
+  DeviceModel,
+  ImportResult,
+  Installation,
+  InventoryTransaction,
+  Photo,
+  PhotoOwner,
+  Supplier,
+  Tenant,
+  User,
+} from './models';
 
 const API = '/api/v1';
 
@@ -126,5 +138,32 @@ export class ApiService {
   }
   deleteSupplier(id: string) {
     return this.delete<void>(`/suppliers/${id}`);
+  }
+
+  latestTransaction(deviceId: string) {
+    return firstValueFrom(
+      this.http.get<InventoryTransaction[]>(`${API}/inventory/transactions`, { params: { device_id: deviceId, limit: 1 } }),
+    ).then((rows) => rows[0] ?? null);
+  }
+
+  uploadPhoto(ownerType: PhotoOwner, ownerId: string, file: File, caption?: string | null) {
+    const form = new FormData();
+    form.append('owner_type', ownerType);
+    form.append('owner_id', ownerId);
+    if (caption) form.append('caption', caption);
+    form.append('file', file, file.name);
+    return this.post<Photo>('/photos', form);
+  }
+  /** Sequential; files before a failing one stay saved. */
+  async uploadPhotos(ownerType: PhotoOwner, ownerId: string, files: File[]): Promise<number> {
+    let saved = 0;
+    for (const file of files) {
+      await this.uploadPhoto(ownerType, ownerId, file);
+      saved++;
+    }
+    return saved;
+  }
+  deletePhoto(id: string) {
+    return this.delete<void>(`/photos/${id}`);
   }
 }

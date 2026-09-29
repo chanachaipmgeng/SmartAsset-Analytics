@@ -3,31 +3,22 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
 import { ROLE_LABELS, toOptions } from '../../core/labels';
-import { Role, Tenant, User } from '../../core/models';
+import { Photo, Role, Tenant, User } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
+import { Avatar } from '../../shared/avatar';
 import { PageHeader } from '../../shared/page-header';
-import { DataGrid, GridCell, GridColumn } from '../../shared/data-grid';
+import { DataGrid, GridCell, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
+import { RecordField, RecordView } from '../../shared/record-view';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 
 @Component({
   selector: 'app-users',
-  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell],
+  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell, RecordView, Avatar],
   styles: `
     .user-cell {
       display: inline-flex;
       align-items: center;
       gap: 10px;
-    }
-    .avatar {
-      display: grid;
-      place-items: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      font-size: 12px;
-      font-weight: 700;
-      background: rgb(var(--color-sf-primary-container));
-      color: rgb(var(--color-sf-on-primary-container));
     }
   `,
   template: `
@@ -47,11 +38,13 @@ import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
           emptyTitle="ยังไม่มีผู้ใช้"
           (selectionChange)="onRowSelected($event)"
           (rowDoubleClick)="onRowSelected($event); openEdit()"
+          [rowActions]="rowActions"
+          (rowAction)="onRowAction($event)"
           (retry)="users.reload()"
         >
           <ng-template gridCell="full_name" let-row>
             <span class="user-cell">
-              <span class="avatar">{{ row.full_name.charAt(0) }}</span>
+              <app-avatar [name]="row.full_name" [src]="row.avatar" [size]="28" />
               {{ row.full_name }}
             </span>
           </ng-template>
@@ -64,6 +57,14 @@ import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
         </app-data-grid>
       </div>
     </div>
+
+    <app-record-view
+      [(open)]="viewOpen"
+      [header]="selected()?.full_name ?? 'ผู้ใช้'"
+      [fields]="viewFields()"
+      [editable]="true"
+      (edit)="openEdit()"
+    />
 
     <ejs-dialog
       [visible]="formOpen()"
@@ -135,6 +136,11 @@ export class UsersPage {
   ]);
   protected readonly users = httpResource<User[]>(() => '/api/v1/users', { defaultValue: [] });
   protected readonly tenants = httpResource<Tenant[]>(() => '/api/v1/tenants', { defaultValue: [] });
+  private readonly userPhotos = httpResource<Photo[]>(
+    () => ({ url: '/api/v1/photos', params: { owner_type: 'user' } }),
+    { defaultValue: [] },
+  );
+  private readonly avatars = computed(() => new Map(this.userPhotos.value().map((p) => [p.owner_id, p.thumb_url])));
 
   private readonly tenantNames = computed(() => new Map(this.tenants.value().map((t) => [t.id, t.name])));
   protected readonly tenantOptions = computed(() => this.tenants.value().map((t) => ({ value: t.id, text: t.name })));
@@ -147,6 +153,7 @@ export class UsersPage {
       role_label: ROLE_LABELS[u.role],
       tenant_name: u.tenant_id ? (this.tenantNames().get(u.tenant_id) ?? '-') : 'แพลตฟอร์ม',
       active_label: u.is_active ? 'ใช้งาน' : 'ระงับ',
+      avatar: this.avatars().get(u.id) ?? null,
     })),
   );
 
@@ -168,8 +175,30 @@ export class UsersPage {
     return !!this.fullName().trim() && !!this.email().trim() && pwOk && tenantOk;
   });
 
+  protected readonly rowActions: GridRowActionId[] = ['view', 'edit'];
+  protected readonly viewOpen = signal(false);
+  protected readonly viewFields = computed<RecordField[]>(() => {
+    const u = this.selected();
+    if (!u) return [];
+    return [
+      { label: 'ชื่อ-นามสกุล', value: u.full_name },
+      { label: 'อีเมล', value: u.email },
+      { label: 'บทบาท', value: ROLE_LABELS[u.role] },
+      { label: 'สถานะ', value: u.is_active ? 'ใช้งาน' : 'ระงับ' },
+      ...(this.auth.isSuperadmin()
+        ? [{ label: 'กลุ่มลูกค้า', value: u.tenant_id ? this.tenantNames().get(u.tenant_id) : 'แพลตฟอร์ม', wide: true }]
+        : []),
+    ];
+  });
+
   protected onRowSelected(row: { id: string } | null): void {
     this.selected.set(row ? (this.users.value().find((u) => u.id === row.id) ?? null) : null);
+  }
+
+  protected onRowAction({ action, row }: GridRowAction<{ id: string }>): void {
+    this.onRowSelected(row);
+    if (action === 'edit') this.openEdit();
+    else this.viewOpen.set(true);
   }
 
   protected openCreate(): void {

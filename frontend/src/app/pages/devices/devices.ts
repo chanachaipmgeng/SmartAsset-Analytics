@@ -26,15 +26,17 @@ import {
   DeviceStatus,
   Installation,
   InventoryTransaction,
+  Photo,
   Tenant,
 } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { AssetTimeline } from '../../shared/asset-timeline';
-import { DataGrid, GridCell, GridColumn, GridQuery } from '../../shared/data-grid';
+import { DataGrid, GridCell, GridColumn, GridQuery, GridRowAction, GridRowActionId } from '../../shared/data-grid';
 import { DeviceActionDialogs } from '../../shared/device-action-dialogs';
 import { FilterChips } from '../../shared/filter-chips';
 import { InstallationMap } from '../../shared/installation-map';
 import { PageHeader } from '../../shared/page-header';
+import { PhotoGallery } from '../../shared/photo-gallery';
 import { StatusChip } from '../../shared/status-chip';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 import { DeviceImport } from './device-import';
@@ -100,6 +102,7 @@ const DAY_MS = 86_400_000;
     DeviceActionDialogs,
     DeviceImport,
     FilterChips,
+    PhotoGallery,
   ],
   templateUrl: './devices.html',
   styleUrl: './devices.scss',
@@ -203,6 +206,13 @@ export class DevicesPage {
     () => (this.id() ? `/api/v1/inventory/transactions?device_id=${this.id()}&limit=100` : undefined),
     { defaultValue: [] },
   );
+  protected readonly txPhotos = httpResource<Photo[]>(
+    () => {
+      const ids = this.history.value().map((t) => t.id);
+      return ids.length ? { url: '/api/v1/photos', params: { owner_type: 'transaction', owner_id: ids } } : undefined;
+    },
+    { defaultValue: [] },
+  );
   private readonly installations = httpResource<Installation[]>(
     () => (this.selected()?.status === 'INSTALLED' ? '/api/v1/installations' : undefined),
     { defaultValue: [] },
@@ -292,8 +302,26 @@ export class DevicesPage {
     this.grid()?.firstPage();
   }
 
+  protected readonly rowActions = computed<GridRowActionId[]>(() =>
+    this.auth.canWrite() ? ['view', 'edit'] : ['view'],
+  );
+
   protected onRowSelected(row: { id: string } | null): void {
     if (row && row.id !== this.id()) void this.router.navigate(['/devices', row.id]);
+  }
+
+  protected onRowAction({ action, row }: GridRowAction<{ id: string }>): void {
+    if (action === 'view') {
+      this.onRowSelected(row);
+      return;
+    }
+    const device = this.page().find((d) => d.id === row.id);
+    if (!device) return;
+    if (device.status === 'RETIRED') {
+      this.notify.warning('อุปกรณ์ที่ปลดระวางแล้วแก้ไขข้อมูลไม่ได้');
+      return;
+    }
+    this.openEdit(device);
   }
 
   protected closeDetail(): void {
@@ -347,8 +375,7 @@ export class DevicesPage {
     this.formOpen.set(true);
   }
 
-  protected openEdit(): void {
-    const d = this.selected();
+  protected openEdit(d: Device | null = this.selected()): void {
     if (!d) return;
     this.editingId.set(d.id);
     this.formSerial.set(d.serial_number);

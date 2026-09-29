@@ -1,15 +1,16 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TX_ICONS, TX_LABELS, TX_TONES, relativeTime } from '../core/labels';
-import { InventoryTransaction } from '../core/models';
+import { InventoryTransaction, Photo } from '../core/models';
+import { PhotoSrcPipe } from '../core/photos';
 import { EmptyState } from './empty-state';
 import { SkeletonBlock } from './skeleton-block';
 
 /** Vertical history of stock movements, newest first. */
 @Component({
   selector: 'app-asset-timeline',
-  imports: [DatePipe, RouterLink, EmptyState, SkeletonBlock],
+  imports: [DatePipe, RouterLink, EmptyState, SkeletonBlock, PhotoSrcPipe],
   template: `
     @if (loading() && !items().length) {
       <div class="flex flex-col gap-3">
@@ -47,6 +48,15 @@ import { SkeletonBlock } from './skeleton-block';
               @if (tx.note && !compact()) {
                 <p class="note">{{ tx.note }}</p>
               }
+              @if (photosByTx().get(tx.id); as txPhotos) {
+                <div class="tx-photos">
+                  @for (p of txPhotos; track p.id) {
+                    <a [href]="p.url | photoSrc" target="_blank" rel="noopener" [title]="p.caption ?? 'เปิดรูปขนาดเต็ม'">
+                      <img [src]="p.thumb_url | photoSrc" alt="รูปประกอบรายการ" loading="lazy" decoding="async" />
+                    </a>
+                  }
+                </div>
+              }
             </div>
           </li>
         }
@@ -61,9 +71,9 @@ import { SkeletonBlock } from './skeleton-block';
       list-style: none;
     }
     .item {
-      --tone: var(--color-sf-outline);
-      --tone-container: var(--color-sf-surface-variant);
-      --on-tone-container: var(--color-sf-on-surface-variant);
+      --tone: var(--app-outline);
+      --tone-container: var(--app-surface-variant);
+      --on-tone-container: var(--app-on-surface-variant);
       position: relative;
       display: flex;
       gap: 12px;
@@ -77,13 +87,13 @@ import { SkeletonBlock } from './skeleton-block';
         bottom: 2px;
         width: 2px;
         border-radius: 1px;
-        background: rgb(var(--color-sf-outline-variant));
+        background: rgb(var(--app-outline-variant));
       }
     }
     @each $tone in success, warning, info, error, primary, tertiary {
       .item[data-tone='#{$tone}'] {
-        --tone-container: var(--color-sf-#{$tone}-container);
-        --on-tone-container: var(--color-sf-on-#{$tone}-container);
+        --tone-container: var(--app-#{$tone}-container);
+        --on-tone-container: var(--app-on-#{$tone}-container);
       }
     }
     .dot {
@@ -112,14 +122,14 @@ import { SkeletonBlock } from './skeleton-block';
       time {
         margin-left: auto;
         font-size: 12px;
-        color: rgb(var(--color-sf-on-surface-variant));
+        color: rgb(var(--app-on-surface-variant));
         white-space: nowrap;
       }
     }
     .serial {
       font-family: ui-monospace, monospace;
       font-size: 13px;
-      color: rgb(var(--color-sf-primary));
+      color: rgb(var(--app-primary));
       text-decoration: none;
 
       &:hover {
@@ -129,15 +139,44 @@ import { SkeletonBlock } from './skeleton-block';
     .meta {
       margin-top: 2px;
       font-size: 12px;
-      color: rgb(var(--color-sf-on-surface-variant));
+      color: rgb(var(--app-on-surface-variant));
     }
     .note {
       margin: 6px 0 0;
       padding: 8px 10px;
       border-radius: 8px;
       font-size: 13px;
-      background: color-mix(in srgb, rgb(var(--color-sf-surface)) 90%, rgb(var(--color-sf-primary)));
+      background: color-mix(in srgb, rgb(var(--app-surface)) 90%, rgb(var(--app-primary)));
       white-space: pre-line;
+    }
+    .tx-photos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+
+      a {
+        display: block;
+        width: 56px;
+        height: 56px;
+        overflow: hidden;
+        border: 1px solid rgba(var(--app-outline-variant), 0.9);
+        border-radius: 8px;
+        transition:
+          transform 160ms ease,
+          box-shadow 160ms ease;
+
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 8px 18px -10px rgba(var(--app-primary), 0.7);
+        }
+      }
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -149,6 +188,14 @@ export class AssetTimeline {
   readonly showDevice = input(false);
   /** Hide notes for a denser list. */
   readonly compact = input(false);
+  /** Photos attached to these transactions (`owner_type` transaction). */
+  readonly photos = input<Photo[]>([]);
+
+  protected readonly photosByTx = computed(() => {
+    const map = new Map<string, Photo[]>();
+    for (const p of this.photos()) map.set(p.owner_id, [...(map.get(p.owner_id) ?? []), p]);
+    return map;
+  });
 
   protected readonly labels = TX_LABELS;
   protected readonly icons = TX_ICONS;

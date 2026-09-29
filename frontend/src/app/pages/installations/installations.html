@@ -2,7 +2,7 @@
   <app-page-header title="จุดติดตั้ง / แผนที่" subtitle="ตำแหน่งอุปกรณ์ที่ติดตั้งอยู่ และค้นหาในรัศมีที่กำหนด">
     <ejs-checkbox label="แสดงรายการที่ถอนแล้ว" [(checked)]="showRemoved" [disabled]="!!nearbyQuery()"></ejs-checkbox>
     @if (auth.canWrite()) {
-      <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected() || !!selected()?.removed_at" (click)="openEdit()">แก้ไขพิกัด</button>
+      <button ejs-button iconCss="e-icons e-edit" [disabled]="!canEditSelected()" (click)="openEdit()">แก้ไขพิกัด</button>
     }
   </app-page-header>
 
@@ -61,6 +61,8 @@
       [emptyTitle]="nearbyQuery() ? 'ไม่พบอุปกรณ์ในรัศมีนี้' : 'ยังไม่มีจุดติดตั้ง'"
       [emptyMessage]="nearbyQuery() ? 'ลองเพิ่มรัศมีหรือเปลี่ยนพิกัดที่ค้นหา' : null"
       (selectionChange)="onRowSelected($event)"
+      [rowActions]="rowActions()"
+      (rowAction)="onRowAction($event)"
       (retry)="installations.reload(); nearby.reload()"
     >
       <ng-template gridCell="state_label" let-row>
@@ -69,6 +71,25 @@
     </app-data-grid>
   </div>
 </div>
+
+<app-record-view
+  [(open)]="viewOpen"
+  [header]="'จุดติดตั้ง ' + (selected()?.serial_number ?? '')"
+  [fields]="viewFields()"
+  [editable]="canEditSelected()"
+  (edit)="openEdit()"
+>
+  @if (viewOpen() && selected(); as i) {
+    <app-installation-map
+      class="mt-4 block overflow-hidden rounded-m3-md"
+      [installations]="[i]"
+      [focus]="{ latitude: i.latitude, longitude: i.longitude }"
+      height="220px"
+    />
+    <h4 class="mb-2 mt-4 text-sm font-semibold">รูปหน้างาน</h4>
+    <app-photo-gallery ownerType="installation" [ownerId]="i.id" [editable]="auth.canWrite()" />
+  }
+</app-record-view>
 
 <ejs-dialog
   [visible]="editOpen()"

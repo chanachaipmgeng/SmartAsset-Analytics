@@ -21,6 +21,22 @@ export type TransactionType =
   | 'RETIRE'
   | 'EDIT';
 export type ServiceLevel = 'BASIC' | 'STANDARD' | 'PREMIUM';
+export type PhotoOwner = 'device' | 'installation' | 'transaction' | 'user' | 'device_model';
+
+export interface Photo {
+  id: string;
+  owner_type: PhotoOwner;
+  owner_id: string;
+  caption: string | null;
+  width: number;
+  height: number;
+  size_bytes: number;
+  uploaded_by: string;
+  created_at: string | null;
+  /** Signed, same-origin paths usable in <img> without the bearer token. */
+  url: string;
+  thumb_url: string;
+}
 
 export interface User {
   id: string;
