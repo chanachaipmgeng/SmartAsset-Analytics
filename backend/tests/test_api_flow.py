@@ -259,7 +259,9 @@ async def test_edit_audit_customer_deactivate_and_tx_filters(client: httpx.Async
     # Customers are deactivated, not deleted, and not while a device is installed there.
     customer = (await client.post("/customers", headers=a, json={"company_name": f"Soft {world['tag']}"})).json()
     assert customer["is_active"] is True
-    install_body = {"device_id": device_id, "customer_id": customer["id"], "install_date": "2026-09-01", "latitude": 13.7, "longitude": 100.5}
+    install_body = {
+        "device_id": device_id, "customer_id": customer["id"], "install_date": "2026-09-01", "latitude": 13.7, "longitude": 100.5
+    }
     assert (await client.post("/inventory/check-out", headers=a, json={"device_id": device_id})).status_code == 200
     assert (await client.post("/installations", headers=a, json=install_body)).status_code == 201
     res = await client.delete(f"/customers/{customer['id']}", headers=a)
@@ -324,7 +326,8 @@ async def test_dashboard_backlog(client: httpx.AsyncClient, world: dict) -> None
     a, b, tag = world["a"], world["b"], world["tag"]
     ids = {}
     for key in ("qc", "loan", "repair"):
-        res = await client.post("/inventory/check-in", headers=a, json={"serial_number": f"BL-{tag}-{key}", "model_id": world["model"]["id"]})
+        body = {"serial_number": f"BL-{tag}-{key}", "model_id": world["model"]["id"]}
+        res = await client.post("/inventory/check-in", headers=a, json=body)
         ids[key] = res.json()["id"]
     await client.post("/inventory/check-out", headers=a, json={"device_id": ids["qc"]})
     await client.post("/inventory/return", headers=a, json={"device_id": ids["qc"]})
@@ -481,7 +484,8 @@ async def test_bulk_actions(client: httpx.AsyncClient, world: dict) -> None:
     res = await client.post("/inventory/bulk", headers=b, json={"action": "retire", "device_ids": [stock]})
     assert res.status_code == 422 and res.json()["failures"][0]["reason"] == "ไม่พบอุปกรณ์"
     assert (await client.get(f"/devices/{stock}", headers=a)).json()["status"] == "IN_STOCK"
-    assert (await client.post("/inventory/bulk", headers=world["viewer"], json={"action": "retire", "device_ids": [stock]})).status_code == 403
+    denied = await client.post("/inventory/bulk", headers=world["viewer"], json={"action": "retire", "device_ids": [stock]})
+    assert denied.status_code == 403
     assert (await client.post("/inventory/bulk", headers=a, json={"action": "transfer", "device_ids": [stock]})).status_code == 403
     too_many = [stock] * 201
     assert (await client.post("/inventory/bulk", headers=a, json={"action": "retire", "device_ids": too_many})).status_code == 422

@@ -12,9 +12,15 @@ from app.infrastructure.media import LocalPhotoStorage
 pytestmark = pytest.mark.asyncio(loop_scope="session")
 
 
+def _media() -> LocalPhotoStorage | None:
+    """Photo files are only checked where the media directory exists (the API container)."""
+    settings = get_settings()
+    return LocalPhotoStorage(settings.media_root, settings.jwt_secret) if Path(settings.media_root).is_dir() else None
+
+
 async def test_database_is_consistent() -> None:
     settings = get_settings()
-    media = LocalPhotoStorage(settings.media_root, settings.jwt_secret) if Path(settings.media_root).is_dir() else None
+    media = _media()
     engine = create_async_engine(settings.migration_database_url)
     try:
         async with engine.connect() as conn:

@@ -125,10 +125,16 @@ async def find_problems(conn: AsyncConnection, media: LocalPhotoStorage | None =
         problems += [f"{description}: {tuple(row)}" for row in rows]
     if media is not None:
         ids: list[UUID] = list((await conn.execute(text("SELECT id FROM photos"))).scalars())
-        for photo_id in ids:
-            missing = [v for v in ("full", "thumb") if not Path(media.path(photo_id, v)).is_file()]
-            if missing:
-                problems.append(f"photo file missing: {photo_id} ({', '.join(missing)})")
+        problems += await asyncio.to_thread(_missing_files, media, ids)
+    return problems
+
+
+def _missing_files(media: LocalPhotoStorage, ids: list[UUID]) -> list[str]:
+    problems = []
+    for photo_id in ids:
+        missing = [v for v in ("full", "thumb") if not Path(media.path(photo_id, v)).is_file()]
+        if missing:
+            problems.append(f"photo file missing: {photo_id} ({', '.join(missing)})")
     return problems
 
 
