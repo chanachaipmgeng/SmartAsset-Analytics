@@ -158,3 +158,13 @@
   overflow-y: auto;
   scrollbar-gutter: stable;
 }
+
+// Syncfusion writes the push margin inline on `.e-main-content`, and any other ejs-sidebar that is
+// destroyed (e.g. the device detail panel on leaving /devices) wipes it. Own the margin here instead.
+.body.sidebar-docked > .content {
+  margin-left: 72px !important;
+}
+
+.body.sidebar-expanded > .content {
+  margin-left: 256px !important;
+}

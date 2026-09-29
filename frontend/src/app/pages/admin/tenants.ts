@@ -18,7 +18,7 @@ const COLUMNS: GridColumn[] = [
   imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell],
   template: `
     <div class="page">
-      <app-page-header title="กลุ่มลูกค้า (Tenant)" subtitle="องค์กรที่แยกข้อมูลกันด้วย Row-Level Security">
+      <app-page-header title="กลุ่มลูกค้า" subtitle="องค์กรที่ใช้ระบบ แต่ละกลุ่มเห็นเฉพาะอุปกรณ์และข้อมูลของตนเอง">
         <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มกลุ่มลูกค้า</button>
         <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
       </app-page-header>

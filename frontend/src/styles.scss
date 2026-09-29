@@ -298,3 +298,18 @@ body {
 .e-dialog {
   max-width: calc(100vw - 24px);
 }
+
+// ejs-textarea sizes itself from `cols` (about 20 characters); fill the form column instead.
+ejs-textarea {
+  display: block;
+
+  .e-input-group.e-multi-line-input.e-auto-width {
+    display: flex;
+    width: 100% !important;
+  }
+
+  textarea.e-textarea {
+    width: 100% !important;
+    resize: vertical;
+  }
+}

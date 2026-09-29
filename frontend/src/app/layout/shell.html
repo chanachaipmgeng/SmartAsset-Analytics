@@ -56,10 +56,10 @@
   }
 </ejs-appbar>
 
-<div class="body">
+<div class="body" [class.sidebar-docked]="docked()" [class.sidebar-expanded]="isDesktop() && sidebarOpen()">
   <ejs-sidebar
     class="sidebar"
-    [type]="isDesktop() ? 'Auto' : 'Over'"
+    [type]="isDesktop() ? 'Push' : 'Over'"
     width="256px"
     dockSize="72px"
     [enableDock]="isDesktop()"
