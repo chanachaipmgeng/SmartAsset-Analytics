@@ -1,3 +1,5 @@
+@use '../../styles/tokens' as *;
+
 :host {
   display: flex;
   flex-direction: column;
@@ -5,14 +7,101 @@
   height: 100dvh;
 }
 
+// ── App Bar ──────────────────────────────────────────────────────────────────
 .app-bar {
   flex-shrink: 0;
   gap: 4px;
   height: 64px;
   padding: 0 12px;
-  background: rgb(var(--color-sf-surface));
-  border-bottom: 1px solid rgb(var(--color-sf-outline-variant));
-  box-shadow: none;
+  background: $glass-bg;
+  backdrop-filter: blur($glass-blur);
+  -webkit-backdrop-filter: blur($glass-blur);
+  border-bottom: 1px solid $glass-border;
+  box-shadow: 0 1px 0 0 rgba(var(--color-sf-primary), 0.06);
+  z-index: 10;
+}
+
+.nav-btn {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(var(--color-sf-primary), 0.12) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+
+  &:hover::after {
+    opacity: 1;
+  }
+}
+
+// ── Brand ────────────────────────────────────────────────────────────────────
+.brand-link {
+  margin-left: 4px;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  color: rgb(var(--color-sf-on-surface));
+  text-decoration: none;
+}
+
+.brand-icon {
+  position: relative;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: $radius-md;
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-sf-primary)),
+    color-mix(in srgb, rgb(var(--color-sf-primary)) 60%, rgb(var(--color-sf-tertiary)))
+  );
+  color: rgb(var(--color-sf-on-primary));
+  font-size: 18px;
+}
+
+.brand-pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: rgba(var(--color-sf-primary), 0.25);
+  animation: pulse-ring 2.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { opacity: 0; transform: scale(0.85); }
+  50%      { opacity: 1; transform: scale(1); }
+}
+
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: linear-gradient(135deg, rgb(var(--color-sf-primary)), rgb(var(--color-sf-tertiary)));
+  color: rgb(var(--color-sf-on-primary));
+  text-transform: uppercase;
+  animation: badge-shimmer 3s linear infinite;
+  background-size: 200% 100%;
+}
+
+@keyframes badge-shimmer {
+  0%   { background-position: 100% 50%; }
+  50%  { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
 }
 
 :host ::ng-deep {
@@ -27,23 +116,57 @@
   }
 }
 
+// ── Avatar Ring ──────────────────────────────────────────────────────────────
+.avatar-ring {
+  position: relative;
+  display: flex;
+  padding: 2px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(var(--color-sf-primary), 0.7),
+    rgba(var(--color-sf-tertiary), 0.5),
+    rgba(var(--color-sf-primary), 0.7)
+  );
+  animation: ring-spin 6s linear infinite;
+}
+
+@keyframes ring-spin {
+  to { --ring-angle: 360deg; }
+}
+
+// Fallback spin for browsers without @property support
+@supports not (background: paint(id)) {
+  @keyframes ring-spin {
+    to { rotate: 360deg; }
+  }
+  .avatar-ring {
+    animation: none;
+    background: linear-gradient(135deg, rgba(var(--color-sf-primary), 0.7), rgba(var(--color-sf-tertiary), 0.5));
+  }
+}
+
+// ── Search Trigger ───────────────────────────────────────────────────────────
 .search-trigger {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
   height: 40px;
   margin-right: 4px;
-  padding: 0 12px;
-  border: 1px solid rgb(var(--color-sf-outline-variant));
+  padding: 0 14px;
+  border: 1px solid $glass-border;
   border-radius: 999px;
-  background: color-mix(in srgb, rgb(var(--color-sf-surface)) 92%, rgb(var(--color-sf-primary)));
+  background: $glass-bg;
+  backdrop-filter: blur(8px);
   color: rgb(var(--color-sf-on-surface-variant));
   font: inherit;
   font-size: 14px;
   cursor: pointer;
+  overflow: hidden;
   transition:
-    border-color 150ms ease,
-    background-color 150ms ease;
+    border-color 200ms ease,
+    box-shadow 200ms ease;
 
   @media (min-width: 768px) {
     min-width: 220px;
@@ -51,6 +174,7 @@
 
   &:hover {
     border-color: rgba(var(--color-sf-primary), 0.5);
+    box-shadow: 0 0 20px -4px rgba(var(--color-sf-primary), 0.25);
   }
 
   &:focus-visible {
@@ -68,6 +192,24 @@
   }
 }
 
+.search-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at 30% 50%,
+    rgba(var(--color-sf-primary), 0.08),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 300ms ease;
+
+  .search-trigger:hover & {
+    opacity: 1;
+  }
+}
+
+// ── Body / Layout ────────────────────────────────────────────────────────────
 .body {
   flex: 1;
   position: relative;
@@ -75,10 +217,13 @@
 }
 
 .sidebar {
-  background: rgb(var(--color-sf-surface));
-  border-right: 1px solid rgb(var(--color-sf-outline-variant));
+  background: $glass-bg;
+  backdrop-filter: blur($glass-blur);
+  -webkit-backdrop-filter: blur($glass-blur);
+  border-right: 1px solid $glass-border;
 }
 
+// ── Navigation Menu ──────────────────────────────────────────────────────────
 .menu {
   display: flex;
   flex-direction: column;
@@ -89,32 +234,43 @@
 
   .section {
     margin: 16px 12px 6px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     color: rgb(var(--color-sf-on-surface-variant));
     white-space: nowrap;
+    opacity: 0.7;
   }
 
   a {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 12px;
     height: 44px;
     padding: 0 14px;
-    border-radius: 999px;
+    border-radius: 14px;
     color: rgb(var(--color-sf-on-surface-variant));
     text-decoration: none;
     font-size: 15px;
     white-space: nowrap;
+    transition:
+      background-color 160ms ease,
+      color 160ms ease;
 
-    .icon {
+    .nav-icon {
       font-size: 18px;
       flex-shrink: 0;
+      transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     &:hover {
       background: rgba(var(--color-sf-on-surface), 0.08);
+
+      .nav-icon {
+        transform: scale(1.12);
+      }
     }
 
     &:focus-visible {
@@ -122,10 +278,39 @@
       outline-offset: -2px;
     }
 
+    .active-indicator {
+      display: none;
+    }
+
     &.active {
-      background: rgb(var(--color-sf-secondary-container));
-      color: rgb(var(--color-sf-on-secondary-container));
+      background: rgba(var(--color-sf-primary), 0.12);
+      color: rgb(var(--color-sf-primary));
       font-weight: 600;
+
+      .nav-icon {
+        color: rgb(var(--color-sf-primary));
+      }
+
+      .active-indicator {
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 20px;
+        border-radius: 0 4px 4px 0;
+        background: rgb(var(--color-sf-primary));
+        box-shadow: 0 0 12px rgba(var(--color-sf-primary), 0.5);
+        animation: indicator-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+    }
+  }
+
+  @keyframes indicator-in {
+    from {
+      opacity: 0;
+      height: 0;
     }
   }
 
@@ -144,6 +329,15 @@
     a {
       justify-content: center;
       padding: 0;
+      border-radius: 14px;
+
+      .active-indicator {
+        display: none;
+      }
+
+      &.active {
+        box-shadow: 0 0 16px -4px rgba(var(--color-sf-primary), 0.4);
+      }
     }
 
     .label {
@@ -152,11 +346,75 @@
   }
 }
 
+// ── Main Content ─────────────────────────────────────────────────────────────
 .content {
+  position: relative;
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-gutter: stable;
+}
+
+// Mesh gradient behind content with two slowly drifting aurora blobs.
+.content-mesh {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    $gradient-mesh,
+    linear-gradient(
+      160deg,
+      rgba(var(--color-sf-primary), 0.05) 0%,
+      transparent 40%,
+      rgba(var(--color-sf-tertiary), 0.05) 100%
+    );
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    width: 46vmax;
+    height: 46vmax;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.5;
+    will-change: transform;
+  }
+
+  &::before {
+    top: -18vmax;
+    right: -10vmax;
+    background: radial-gradient(circle, rgba(var(--color-sf-primary), 0.35), transparent 65%);
+    animation: aurora-a 26s ease-in-out infinite alternate;
+  }
+
+  &::after {
+    bottom: -22vmax;
+    left: 10vmax;
+    background: radial-gradient(circle, rgba(var(--color-sf-tertiary), 0.3), transparent 65%);
+    animation: aurora-b 32s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes aurora-a {
+  to {
+    transform: translate(-14vmax, 10vmax) scale(1.15);
+  }
+}
+
+@keyframes aurora-b {
+  to {
+    transform: translate(18vmax, -8vmax) scale(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content-mesh::before,
+  .content-mesh::after {
+    animation: none;
+  }
 }
 
 // Syncfusion writes the push margin inline on `.e-main-content`, and any other ejs-sidebar that is

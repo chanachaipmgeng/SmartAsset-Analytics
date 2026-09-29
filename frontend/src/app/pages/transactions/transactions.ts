@@ -51,6 +51,7 @@ function daysAgo(n: number): Date {
             [presets]="presets"
             [max]="today"
             format="dd/MM/yyyy"
+            cssClass="field-pill"
             placeholder="ทุกช่วงเวลา"
             (change)="onRange($event)"
           ></ejs-daterangepicker>

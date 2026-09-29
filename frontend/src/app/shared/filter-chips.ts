@@ -11,11 +11,12 @@ export interface FilterChip<K extends string = string> {
   selector: 'app-filter-chips',
   template: `
     <div class="chips e-chip-list e-selection" role="radiogroup" [attr.aria-label]="label()">
-      @for (f of options(); track f.key) {
+      @for (f of options(); track f.key; let i = $index) {
         <button
           type="button"
           class="e-chip"
           role="radio"
+          [style.--i]="i"
           [class.e-active]="value() === f.key"
           [attr.aria-checked]="value() === f.key"
           [attr.data-key]="f.key"
@@ -41,13 +42,70 @@ export interface FilterChip<K extends string = string> {
       padding: 0;
     }
     .e-chip {
+      position: relative;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      height: 32px;
       margin: 0;
-      gap: 8px;
+      padding: 0 12px;
+      gap: 6px;
+      border: 1px solid rgba(var(--color-sf-outline-variant), 0.9);
+      border-radius: 999px;
+      background: rgba(var(--color-sf-surface), 0.72);
+      color: rgb(var(--color-sf-on-surface-variant));
+      box-shadow: none;
       cursor: pointer;
       font: inherit;
+      font-size: 13.5px;
+      font-weight: 500;
+      animation: chip-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+      animation-delay: calc(min(var(--i, 0), 14) * 30ms);
       transition:
-        background-color 150ms ease,
-        box-shadow 150ms ease;
+        transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        border-color 180ms ease,
+        color 180ms ease,
+        background-color 180ms ease,
+        box-shadow 220ms ease;
+    }
+    .e-chip .e-chip-text {
+      color: inherit;
+      font-weight: inherit;
+    }
+    .e-chip:hover {
+      transform: translateY(-1px);
+      border-color: rgba(var(--color-sf-primary), 0.5);
+      background: rgba(var(--color-sf-primary), 0.06);
+      color: rgb(var(--color-sf-primary));
+      box-shadow: 0 6px 16px -10px rgba(var(--color-sf-primary), 0.6);
+    }
+    .e-chip:active {
+      transform: scale(0.96);
+    }
+    .e-chip:focus-visible {
+      outline: 2px solid rgb(var(--color-sf-primary));
+      outline-offset: 2px;
+    }
+    .e-chip.e-active {
+      border-color: transparent;
+      background: linear-gradient(
+        135deg,
+        rgb(var(--color-sf-primary)),
+        color-mix(in srgb, rgb(var(--color-sf-primary)) 60%, rgb(var(--color-sf-tertiary)))
+      );
+      color: rgb(var(--color-sf-on-primary));
+      font-weight: 600;
+      box-shadow: 0 8px 20px -10px rgba(var(--color-sf-primary), 0.85);
+    }
+    /* Light sweep across the chip when it becomes active. */
+    .e-chip.e-active::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.35) 50%, transparent 65%);
+      transform: translateX(-100%);
+      animation: chip-sweep 700ms ease-out 80ms both;
+      pointer-events: none;
     }
     .count {
       min-width: 22px;
@@ -57,12 +115,30 @@ export interface FilterChip<K extends string = string> {
       font-weight: 700;
       line-height: 20px;
       text-align: center;
-      background: rgb(var(--color-sf-surface-variant));
-      color: rgb(var(--color-sf-on-surface-variant));
+      background: rgba(var(--color-sf-on-surface-variant), 0.1);
+      color: inherit;
+      font-variant-numeric: tabular-nums;
     }
     .e-chip.e-active .count {
-      background: rgb(var(--color-sf-primary));
+      background: rgb(255 255 255 / 0.22);
       color: rgb(var(--color-sf-on-primary));
+    }
+    @keyframes chip-in {
+      from {
+        opacity: 0;
+        transform: translateY(6px) scale(0.96);
+      }
+    }
+    @keyframes chip-sweep {
+      to {
+        transform: translateX(100%);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .e-chip,
+      .e-chip.e-active::after {
+        animation: none;
+      }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

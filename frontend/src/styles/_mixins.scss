@@ -52,3 +52,61 @@
     @content;
   }
 }
+
+// ---- AI-era glassmorphism card ----
+@mixin glass-card($padding: $space-lg) {
+  background: $glass-bg;
+  backdrop-filter: blur($glass-blur);
+  -webkit-backdrop-filter: blur($glass-blur);
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  padding: $padding;
+  min-width: 0;
+  box-shadow: $glow-primary;
+  transition:
+    box-shadow 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 280ms ease,
+    transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@mixin glass-card-hover {
+  &:hover {
+    box-shadow: $glow-primary-hover;
+    border-color: rgba(var(--color-sf-primary), 0.5);
+    transform: translateY(-2px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+// Subtle animated gradient border
+@mixin aura-border {
+  position: relative;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      rgba(var(--color-sf-primary), 0.5),
+      rgba(var(--color-sf-tertiary), 0.3),
+      rgba(var(--color-sf-primary), 0.1)
+    );
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 400ms ease;
+  }
+  &:hover::before {
+    opacity: 1;
+  }
+}

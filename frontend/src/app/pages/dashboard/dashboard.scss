@@ -1,3 +1,5 @@
+@use '../../../styles/tokens' as *;
+
 // Columns follow the content width, not the viewport, so an expanded sidebar doesn't squeeze the cards.
 // Eight cards (total + seven statuses) fill 2 x 4 or 4 x 2 without an orphan.
 :host {
@@ -8,8 +10,8 @@
 .stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 14px;
+  margin-bottom: 20px;
 
   @container (min-width: 640px) {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -26,6 +28,9 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .panel-sub {
@@ -33,16 +38,23 @@
   font-size: 12px;
   font-weight: 400;
   color: rgb(var(--color-sf-on-surface-variant));
+  opacity: 0.75;
 }
 
 .panel-link {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: rgb(var(--color-sf-primary));
   text-decoration: none;
+  padding: 2px 10px;
+  border-radius: 999px;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
 
   &:hover {
-    text-decoration: underline;
+    background: rgba(var(--color-sf-primary), 0.1);
+    text-decoration: none;
   }
 }
 
@@ -54,11 +66,24 @@
 }
 
 :host ::ng-deep .e-dashboardlayout .e-panel {
-  border-radius: 16px;
-  border-color: rgb(var(--color-sf-outline-variant));
+  border-radius: 20px;
+  border-color: rgba(var(--color-sf-outline-variant), 0.6);
+  background: rgba(var(--color-sf-surface), 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow: hidden;
+  transition:
+    box-shadow 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 280ms ease;
+
+  &:hover {
+    box-shadow: 0 8px 32px -12px rgba(var(--color-sf-primary), 0.2);
+    border-color: rgba(var(--color-sf-primary), 0.25);
+  }
 
   .e-panel-header {
-    border-radius: 16px 16px 0 0;
+    border-radius: 20px 20px 0 0;
+    background: transparent;
   }
 }
 

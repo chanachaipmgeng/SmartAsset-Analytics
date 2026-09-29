@@ -17,7 +17,8 @@
     position: absolute;
     inset: 0 auto 0 0;
     width: 40%;
-    background: rgb(var(--color-sf-primary));
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgb(var(--color-sf-primary)), rgb(var(--color-sf-tertiary)));
     animation: grid-progress 1s ease-in-out infinite;
   }
 }
@@ -47,29 +48,60 @@
 
     .e-tbar-btn {
       border-radius: 999px;
-    }
+      transition:
+        background-color 160ms ease,
+        color 160ms ease;
 
-    .e-search-wrapper .e-input-group {
-      border-radius: 999px;
+      &:hover {
+        background: rgba(var(--color-sf-primary), 0.08);
+        color: rgb(var(--color-sf-primary));
+
+        .e-icons {
+          color: inherit;
+        }
+      }
     }
   }
 
   .e-gridheader {
-    border-top: 1px solid rgb(var(--color-sf-outline-variant));
+    border: 1px solid rgba(var(--color-sf-outline-variant), 0.8);
+    border-bottom: 0;
     border-radius: 12px 12px 0 0;
     overflow: hidden;
   }
 
-  .e-headercell {
-    background: color-mix(in srgb, rgb(var(--color-sf-surface)) 94%, rgb(var(--color-sf-primary)));
+  .e-headercell,
+  .e-filterbarcell,
+  .e-grouptopleftcell {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, rgb(var(--color-sf-surface)) 90%, rgb(var(--color-sf-primary))),
+      color-mix(in srgb, rgb(var(--color-sf-surface)) 95%, rgb(var(--color-sf-tertiary)))
+    );
   }
 
   .e-headertext {
     font-weight: 600;
+    color: rgb(var(--color-sf-on-surface));
   }
 
   .e-row {
     transition: background-color 120ms ease;
+  }
+
+  .e-row:hover .e-rowcell:not(.e-selectionbackground) {
+    background: rgba(var(--color-sf-primary), 0.06);
+  }
+
+  // Accent bar on the first cell of the hovered / selected row.
+  .e-row .e-rowcell:first-child {
+    box-shadow: inset 3px 0 0 transparent;
+    transition: box-shadow 160ms ease;
+  }
+
+  .e-row:hover .e-rowcell:first-child,
+  .e-row[aria-selected='true'] .e-rowcell:first-child {
+    box-shadow: inset 3px 0 0 rgb(var(--color-sf-primary));
   }
 
   .e-row.e-altrow:not(:hover) .e-rowcell:not(.e-selectionbackground) {

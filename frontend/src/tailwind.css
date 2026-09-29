@@ -89,8 +89,11 @@
   --radius-m3-xl: 28px;
 
   /* Keyframes live in styles.scss so Syncfusion-styled SCSS can reuse them too. */
-  --animate-fade-up: fade-up 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-fade-up: fade-up 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-fade-in: fade-in 240ms ease-out both;
   --animate-scale-in: scale-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-shimmer: shimmer 1.4s linear infinite;
+  --animate-glow-pulse: glow-pulse 2.4s ease-in-out infinite;
+  --animate-float-y: float-y 3s ease-in-out infinite;
+  --animate-gradient-shift: gradient-shift 8s ease infinite;
 }

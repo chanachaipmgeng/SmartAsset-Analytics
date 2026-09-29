@@ -1,17 +1,19 @@
 <ejs-appbar colorMode="Inherit" cssClass="app-bar">
   <button
     ejs-button
-    cssClass="e-flat e-round"
+    cssClass="e-flat e-round nav-btn"
     iconCss="e-icons e-menu"
     (click)="toggleSidebar()"
     [attr.aria-label]="sidebarOpen() ? 'ย่อเมนู' : 'ขยายเมนู'"
   ></button>
 
-  <a routerLink="/dashboard" class="ml-1 flex min-w-0 items-center gap-2 text-on-surface no-underline">
-    <span class="grid size-8 shrink-0 place-items-center rounded-m3-sm bg-primary text-on-primary">
+  <a routerLink="/dashboard" class="brand-link">
+    <span class="brand-icon">
       <span class="e-icons e-clock"></span>
+      <span class="brand-pulse"></span>
     </span>
     <span class="hidden truncate text-base font-semibold sm:inline">myAssets</span>
+    <span class="ai-badge">AI</span>
   </a>
 
   <div class="ml-4 hidden min-w-0 md:block">
@@ -21,6 +23,7 @@
   <div class="e-appbar-spacer"></div>
 
   <button type="button" class="search-trigger" (click)="paletteOpen.set(true)" aria-label="ค้นหาและคำสั่ง (Ctrl+K)">
+    <span class="search-glow"></span>
     <span class="e-icons e-search"></span>
     <span class="hidden md:inline">ค้นหา...</span>
     <kbd class="hidden md:inline">Ctrl K</kbd>
@@ -28,7 +31,7 @@
 
   <button
     ejs-button
-    cssClass="e-flat e-round"
+    cssClass="e-flat e-round nav-btn"
     iconCss="e-icons e-contrast"
     (click)="theme.toggle()"
     [attr.aria-label]="theme.isDark() ? 'เปลี่ยนเป็นธีมสว่าง' : 'เปลี่ยนเป็นธีมมืด'"
@@ -44,8 +47,10 @@
       aria-label="เมนูผู้ใช้"
     >
       <span class="flex items-center gap-2">
-        <span class="grid size-8 place-items-center rounded-full bg-primary-container text-sm font-semibold text-on-primary-container">
-          {{ initials() }}
+        <span class="avatar-ring">
+          <span class="grid size-8 place-items-center rounded-full bg-primary-container text-sm font-semibold text-on-primary-container">
+            {{ initials() }}
+          </span>
         </span>
         <span class="hidden text-left leading-tight lg:block">
           <span class="block text-sm font-medium text-on-surface">{{ user.full_name }}</span>
@@ -77,8 +82,9 @@
           <div class="section">{{ group.label }}</div>
           @for (item of group.items; track item.path) {
             <a [routerLink]="item.path" routerLinkActive="active" [attr.title]="docked() ? item.label : null">
-              <span class="icon" [class]="item.icon"></span>
+              <span class="nav-icon" [class]="item.icon"></span>
               <span class="label">{{ item.label }}</span>
+              <span class="active-indicator"></span>
             </a>
           }
         }
@@ -87,6 +93,7 @@
   </ejs-sidebar>
 
   <main class="content e-main-content" #content>
+    <div class="content-mesh"></div>
     <router-outlet />
     <app-back-to-top [target]="content" />
   </main>

@@ -19,6 +19,8 @@
   --color-sf-secondary: 91, 93, 114;
   --color-sf-secondary-container: 224, 225, 249;
   --color-sf-on-secondary-container: 24, 26, 44;
+  // Violet accent for gradients next to indigo; tertiary containers keep the M3 rose for tonal chips.
+  --color-sf-tertiary: 139, 92, 246;
 }
 
 // Higher specificity than Syncfusion's own `.e-dark-mode` palette so the brand wins in both themes.
@@ -32,6 +34,7 @@
   --color-sf-secondary: 196, 197, 221;
   --color-sf-secondary-container: 67, 70, 89;
   --color-sf-on-secondary-container: 224, 225, 249;
+  --color-sf-tertiary: 196, 181, 253;
   color-scheme: dark;
 }
 
@@ -87,6 +90,125 @@ body {
 
 .panel {
   @include card($space-md);
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(var(--color-sf-primary), 0.035), transparent 120px),
+    rgba(var(--color-sf-surface), 0.9);
+  border-color: rgba(var(--color-sf-outline-variant), 0.7);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.04),
+    0 16px 40px -28px rgba(var(--color-sf-primary), 0.35);
+  animation: fade-up 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  // Hairline highlight along the top edge.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 24px auto;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(var(--color-sf-primary), 0.45),
+      rgba(var(--color-sf-tertiary), 0.35),
+      transparent
+    );
+    pointer-events: none;
+  }
+}
+
+// ── Pill text field ───────────────────────────────────────────────────────────
+// M3 inputs are bottom-underlined; rounding them bends the underline into a curve. Toolbar-style
+// fields (grid search, `cssClass="field-pill"` on pickers) get a full outline instead.
+.e-input-group.field-pill,
+.e-input-group.e-control-wrapper.field-pill,
+.app-grid .e-toolbar .e-search-wrapper .e-input-group {
+  height: 38px;
+  padding: 0 6px 0 14px;
+  border: 1px solid rgba(var(--color-sf-outline-variant), 0.9);
+  border-radius: 999px;
+  background: rgba(var(--color-sf-surface), 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition:
+    border-color 200ms ease,
+    box-shadow 240ms ease,
+    background-color 200ms ease;
+
+  &::before,
+  &::after {
+    display: none;
+  }
+
+  input.e-input {
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: 14px;
+  }
+
+  .e-input-group-icon {
+    min-width: 30px;
+    height: 30px;
+    margin: 0;
+    border: 0;
+    border-radius: 999px;
+    color: rgb(var(--color-sf-on-surface-variant));
+    transition:
+      background-color 160ms ease,
+      color 160ms ease;
+
+    &:hover {
+      background: rgba(var(--color-sf-primary), 0.1);
+      color: rgb(var(--color-sf-primary));
+    }
+  }
+
+  &:hover {
+    border-color: rgba(var(--color-sf-primary), 0.45);
+  }
+
+  &.e-input-focus,
+  &:focus-within {
+    border-color: rgb(var(--color-sf-primary));
+    background: rgb(var(--color-sf-surface));
+    box-shadow:
+      0 0 0 3px rgba(var(--color-sf-primary), 0.16),
+      0 8px 24px -12px rgba(var(--color-sf-primary), 0.5);
+  }
+}
+
+// ── Primary buttons: brand gradient with a soft glow ─────────────────────────
+.e-btn.e-primary:not(:disabled):not(.e-flat):not(.e-outline) {
+  background-image: linear-gradient(
+    135deg,
+    rgb(var(--color-sf-primary)),
+    color-mix(in srgb, rgb(var(--color-sf-primary)) 65%, rgb(var(--color-sf-tertiary)))
+  );
+  background-size: 160% 100%;
+  background-position: 0% 50%;
+  border-color: transparent;
+  box-shadow: 0 6px 18px -8px rgba(var(--color-sf-primary), 0.7);
+  transition:
+    background-position 400ms ease,
+    box-shadow 220ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    background-position: 100% 50%;
+    box-shadow: 0 10px 24px -8px rgba(var(--color-sf-primary), 0.75);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+// ── AI-era glass panel ────────────────────────────────────────────────────────
+.glass-panel {
+  @include glass-card($space-md);
 }
 
 // Small tonal badge for grid cells: <span class="tone-chip" data-tone="success">ใช้งาน</span>
@@ -179,7 +301,7 @@ body {
   border-radius: $radius-sm;
 }
 
-// ---- motion ----
+// ── Motion ────────────────────────────────────────────────────────────────────
 @keyframes fade-up {
   from {
     opacity: 0;
@@ -209,31 +331,53 @@ body {
   }
 }
 
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px -6px rgba(var(--color-sf-primary), 0.3);
+  }
+  50% {
+    box-shadow: 0 0 32px -4px rgba(var(--color-sf-primary), 0.5);
+  }
+}
+
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+@keyframes gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 // Children enter one after another; cap the delay so long lists don't feel slow.
 .stagger > * {
-  animation: fade-up 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: fade-up 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 @for $i from 1 through 12 {
   .stagger > :nth-child(#{$i}) {
-    animation-delay: #{($i - 1) * 40}ms;
+    animation-delay: #{($i - 1) * 50}ms;
   }
 }
 
 .stagger > :nth-child(n + 13) {
-  animation-delay: 480ms;
+  animation-delay: 600ms;
 }
 
 // Hover elevation for clickable cards.
 .lift {
   transition:
-    transform 180ms ease,
-    box-shadow 180ms ease,
-    border-color 180ms ease;
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 220ms ease;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px -12px rgba(var(--color-sf-primary), 0.45);
+    transform: translateY(-3px);
+    box-shadow:
+      0 12px 32px -12px rgba(var(--color-sf-primary), 0.45),
+      0 0 0 1px rgba(var(--color-sf-primary), 0.1);
     border-color: rgba(var(--color-sf-primary), 0.4);
   }
 
@@ -252,7 +396,7 @@ body {
 }
 
 ::view-transition-new(page) {
-  animation: 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both fade-up;
+  animation: 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both fade-up;
 }
 
 @keyframes fade-out {
@@ -303,12 +447,16 @@ body {
 // ---- M3 toasts: tonal surface, coloured accent bar and icon, progress bar in the accent colour ----
 .e-toast-container .e-toast.m3-toast {
   --toast-accent: var(--color-sf-primary);
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid rgb(var(--color-sf-outline-variant));
   border-left: 4px solid rgb(var(--toast-accent));
-  background: rgb(var(--color-sf-surface));
+  background: rgba(var(--color-sf-surface), 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   color: rgb(var(--color-sf-on-surface));
-  box-shadow: 0 12px 32px -16px rgb(0 0 0 / 0.45);
+  box-shadow:
+    0 12px 32px -16px rgb(0 0 0 / 0.45),
+    0 0 0 1px rgba(var(--toast-accent), 0.08);
   overflow: hidden;
 
   .e-toast-icon {
@@ -351,6 +499,8 @@ body {
 // ---- confirm dialog (ConfirmService) ----
 .e-dialog.confirm-dialog {
   border-radius: 28px;
+  backdrop-filter: blur(16px);
+  background: rgba(var(--color-sf-surface), 0.92);
 
   .e-dlg-header {
     font-size: 20px;
