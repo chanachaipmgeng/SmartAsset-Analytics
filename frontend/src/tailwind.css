@@ -29,7 +29,10 @@
   --color-secondary: rgb(var(--color-sf-secondary));
   --color-secondary-container: rgb(var(--color-sf-secondary-container));
   --color-on-secondary-container: rgb(var(--color-sf-on-secondary-container));
+  --color-tertiary: rgb(var(--color-sf-tertiary));
+  --color-on-tertiary: rgb(var(--color-sf-on-tertiary));
   --color-tertiary-container: rgb(var(--color-sf-tertiary-container));
+  --color-on-tertiary-container: rgb(var(--color-sf-on-tertiary-container));
 
   --color-surface: rgb(var(--color-sf-surface));
   --color-surface-dim: color-mix(in srgb, rgb(var(--color-sf-surface)) 95%, rgb(var(--color-sf-primary)));
@@ -63,4 +66,10 @@
   --radius-m3-md: 12px;
   --radius-m3-lg: 16px;
   --radius-m3-xl: 28px;
+
+  /* Keyframes live in styles.scss so Syncfusion-styled SCSS can reuse them too. */
+  --animate-fade-up: fade-up 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-fade-in: fade-in 240ms ease-out both;
+  --animate-scale-in: scale-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-shimmer: shimmer 1.4s linear infinite;
 }
