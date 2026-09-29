@@ -48,6 +48,7 @@ class Device:
     cost: Decimal | None = None
     warranty_end: date | None = None
     notes: str | None = None
+    loan_due_date: date | None = None
     id: UUID = field(default_factory=uuid4)
     created_at: datetime | None = None
 

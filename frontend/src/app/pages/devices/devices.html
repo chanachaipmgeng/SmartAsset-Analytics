@@ -109,6 +109,15 @@
               }
             </dd>
           </div>
+          @if (loanDue(); as l) {
+            <div class="wide">
+              <dt>ครบกำหนดคืน</dt>
+              <dd class="flex flex-wrap items-center gap-2">
+                {{ d.loan_due_date | date: 'd MMM y' }}
+                <span class="tone-chip" [attr.data-tone]="l.tone">{{ l.text }}</span>
+              </dd>
+            </div>
+          }
           @if (d.notes) {
             <div class="wide">
               <dt>หมายเหตุ</dt>

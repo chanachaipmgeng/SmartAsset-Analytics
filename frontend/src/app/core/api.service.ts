@@ -41,6 +41,15 @@ export class ApiService {
   returnDevice(deviceId: string, note?: string | null) {
     return this.post<Device>('/inventory/return', { device_id: deviceId, note });
   }
+  loan(deviceId: string, dueDate: string, note?: string | null) {
+    return this.post<Device>('/inventory/loan', { device_id: deviceId, due_date: dueDate, note });
+  }
+  qcPass(deviceId: string, note?: string | null) {
+    return this.post<Device>('/inventory/qc-pass', { device_id: deviceId, note });
+  }
+  qcFail(deviceId: string, note: string) {
+    return this.post<Device>('/inventory/qc-fail', { device_id: deviceId, note });
+  }
   importDevices(file: File, dryRun: boolean) {
     const form = new FormData();
     form.append('file', file, file.name);

@@ -154,9 +154,9 @@ async def test_full_lifecycle_and_tenant_isolation(client: httpx.AsyncClient, wo
     assert all(i["id"] != installation["id"] for i in far)
     assert all(i["id"] != installation["id"] for i in (await client.get("/installations", headers=b)).json())
 
-    # Return closes the installation and puts the device back in stock.
+    # Return closes the installation; the device waits for inspection before it is stock again.
     res = await client.post("/inventory/return", headers=a, json={"device_id": device["id"], "note": "เสีย"})
-    assert res.status_code == 200 and res.json()["status"] == "IN_STOCK"
+    assert res.status_code == 200 and res.json()["status"] == "UNDER_QC"
     active = (await client.get("/installations", headers=a)).json()
     assert all(i["id"] != installation["id"] for i in active)
 
@@ -257,6 +257,7 @@ async def test_edit_audit_customer_deactivate_and_tx_filters(client: httpx.Async
     res = await client.delete(f"/customers/{customer['id']}", headers=a)
     assert res.status_code == 409
     assert (await client.post("/inventory/return", headers=a, json={"device_id": device_id})).status_code == 200
+    assert (await client.post("/inventory/qc-pass", headers=a, json={"device_id": device_id})).status_code == 200
     res = await client.delete(f"/customers/{customer['id']}", headers=a)
     assert res.status_code == 200 and res.json()["is_active"] is False
     listed = {c["id"]: c for c in (await client.get("/customers", headers=a)).json()}
@@ -265,6 +266,42 @@ async def test_edit_audit_customer_deactivate_and_tx_filters(client: httpx.Async
     assert (await client.post("/installations", headers=a, json=install_body)).status_code == 422
     res = await client.patch(f"/customers/{customer['id']}", headers=a, json={"is_active": True})
     assert res.status_code == 200 and res.json()["is_active"] is True
+
+
+async def test_loan_and_qc_flow(client: httpx.AsyncClient, world: dict) -> None:
+    a, b = world["a"], world["b"]
+    res = await client.post("/inventory/check-in", headers=a, json={"serial_number": f"L-{world['tag']}", "model_id": world["model"]["id"]})
+    device_id = res.json()["id"]
+
+    # Due date is required and cannot be in the past; tenant B cannot lend A's device.
+    assert (await client.post("/inventory/loan", headers=a, json={"device_id": device_id})).status_code == 422
+    past = {"device_id": device_id, "due_date": "2020-01-01"}
+    assert (await client.post("/inventory/loan", headers=a, json=past)).status_code == 422
+    body = {"device_id": device_id, "due_date": "2099-12-31", "note": "ทดลองใช้"}
+    assert (await client.post("/inventory/loan", headers=b, json=body)).status_code == 404
+    res = await client.post("/inventory/loan", headers=a, json=body)
+    assert res.status_code == 200, res.text
+    assert res.json()["status"] == "ON_LOAN" and res.json()["loan_due_date"] == "2099-12-31"
+    assert (await client.post("/inventory/check-out", headers=a, json={"device_id": device_id})).status_code == 409
+
+    # Return → UNDER_QC (due date cleared) → fail needs a reason → IN_REPAIR → repaired → return path again → pass.
+    res = await client.post("/inventory/return", headers=a, json={"device_id": device_id})
+    assert res.json()["status"] == "UNDER_QC" and res.json()["loan_due_date"] is None
+    assert (await client.post("/inventory/check-out", headers=a, json={"device_id": device_id})).status_code == 409
+    assert (await client.post("/inventory/qc-fail", headers=a, json={"device_id": device_id, "note": " "})).status_code == 422
+    res = await client.post("/inventory/qc-fail", headers=a, json={"device_id": device_id, "note": "ปุ่มกดไม่ติด"})
+    assert res.json()["status"] == "IN_REPAIR"
+    await client.post("/inventory/repair-done", headers=a, json={"device_id": device_id, "qc_note": "เปลี่ยนปุ่ม"})
+    await client.post("/inventory/check-out", headers=a, json={"device_id": device_id})
+    await client.post("/inventory/return", headers=a, json={"device_id": device_id})
+    res = await client.post("/inventory/qc-pass", headers=a, json={"device_id": device_id, "note": "ปกติ"})
+    assert res.status_code == 200 and res.json()["status"] == "IN_STOCK"
+
+    history = (await client.get("/inventory/transactions", headers=a, params={"device_id": device_id})).json()
+    assert [t["transaction_type"] for t in reversed(history)] == [
+        "CHECK_IN", "LOAN", "RETURN", "QC_FAIL", "REPAIR_DONE", "CHECK_OUT", "RETURN", "QC_PASS",
+    ]
+    assert history[-2]["note"].startswith("ครบกำหนดคืน 31/12/2099")
 
 
 def _xlsx(rows: list[list[object]]) -> bytes:

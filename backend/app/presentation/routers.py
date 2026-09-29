@@ -203,6 +203,21 @@ async def repair_done(body: s.RepairDoneIn, actor: ActorDep, uow: UowDep):
     return await inventory.repair_done(uow, actor, body.device_id, body.qc_note)
 
 
+@router.post("/inventory/loan", response_model=s.DeviceOut, tags=["inventory"])
+async def loan(body: s.LoanIn, actor: ActorDep, uow: UowDep):
+    return await inventory.loan(uow, actor, body.device_id, body.due_date, body.note)
+
+
+@router.post("/inventory/qc-pass", response_model=s.DeviceOut, tags=["inventory"])
+async def qc_pass(body: s.MovementIn, actor: ActorDep, uow: UowDep):
+    return await inventory.qc_pass(uow, actor, body.device_id, body.note)
+
+
+@router.post("/inventory/qc-fail", response_model=s.DeviceOut, tags=["inventory"])
+async def qc_fail(body: s.QcFailIn, actor: ActorDep, uow: UowDep):
+    return await inventory.qc_fail(uow, actor, body.device_id, body.note)
+
+
 @router.get("/inventory/transactions", response_model=list[s.TransactionOut], tags=["inventory"])
 async def list_transactions(
     actor: ActorDep,

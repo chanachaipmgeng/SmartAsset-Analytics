@@ -35,6 +35,15 @@ const CENTRAL_STOCK = '__central__';
               <ejs-dropdownlist [dataSource]="transferOptions()" [fields]="{ value: 'value', text: 'text' }" [(value)]="transferTarget" placeholder="เลือกปลายทาง"></ejs-dropdownlist>
             </div>
           }
+          @if (movement() === 'loan') {
+            <div class="full">
+              <label>วันครบกำหนดคืน *</label>
+              <ejs-datepicker [(value)]="dueDate" [min]="today" format="dd/MM/yyyy"></ejs-datepicker>
+            </div>
+          }
+          @if (movement() === 'return') {
+            <div class="full muted">เครื่องจะอยู่สถานะ "รอตรวจสอบ (QC)" จนกว่าจะบันทึกผล QC ผ่านหรือไม่ผ่าน</div>
+          }
           @if (movement() === 'retire') {
             <div class="full muted">อุปกรณ์ที่ปลดระวางจะไม่นับรวมในสต็อก แต่ประวัติยังคงอยู่</div>
           }
@@ -47,7 +56,7 @@ const CENTRAL_STOCK = '__central__';
               [(value)]="note"
               [liveValue]="note"
               rows="3"
-              [placeholder]="movement() === 'repair_done' ? 'เช่น เปลี่ยนจอ ทดสอบสแกนหน้า 20 ครั้งผ่าน' : ''"
+              [placeholder]="notePlaceholder()"
             ></ejs-textarea>
           </div>
         </div>
@@ -144,16 +153,35 @@ export class DeviceActionDialogs {
         return 'อาการ / สาเหตุที่ส่งซ่อม';
       case 'repair_done':
         return 'ผลการซ่อมและ QC *';
+      case 'qc_fail':
+        return 'อาการ / สาเหตุที่ไม่ผ่าน QC *';
+      case 'loan':
+        return 'ผู้ยืม / วัตถุประสงค์';
       case 'retire':
         return 'เหตุผล';
       default:
         return 'หมายเหตุ';
     }
   });
+  protected readonly notePlaceholder = computed(() => {
+    switch (this.movement()) {
+      case 'repair_done':
+        return 'เช่น เปลี่ยนจอ ทดสอบสแกนหน้า 20 ครั้งผ่าน';
+      case 'qc_fail':
+        return 'เช่น สแกนนิ้วไม่ติด จอมีรอยร้าว';
+      case 'loan':
+        return 'เช่น บริษัท ก. ทดลองใช้ 2 สัปดาห์';
+      default:
+        return '';
+    }
+  });
+  protected readonly today = new Date(new Date().setHours(0, 0, 0, 0));
+  protected readonly dueDate = signal<Date | null>(null);
   protected readonly movementValid = computed(() => {
     const kind = this.movement();
     if (kind === 'transfer') return !!this.transferTarget();
-    if (kind === 'repair_done') return !!this.note().trim();
+    if (kind === 'repair_done' || kind === 'qc_fail') return !!this.note().trim();
+    if (kind === 'loan') return !!this.dueDate();
     return kind !== null;
   });
   protected readonly transferOptions = computed(() => [
@@ -201,6 +229,7 @@ export class DeviceActionDialogs {
     if (action === 'transfer') this.needTenants.set(true);
     this.note.set('');
     this.transferTarget.set(null);
+    this.dueDate.set(new Date(Date.now() + 14 * 86_400_000));
     this.movement.set(action);
   }
 
@@ -236,6 +265,9 @@ export class DeviceActionDialogs {
       else if (kind === 'retire') updated = await this.api.retireDevice(d.id, note);
       else if (kind === 'send_repair') updated = await this.api.sendRepair(d.id, note);
       else if (kind === 'repair_done') updated = await this.api.repairDone(d.id, note ?? '');
+      else if (kind === 'loan') updated = await this.api.loan(d.id, toIsoDate(this.dueDate())!, note);
+      else if (kind === 'qc_pass') updated = await this.api.qcPass(d.id, note);
+      else if (kind === 'qc_fail') updated = await this.api.qcFail(d.id, note ?? '');
       else {
         const target = this.transferTarget();
         updated = await this.api.transfer(d.id, target === CENTRAL_STOCK ? null : target, note);

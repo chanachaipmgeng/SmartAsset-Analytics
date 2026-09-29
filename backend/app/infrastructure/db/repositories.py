@@ -168,6 +168,7 @@ def _device_view(row: Any) -> DeviceView:
         warranty_end=d.warranty_end,
         notes=d.notes,
         created_at=d.created_at,
+        loan_due_date=d.loan_due_date,
     )
 
 

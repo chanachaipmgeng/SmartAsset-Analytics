@@ -120,7 +120,7 @@ body {
     font-size: 12px;
   }
 
-  @each $tone in success, warning, info, error {
+  @each $tone in success, warning, info, error, primary, tertiary {
     &[data-tone='#{$tone}'] {
       background: rgb(var(--color-sf-#{$tone}-container));
       color: rgb(var(--color-sf-on-#{$tone}-container));

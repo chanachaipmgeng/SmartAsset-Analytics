@@ -9,6 +9,8 @@ const CHIP_CLASSES: Record<StatusTone, string> = {
   info: 'bg-info-container text-on-info-container',
   error: 'bg-error-container text-on-error-container',
   neutral: 'bg-surface-variant text-on-surface-variant',
+  primary: 'bg-primary-container text-on-primary-container',
+  tertiary: 'bg-tertiary-container text-on-tertiary-container',
 };
 
 const DOT_CLASSES: Record<StatusTone, string> = {
@@ -17,6 +19,8 @@ const DOT_CLASSES: Record<StatusTone, string> = {
   info: 'bg-info',
   error: 'bg-error',
   neutral: 'bg-outline',
+  primary: 'bg-primary',
+  tertiary: 'bg-tertiary',
 };
 
 /** Material 3 tonal chip: container background, on-container text, solid tone dot. */

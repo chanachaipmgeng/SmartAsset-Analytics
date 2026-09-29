@@ -147,6 +147,7 @@ class DeviceOut(Out):
     warranty_end: date | None
     notes: str | None
     created_at: datetime
+    loan_due_date: date | None = None
 
 
 class MovementIn(BaseModel):
@@ -156,6 +157,15 @@ class MovementIn(BaseModel):
 
 class TransferIn(MovementIn):
     target_tenant_id: UUID | None = None
+
+
+class LoanIn(MovementIn):
+    due_date: date
+
+
+class QcFailIn(BaseModel):
+    device_id: UUID
+    note: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
 
 
 class ImportRowOut(Out):

@@ -22,6 +22,7 @@ class DeviceView:
     warranty_end: date | None
     notes: str | None
     created_at: datetime
+    loan_due_date: date | None = None
 
 
 @dataclass(frozen=True)

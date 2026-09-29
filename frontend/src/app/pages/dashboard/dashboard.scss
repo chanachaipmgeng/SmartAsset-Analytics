@@ -1,4 +1,5 @@
-// Columns follow the content width, not the viewport, so an expanded sidebar doesn't squeeze six cards.
+// Columns follow the content width, not the viewport, so an expanded sidebar doesn't squeeze the cards.
+// Eight cards (total + seven statuses) fill 2 x 4 or 4 x 2 without an orphan.
 :host {
   display: block;
   container-type: inline-size;
@@ -10,20 +11,8 @@
   gap: 12px;
   margin-bottom: 16px;
 
-  .total {
-    grid-column: span 2;
-  }
-
   @container (min-width: 640px) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-
-    .total {
-      grid-column: span 1;
-    }
-  }
-
-  @container (min-width: 1180px) {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 

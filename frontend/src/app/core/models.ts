@@ -1,11 +1,21 @@
 export type Role = 'superadmin' | 'tenant_admin' | 'staff' | 'viewer';
-export type DeviceStatus = 'IN_STOCK' | 'CHECKED_OUT' | 'INSTALLED' | 'IN_REPAIR' | 'RETIRED';
+export type DeviceStatus =
+  | 'IN_STOCK'
+  | 'CHECKED_OUT'
+  | 'INSTALLED'
+  | 'ON_LOAN'
+  | 'UNDER_QC'
+  | 'IN_REPAIR'
+  | 'RETIRED';
 export type TransactionType =
   | 'CHECK_IN'
   | 'TRANSFER'
   | 'CHECK_OUT'
   | 'INSTALL'
+  | 'LOAN'
   | 'RETURN'
+  | 'QC_PASS'
+  | 'QC_FAIL'
   | 'SEND_REPAIR'
   | 'REPAIR_DONE'
   | 'RETIRE'
@@ -57,6 +67,7 @@ export interface Device {
   cost: string | null;
   warranty_end: string | null;
   notes: string | null;
+  loan_due_date: string | null;
   created_at: string;
 }
 

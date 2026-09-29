@@ -170,6 +170,15 @@ export class DevicesPage {
     return { tone: 'success', text: 'อยู่ในประกัน' };
   });
 
+  protected readonly loanDue = computed(() => {
+    const due = toDate(this.selected()?.loan_due_date);
+    if (!due) return null;
+    const days = Math.ceil((due.getTime() - Date.now()) / DAY_MS);
+    if (days < 0) return { tone: 'error', text: `เกินกำหนด ${-days} วัน` };
+    if (days <= 3) return { tone: 'warning', text: days === 0 ? 'ครบกำหนดวันนี้' : `เหลือ ${days} วัน` };
+    return { tone: 'tertiary', text: `เหลือ ${days} วัน` };
+  });
+
   protected readonly importOpen = signal(false);
 
   // ---- device form ----

@@ -4,7 +4,10 @@ export type DeviceActionId =
   | 'transfer'
   | 'checkout'
   | 'install'
+  | 'loan'
   | 'return'
+  | 'qc_pass'
+  | 'qc_fail'
   | 'send_repair'
   | 'repair_done'
   | 'retire';
@@ -44,11 +47,32 @@ const RULES: Rule[] = [
     allowed: (d, p) => p.canWrite && d.status === 'CHECKED_OUT',
   },
   {
+    id: 'loan',
+    text: 'ให้ยืม',
+    title: 'ให้ยืมอุปกรณ์',
+    iconCss: 'e-icons e-clock',
+    allowed: (d, p) => p.canWrite && d.status === 'IN_STOCK' && d.tenant_id !== null,
+  },
+  {
     id: 'return',
     text: 'รับคืน',
-    title: 'รับคืนเข้าคลัง',
+    title: 'รับคืนเพื่อตรวจสอบ (QC)',
     iconCss: 'e-icons e-import',
-    allowed: (d, p) => p.canWrite && (d.status === 'CHECKED_OUT' || d.status === 'INSTALLED'),
+    allowed: (d, p) => p.canWrite && ['CHECKED_OUT', 'INSTALLED', 'ON_LOAN'].includes(d.status),
+  },
+  {
+    id: 'qc_pass',
+    text: 'QC ผ่าน',
+    title: 'ผ่านการตรวจสอบ กลับเข้าคลัง',
+    iconCss: 'e-icons e-check-box',
+    allowed: (d, p) => p.canWrite && d.status === 'UNDER_QC',
+  },
+  {
+    id: 'qc_fail',
+    text: 'QC ไม่ผ่าน',
+    title: 'ไม่ผ่านการตรวจสอบ ส่งซ่อม',
+    iconCss: 'e-icons e-warning',
+    allowed: (d, p) => p.canWrite && d.status === 'UNDER_QC',
   },
   {
     id: 'transfer',
@@ -77,7 +101,7 @@ const RULES: Rule[] = [
     title: 'ปลดระวางอุปกรณ์',
     iconCss: 'e-icons e-close',
     danger: true,
-    allowed: (d, p) => p.canWrite && (d.status === 'IN_STOCK' || d.status === 'IN_REPAIR'),
+    allowed: (d, p) => p.canWrite && ['IN_STOCK', 'IN_REPAIR', 'UNDER_QC'].includes(d.status),
   },
 ];
 

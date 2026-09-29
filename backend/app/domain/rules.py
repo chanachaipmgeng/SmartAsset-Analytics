@@ -8,6 +8,8 @@ STATUS_LABELS_TH: dict[DeviceStatus, str] = {
     DeviceStatus.IN_STOCK: "อยู่ในคลัง",
     DeviceStatus.CHECKED_OUT: "เบิกออก",
     DeviceStatus.INSTALLED: "ติดตั้งแล้ว",
+    DeviceStatus.ON_LOAN: "ยืม",
+    DeviceStatus.UNDER_QC: "รอตรวจสอบ (QC)",
     DeviceStatus.IN_REPAIR: "ส่งซ่อม",
     DeviceStatus.RETIRED: "ปลดระวาง",
 }
@@ -16,14 +18,24 @@ ALLOWED_TRANSITIONS: dict[TransactionType, tuple[set[DeviceStatus], DeviceStatus
     TransactionType.TRANSFER: ({DeviceStatus.IN_STOCK}, DeviceStatus.IN_STOCK),
     TransactionType.CHECK_OUT: ({DeviceStatus.IN_STOCK}, DeviceStatus.CHECKED_OUT),
     TransactionType.INSTALL: ({DeviceStatus.CHECKED_OUT}, DeviceStatus.INSTALLED),
-    TransactionType.RETURN: ({DeviceStatus.CHECKED_OUT, DeviceStatus.INSTALLED}, DeviceStatus.IN_STOCK),
+    TransactionType.LOAN: ({DeviceStatus.IN_STOCK}, DeviceStatus.ON_LOAN),
+    # Everything that comes back from the field is inspected before it counts as stock again.
+    TransactionType.RETURN: (
+        {DeviceStatus.CHECKED_OUT, DeviceStatus.INSTALLED, DeviceStatus.ON_LOAN},
+        DeviceStatus.UNDER_QC,
+    ),
+    TransactionType.QC_PASS: ({DeviceStatus.UNDER_QC}, DeviceStatus.IN_STOCK),
+    TransactionType.QC_FAIL: ({DeviceStatus.UNDER_QC}, DeviceStatus.IN_REPAIR),
     TransactionType.SEND_REPAIR: (
         {DeviceStatus.IN_STOCK, DeviceStatus.CHECKED_OUT, DeviceStatus.INSTALLED},
         DeviceStatus.IN_REPAIR,
     ),
     TransactionType.REPAIR_DONE: ({DeviceStatus.IN_REPAIR}, DeviceStatus.IN_STOCK),
-    # A device that cannot be repaired may be retired straight from repair.
-    TransactionType.RETIRE: ({DeviceStatus.IN_STOCK, DeviceStatus.IN_REPAIR}, DeviceStatus.RETIRED),
+    # A device that cannot be repaired (or fails inspection beyond repair) may be retired directly.
+    TransactionType.RETIRE: (
+        {DeviceStatus.IN_STOCK, DeviceStatus.IN_REPAIR, DeviceStatus.UNDER_QC},
+        DeviceStatus.RETIRED,
+    ),
 }
 
 WRITE_ROLES = {Role.SUPERADMIN, Role.TENANT_ADMIN, Role.STAFF}
@@ -38,7 +50,7 @@ def next_status(device: Device, tx_type: TransactionType) -> DeviceStatus:
             f"อุปกรณ์ {device.serial_number} อยู่ในสถานะ '{STATUS_LABELS_TH[device.status]}' "
             f"ต้องอยู่ในสถานะ '{allowed}' จึงจะทำรายการนี้ได้"
         )
-    if tx_type in (TransactionType.CHECK_OUT, TransactionType.INSTALL) and device.tenant_id is None:
+    if tx_type in (TransactionType.CHECK_OUT, TransactionType.INSTALL, TransactionType.LOAN) and device.tenant_id is None:
         raise InvalidTransitionError(
             f"อุปกรณ์ {device.serial_number} ยังอยู่ในคลังกลาง ต้องโอนให้กลุ่มลูกค้าก่อน"
         )

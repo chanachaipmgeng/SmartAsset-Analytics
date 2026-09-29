@@ -12,6 +12,8 @@ class DeviceStatus(StrEnum):
     IN_STOCK = "IN_STOCK"
     CHECKED_OUT = "CHECKED_OUT"
     INSTALLED = "INSTALLED"
+    ON_LOAN = "ON_LOAN"
+    UNDER_QC = "UNDER_QC"
     IN_REPAIR = "IN_REPAIR"
     RETIRED = "RETIRED"
 
@@ -22,6 +24,9 @@ class TransactionType(StrEnum):
     CHECK_OUT = "CHECK_OUT"
     INSTALL = "INSTALL"
     RETURN = "RETURN"
+    LOAN = "LOAN"
+    QC_PASS = "QC_PASS"
+    QC_FAIL = "QC_FAIL"
     SEND_REPAIR = "SEND_REPAIR"
     REPAIR_DONE = "REPAIR_DONE"
     RETIRE = "RETIRE"

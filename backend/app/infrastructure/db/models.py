@@ -58,6 +58,7 @@ class DeviceORM(Base):
     cost: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
     warranty_end: Mapped[date | None] = mapped_column(Date)
     notes: Mapped[str | None]
+    loan_due_date: Mapped[date | None] = mapped_column(Date)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

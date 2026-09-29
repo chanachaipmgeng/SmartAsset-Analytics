@@ -185,11 +185,26 @@ async def check_out(uow: UnitOfWork, actor: Actor, device_id: UUID, note: str | 
     return await _view(uow, device.id)
 
 
+async def loan(uow: UnitOfWork, actor: Actor, device_id: UUID, due_date: date, note: str | None) -> DeviceView:
+    """Lend a stocked device (demo, trial, temporary replacement) until `due_date`."""
+    require_write(actor.role)
+    if due_date < datetime.now(BUSINESS_OFFSET).date():
+        raise ValidationError("วันครบกำหนดคืนต้องไม่ก่อนวันนี้")
+    device = await _load_device(uow, device_id)
+    from_status = device.status
+    device = replace(device, status=next_status(device, TransactionType.LOAN), loan_due_date=due_date)
+    await uow.devices.update(device)
+    note_text = f"ครบกำหนดคืน {due_date:%d/%m/%Y}" + (f" · {note}" if note else "")
+    await _record(uow, actor, device, TransactionType.LOAN, from_status, note=note_text)
+    return await _view(uow, device.id)
+
+
 async def return_device(uow: UnitOfWork, actor: Actor, device_id: UUID, note: str | None) -> DeviceView:
+    """Back from the field or a loan; the device waits for inspection (UNDER_QC) before it is stock again."""
     require_write(actor.role)
     device = await _load_device(uow, device_id)
     from_status = device.status
-    device = replace(device, status=next_status(device, TransactionType.RETURN))
+    device = replace(device, status=next_status(device, TransactionType.RETURN), loan_due_date=None)
     customer_id = None
     active = await uow.installations.get_active_for_device(device.id)
     if active is not None:
@@ -226,6 +241,29 @@ async def repair_done(uow: UnitOfWork, actor: Actor, device_id: UUID, qc_note: s
     device = replace(device, status=next_status(device, TransactionType.REPAIR_DONE))
     await uow.devices.update(device)
     await _record(uow, actor, device, TransactionType.REPAIR_DONE, from_status, note=qc_note.strip())
+    return await _view(uow, device.id)
+
+
+async def qc_pass(uow: UnitOfWork, actor: Actor, device_id: UUID, note: str | None) -> DeviceView:
+    require_write(actor.role)
+    device = await _load_device(uow, device_id)
+    from_status = device.status
+    device = replace(device, status=next_status(device, TransactionType.QC_PASS))
+    await uow.devices.update(device)
+    await _record(uow, actor, device, TransactionType.QC_PASS, from_status, note=note)
+    return await _view(uow, device.id)
+
+
+async def qc_fail(uow: UnitOfWork, actor: Actor, device_id: UUID, note: str) -> DeviceView:
+    """Failed inspection goes to repair; the defect found is mandatory."""
+    require_write(actor.role)
+    if not note.strip():
+        raise ValidationError("ต้องระบุอาการหรือสาเหตุที่ไม่ผ่าน QC")
+    device = await _load_device(uow, device_id)
+    from_status = device.status
+    device = replace(device, status=next_status(device, TransactionType.QC_FAIL))
+    await uow.devices.update(device)
+    await _record(uow, actor, device, TransactionType.QC_FAIL, from_status, note=note.strip())
     return await _view(uow, device.id)
 
 

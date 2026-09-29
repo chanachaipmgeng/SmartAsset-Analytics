@@ -23,8 +23,13 @@ def device(status: DeviceStatus, tenant: bool = True) -> Device:
     [
         (DeviceStatus.IN_STOCK, TransactionType.CHECK_OUT, DeviceStatus.CHECKED_OUT),
         (DeviceStatus.CHECKED_OUT, TransactionType.INSTALL, DeviceStatus.INSTALLED),
-        (DeviceStatus.INSTALLED, TransactionType.RETURN, DeviceStatus.IN_STOCK),
-        (DeviceStatus.CHECKED_OUT, TransactionType.RETURN, DeviceStatus.IN_STOCK),
+        (DeviceStatus.INSTALLED, TransactionType.RETURN, DeviceStatus.UNDER_QC),
+        (DeviceStatus.CHECKED_OUT, TransactionType.RETURN, DeviceStatus.UNDER_QC),
+        (DeviceStatus.ON_LOAN, TransactionType.RETURN, DeviceStatus.UNDER_QC),
+        (DeviceStatus.IN_STOCK, TransactionType.LOAN, DeviceStatus.ON_LOAN),
+        (DeviceStatus.UNDER_QC, TransactionType.QC_PASS, DeviceStatus.IN_STOCK),
+        (DeviceStatus.UNDER_QC, TransactionType.QC_FAIL, DeviceStatus.IN_REPAIR),
+        (DeviceStatus.UNDER_QC, TransactionType.RETIRE, DeviceStatus.RETIRED),
         (DeviceStatus.IN_STOCK, TransactionType.RETIRE, DeviceStatus.RETIRED),
         (DeviceStatus.IN_STOCK, TransactionType.TRANSFER, DeviceStatus.IN_STOCK),
         (DeviceStatus.IN_STOCK, TransactionType.SEND_REPAIR, DeviceStatus.IN_REPAIR),
@@ -50,6 +55,12 @@ def test_allowed_transitions(status: DeviceStatus, tx: TransactionType, expected
         (DeviceStatus.IN_REPAIR, TransactionType.SEND_REPAIR),
         (DeviceStatus.RETIRED, TransactionType.SEND_REPAIR),
         (DeviceStatus.IN_STOCK, TransactionType.REPAIR_DONE),
+        (DeviceStatus.ON_LOAN, TransactionType.CHECK_OUT),
+        (DeviceStatus.ON_LOAN, TransactionType.RETIRE),
+        (DeviceStatus.UNDER_QC, TransactionType.CHECK_OUT),
+        (DeviceStatus.UNDER_QC, TransactionType.LOAN),
+        (DeviceStatus.IN_STOCK, TransactionType.QC_PASS),
+        (DeviceStatus.CHECKED_OUT, TransactionType.LOAN),
     ],
 )
 def test_rejected_transitions(status: DeviceStatus, tx: TransactionType) -> None:
@@ -60,6 +71,8 @@ def test_rejected_transitions(status: DeviceStatus, tx: TransactionType) -> None
 def test_central_stock_must_be_transferred_before_check_out() -> None:
     with pytest.raises(InvalidTransitionError, match="คลังกลาง"):
         next_status(device(DeviceStatus.IN_STOCK, tenant=False), TransactionType.CHECK_OUT)
+    with pytest.raises(InvalidTransitionError, match="คลังกลาง"):
+        next_status(device(DeviceStatus.IN_STOCK, tenant=False), TransactionType.LOAN)
 
 
 def test_role_guards() -> None:
