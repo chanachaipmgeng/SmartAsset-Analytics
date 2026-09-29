@@ -11,7 +11,7 @@ from app.domain.entities import (
     Tenant,
     User,
 )
-from app.domain.enums import DeviceStatus
+from app.domain.enums import DeviceStatus, TransactionType
 from app.domain.read_models import CountItem, DailyCount, DeviceView, InstallationView, TransactionView
 
 
@@ -61,7 +61,16 @@ class DeviceRepository(Protocol):
 
 class TransactionRepository(Protocol):
     async def add(self, tx: InventoryTransaction) -> None: ...
-    async def list_views(self, *, device_id: UUID | None = None, limit: int = 500) -> list[TransactionView]: ...
+    async def list_views(
+        self,
+        *,
+        device_id: UUID | None = None,
+        limit: int = 500,
+        since: datetime | None = None,
+        until: datetime | None = None,
+        tx_types: list[TransactionType] | None = None,
+        user_id: UUID | None = None,
+    ) -> list[TransactionView]: ...
     async def daily_counts(self, since: datetime, tz: str) -> list[DailyCount]: ...
 
 
@@ -70,8 +79,7 @@ class CustomerRepository(Protocol):
     async def list(self) -> list[Customer]: ...
     async def add(self, customer: Customer) -> None: ...
     async def update(self, customer: Customer) -> None: ...
-    async def delete(self, customer_id: UUID) -> None: ...
-    async def has_installations(self, customer_id: UUID) -> bool: ...
+    async def has_active_installations(self, customer_id: UUID) -> bool: ...
 
 
 class InstallationRepository(Protocol):

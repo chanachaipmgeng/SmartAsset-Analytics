@@ -49,6 +49,7 @@ export const TX_LABELS: Record<TransactionType, string> = {
   SEND_REPAIR: 'ส่งซ่อม',
   REPAIR_DONE: 'ซ่อมเสร็จ (QC ผ่าน)',
   RETIRE: 'ปลดระวาง',
+  EDIT: 'แก้ไขข้อมูล',
 };
 
 export const TX_ICONS: Record<TransactionType, string> = {
@@ -60,6 +61,7 @@ export const TX_ICONS: Record<TransactionType, string> = {
   SEND_REPAIR: 'e-icons e-settings',
   REPAIR_DONE: 'e-icons e-check',
   RETIRE: 'e-icons e-close',
+  EDIT: 'e-icons e-edit',
 };
 
 export const TX_TONES: Record<TransactionType, StatusTone> = {
@@ -71,6 +73,7 @@ export const TX_TONES: Record<TransactionType, StatusTone> = {
   SEND_REPAIR: 'error',
   REPAIR_DONE: 'success',
   RETIRE: 'neutral',
+  EDIT: 'neutral',
 };
 
 const RELATIVE = new Intl.RelativeTimeFormat('th', { numeric: 'auto' });

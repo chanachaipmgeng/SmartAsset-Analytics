@@ -67,8 +67,10 @@ export class ApiService {
   updateCustomer(id: string, body: Record<string, unknown>) {
     return this.patch<Customer>(`/customers/${id}`, body);
   }
-  deleteCustomer(id: string) {
-    return this.delete<void>(`/customers/${id}`);
+  setCustomerActive(id: string, active: boolean) {
+    return active
+      ? this.patch<Customer>(`/customers/${id}`, { is_active: true })
+      : this.delete<Customer>(`/customers/${id}`);
   }
 
   install(body: Record<string, unknown>) {

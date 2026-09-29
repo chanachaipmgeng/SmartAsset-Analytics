@@ -5,12 +5,13 @@ so stock levels are always derivable from the audit trail.
 """
 
 from dataclasses import replace
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
 from app.application.context import Actor
+from app.application.dashboard import BUSINESS_OFFSET
 from app.domain.entities import Device, Installation, InventoryTransaction
 from app.domain.enums import DeviceStatus, TransactionType
 from app.domain.errors import NotFoundError, ValidationError
@@ -130,19 +131,31 @@ async def check_in(
     return await _view(uow, device.id)
 
 
+EDITABLE_FIELDS_TH = {
+    "model_id": "รุ่น",
+    "mac_address": "MAC",
+    "purchase_date": "วันที่ซื้อ",
+    "cost": "ต้นทุน",
+    "warranty_end": "วันหมดประกัน",
+    "notes": "หมายเหตุ",
+}
+
+
 async def update_device(uow: UnitOfWork, actor: Actor, device_id: UUID, changes: dict[str, Any]) -> DeviceView:
-    """Edit descriptive fields only; status and tenant change through movements."""
+    """Edit descriptive fields only; status and tenant change through movements. Real changes are audited as EDIT."""
     require_write(actor.role)
     device = await _load_device(uow, device_id)
     if "model_id" in changes and await uow.device_models.get(changes["model_id"]) is None:
         raise NotFoundError("ไม่พบรุ่นอุปกรณ์")
     if changes.get("mac_address"):
         changes["mac_address"] = changes["mac_address"].strip().upper()
+    changed = [EDITABLE_FIELDS_TH.get(k, k) for k, v in changes.items() if getattr(device, k) != v]
     device = replace(device, **changes)
     if device.purchase_date and device.warranty_end and device.warranty_end < device.purchase_date:
         raise ValidationError("วันสิ้นสุดประกันต้องไม่ก่อนวันที่ซื้อ")
-    await uow.devices.update(device)
-    await uow.flush()
+    if changed:
+        await uow.devices.update(device)
+        await _record(uow, actor, device, TransactionType.EDIT, device.status, note="แก้ไข: " + ", ".join(changed))
     return await _view(uow, device.id)
 
 
@@ -227,9 +240,24 @@ async def retire(uow: UnitOfWork, actor: Actor, device_id: UUID, note: str | Non
 
 
 async def list_transactions(
-    uow: UnitOfWork, actor: Actor, *, device_id: UUID | None = None, limit: int = 500
+    uow: UnitOfWork,
+    actor: Actor,
+    *,
+    device_id: UUID | None = None,
+    limit: int = 500,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    tx_types: list[TransactionType] | None = None,
+    user_id: UUID | None = None,
 ) -> list[TransactionView]:
-    return await uow.transactions.list_views(device_id=device_id, limit=limit)
+    """`date_from`/`date_to` are inclusive business-calendar days (Asia/Bangkok)."""
+    if date_from and date_to and date_to < date_from:
+        raise ValidationError("วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มต้น")
+    since = datetime.combine(date_from, time.min, tzinfo=BUSINESS_OFFSET) if date_from else None
+    until = datetime.combine(date_to + timedelta(days=1), time.min, tzinfo=BUSINESS_OFFSET) if date_to else None
+    return await uow.transactions.list_views(
+        device_id=device_id, limit=limit, since=since, until=until, tx_types=tx_types, user_id=user_id
+    )
 
 
 async def stock_summary(uow: UnitOfWork, actor: Actor) -> dict[str, list[CountItem]]:
@@ -253,6 +281,8 @@ async def install(
     customer = await uow.customers.get(customer_id)
     if customer is None:
         raise NotFoundError("ไม่พบลูกค้า")
+    if not customer.is_active:
+        raise ValidationError("ลูกค้ารายนี้ถูกระงับการใช้งาน")
     if customer.tenant_id != device.tenant_id:
         raise ValidationError("ลูกค้าและอุปกรณ์ต้องอยู่ในกลุ่มลูกค้าเดียวกัน")
 

@@ -8,11 +8,14 @@ import { NotifyService } from '../../core/notify.service';
 import { ConfirmService } from '../../shared/confirm.service';
 import { PageHeader } from '../../shared/page-header';
 import { DataGrid, GridCell, GridColumn } from '../../shared/data-grid';
+import { FilterChip, FilterChips } from '../../shared/filter-chips';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
+
+type ActiveFilter = 'ACTIVE' | 'INACTIVE' | 'ALL';
 
 @Component({
   selector: 'app-customers',
-  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell],
+  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell, FilterChips],
   templateUrl: './customers.html',
   styleUrl: './customers.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,6 +33,7 @@ export class CustomersPage {
     { field: 'phone', headerText: 'โทรศัพท์', width: 130 },
     { field: 'email', headerText: 'อีเมล', width: 200 },
     { field: 'level_label', headerText: 'ระดับบริการ', width: 130 },
+    { field: 'active_label', headerText: 'สถานะ', width: 110 },
     ...(this.auth.isSuperadmin() ? [{ field: 'tenant_name', headerText: 'กลุ่มลูกค้า', width: 200 }] : []),
   ]);
   protected readonly levelOptions = toOptions(SERVICE_LEVEL_LABELS);
@@ -39,13 +43,28 @@ export class CustomersPage {
 
   private readonly tenantNames = computed(() => new Map(this.tenants.value().map((t) => [t.id, t.name])));
   protected readonly tenantOptions = computed(() => this.tenants.value().map((t) => ({ value: t.id, text: t.name })));
-  protected readonly rows = computed(() =>
-    this.customers.value().map((c) => ({
-      ...c,
-      level_label: SERVICE_LEVEL_LABELS[c.service_level],
-      tenant_name: this.tenantNames().get(c.tenant_id) ?? '-',
-    })),
-  );
+  protected readonly activeFilter = signal<ActiveFilter>('ACTIVE');
+  protected readonly filters = computed<FilterChip<ActiveFilter>[]>(() => {
+    const all = this.customers.value();
+    const active = all.filter((c) => c.is_active).length;
+    return [
+      { key: 'ACTIVE', label: 'ใช้งาน', count: active },
+      { key: 'INACTIVE', label: 'ระงับ', count: all.length - active },
+      { key: 'ALL', label: 'ทั้งหมด', count: all.length },
+    ];
+  });
+  protected readonly rows = computed(() => {
+    const filter = this.activeFilter();
+    return this.customers
+      .value()
+      .filter((c) => filter === 'ALL' || c.is_active === (filter === 'ACTIVE'))
+      .map((c) => ({
+        ...c,
+        level_label: SERVICE_LEVEL_LABELS[c.service_level],
+        active_label: c.is_active ? 'ใช้งาน' : 'ระงับ',
+        tenant_name: this.tenantNames().get(c.tenant_id) ?? '-',
+      }));
+  });
 
   protected readonly selected = signal<Customer | null>(null);
   protected readonly busy = signal(false);
@@ -117,19 +136,21 @@ export class CustomersPage {
     });
   }
 
-  protected async remove(): Promise<void> {
+  protected async toggleActive(): Promise<void> {
     const c = this.selected();
     if (!c) return;
-    const ok = await this.confirm.ask({
-      title: 'ยืนยันการลบลูกค้า',
-      message: `ต้องการลบลูกค้า "${c.company_name}" ใช่หรือไม่`,
-      okText: 'ลบ',
-      danger: true,
-    });
-    if (!ok) return;
+    if (c.is_active) {
+      const ok = await this.confirm.ask({
+        title: 'ยืนยันการระงับลูกค้า',
+        message: `ระงับลูกค้า "${c.company_name}" แล้วจะเลือกลูกค้ารายนี้ตอนบันทึกการติดตั้งไม่ได้ ประวัติเดิมยังอยู่ครบ`,
+        okText: 'ระงับ',
+        danger: true,
+      });
+      if (!ok) return;
+    }
     await this.run(async () => {
-      await this.api.deleteCustomer(c.id);
-      this.notify.success('ลบลูกค้าแล้ว');
+      await this.api.setCustomerActive(c.id, !c.is_active);
+      this.notify.success(c.is_active ? 'ระงับลูกค้าแล้ว' : 'เปิดใช้งานลูกค้าแล้ว');
     });
   }
 

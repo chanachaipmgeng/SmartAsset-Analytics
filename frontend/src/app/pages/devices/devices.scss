@@ -1,38 +1,3 @@
-.status-filter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding: 0;
-
-  .e-chip {
-    margin: 0;
-    gap: 8px;
-    cursor: pointer;
-    font: inherit;
-    transition:
-      background-color 150ms ease,
-      box-shadow 150ms ease;
-  }
-
-  .count {
-    min-width: 22px;
-    padding: 0 6px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
-    line-height: 20px;
-    text-align: center;
-    background: rgb(var(--color-sf-surface-variant));
-    color: rgb(var(--color-sf-on-surface-variant));
-  }
-
-  .e-chip.e-active .count {
-    background: rgb(var(--color-sf-primary));
-    color: rgb(var(--color-sf-on-primary));
-  }
-}
-
 .serial-cell {
   font-family: ui-monospace, 'Cascadia Mono', monospace;
   font-size: 13px;

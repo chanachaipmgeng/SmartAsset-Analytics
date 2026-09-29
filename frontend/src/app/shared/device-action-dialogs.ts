@@ -175,7 +175,7 @@ export class DeviceActionDialogs {
     const tenant = this.device()?.tenant_id;
     return this.customers
       .value()
-      .filter((c) => c.tenant_id === tenant)
+      .filter((c) => c.tenant_id === tenant && c.is_active)
       .map((c) => ({ value: c.id, text: c.company_name }));
   });
   protected readonly installValid = computed(() => {

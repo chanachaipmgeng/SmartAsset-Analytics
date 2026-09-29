@@ -1,10 +1,11 @@
+from datetime import date
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, File, Path, Query, Response, UploadFile, status
 
 from app.application import admin, auth, customers, dashboard, device_import, inventory
-from app.domain.enums import DeviceStatus
+from app.domain.enums import DeviceStatus, TransactionType
 from app.domain.errors import NotFoundError, ValidationError
 from app.infrastructure import spreadsheet
 from app.presentation import schemas as s
@@ -207,9 +208,22 @@ async def list_transactions(
     actor: ActorDep,
     uow: UowDep,
     device_id: UUID | None = None,
-    limit: Annotated[int, Query(ge=1, le=2000)] = 500,
+    limit: Annotated[int, Query(ge=1, le=5000)] = 500,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    transaction_type: Annotated[list[TransactionType] | None, Query()] = None,
+    user_id: UUID | None = None,
 ):
-    return await inventory.list_transactions(uow, actor, device_id=device_id, limit=limit)
+    return await inventory.list_transactions(
+        uow,
+        actor,
+        device_id=device_id,
+        limit=limit,
+        date_from=date_from,
+        date_to=date_to,
+        tx_types=transaction_type,
+        user_id=user_id,
+    )
 
 
 @router.get("/inventory/summary", response_model=s.StockSummaryOut, tags=["inventory"])
@@ -233,9 +247,10 @@ async def update_customer(customer_id: UUID, body: s.CustomerPatch, actor: Actor
     return await customers.update_customer(uow, actor, customer_id, body.model_dump(exclude_unset=True))
 
 
-@router.delete("/customers/{customer_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["customers"])
-async def delete_customer(customer_id: UUID, actor: ActorDep, uow: UowDep):
-    await customers.delete_customer(uow, actor, customer_id)
+@router.delete("/customers/{customer_id}", response_model=s.CustomerOut, tags=["customers"])
+async def deactivate_customer(customer_id: UUID, actor: ActorDep, uow: UowDep):
+    """Customers are never hard-deleted; this deactivates them (PATCH is_active=true restores)."""
+    return await customers.deactivate_customer(uow, actor, customer_id)
 
 
 # ---- installations ----

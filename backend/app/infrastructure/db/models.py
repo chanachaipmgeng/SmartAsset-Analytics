@@ -74,6 +74,7 @@ class CustomerORM(Base):
     phone: Mapped[str | None]
     email: Mapped[str | None]
     service_level: Mapped[str] = mapped_column(String)
+    is_active: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

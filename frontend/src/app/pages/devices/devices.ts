@@ -23,6 +23,7 @@ import { NotifyService } from '../../core/notify.service';
 import { AssetTimeline } from '../../shared/asset-timeline';
 import { DataGrid, GridCell, GridColumn } from '../../shared/data-grid';
 import { DeviceActionDialogs } from '../../shared/device-action-dialogs';
+import { FilterChips } from '../../shared/filter-chips';
 import { InstallationMap } from '../../shared/installation-map';
 import { PageHeader } from '../../shared/page-header';
 import { StatusChip } from '../../shared/status-chip';
@@ -65,6 +66,7 @@ const DAY_MS = 86_400_000;
     InstallationMap,
     DeviceActionDialogs,
     DeviceImport,
+    FilterChips,
   ],
   templateUrl: './devices.html',
   styleUrl: './devices.scss',

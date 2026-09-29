@@ -25,6 +25,8 @@ class TransactionType(StrEnum):
     SEND_REPAIR = "SEND_REPAIR"
     REPAIR_DONE = "REPAIR_DONE"
     RETIRE = "RETIRE"
+    # Descriptive fields changed; status stays the same.
+    EDIT = "EDIT"
 
 
 class ServiceLevel(StrEnum):

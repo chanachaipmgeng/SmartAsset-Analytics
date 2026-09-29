@@ -8,7 +8,8 @@ export type TransactionType =
   | 'RETURN'
   | 'SEND_REPAIR'
   | 'REPAIR_DONE'
-  | 'RETIRE';
+  | 'RETIRE'
+  | 'EDIT';
 export type ServiceLevel = 'BASIC' | 'STANDARD' | 'PREMIUM';
 
 export interface User {
@@ -82,6 +83,7 @@ export interface Customer {
   phone: string | null;
   email: string | null;
   service_level: ServiceLevel;
+  is_active: boolean;
 }
 
 export interface Installation {

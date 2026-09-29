@@ -75,6 +75,7 @@ class Customer:
     phone: str | None = None
     email: str | None = None
     service_level: ServiceLevel = ServiceLevel.STANDARD
+    is_active: bool = True
     id: UUID = field(default_factory=uuid4)
     created_at: datetime | None = None
 

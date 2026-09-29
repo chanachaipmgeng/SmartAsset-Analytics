@@ -14,22 +14,7 @@
     >ทำรายการ</button>
   </app-page-header>
 
-  <div class="status-filter e-chip-list e-selection" role="radiogroup" aria-label="กรองตามสถานะ">
-    @for (f of filters(); track f.key) {
-      <button
-        type="button"
-        class="e-chip"
-        role="radio"
-        [class.e-active]="statusFilter() === f.key"
-        [attr.aria-checked]="statusFilter() === f.key"
-        [attr.data-status]="f.key"
-        (click)="statusFilter.set(f.key)"
-      >
-        <span class="e-chip-text">{{ f.label }}</span>
-        <span class="count">{{ f.count }}</span>
-      </button>
-    }
-  </div>
+  <app-filter-chips [options]="filters()" [(value)]="statusFilter" label="กรองตามสถานะ" />
 
   <div class="panel">
     <app-data-grid

@@ -4,10 +4,16 @@
       <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มลูกค้า</button>
       <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
       @if (auth.isAdmin()) {
-        <button ejs-button cssClass="e-danger" iconCss="e-icons e-trash" [disabled]="!selected() || busy()" (click)="remove()">ลบ</button>
+        @if (selected()?.is_active === false) {
+          <button ejs-button iconCss="e-icons e-check" [disabled]="busy()" (click)="toggleActive()">เปิดใช้งาน</button>
+        } @else {
+          <button ejs-button cssClass="e-danger" iconCss="e-icons e-lock" [disabled]="!selected() || busy()" (click)="toggleActive()">ระงับ</button>
+        }
       }
     }
   </app-page-header>
+
+  <app-filter-chips [options]="filters()" [(value)]="activeFilter" label="กรองตามสถานะลูกค้า" />
 
   <div class="panel">
     <app-data-grid
@@ -25,6 +31,9 @@
     >
       <ng-template gridCell="level_label" let-row>
         <span class="level-chip" [attr.data-level]="row.service_level">{{ row.level_label }}</span>
+      </ng-template>
+      <ng-template gridCell="active_label" let-row>
+        <span class="tone-chip" [attr.data-tone]="row.is_active ? 'success' : null">{{ row.active_label }}</span>
       </ng-template>
     </app-data-grid>
   </div>

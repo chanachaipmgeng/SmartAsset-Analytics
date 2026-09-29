@@ -24,23 +24,27 @@ async def create_customer(uow: UnitOfWork, actor: Actor, *, tenant_id: UUID | No
     return customer
 
 
+async def _ensure_can_deactivate(uow: UnitOfWork, customer_id: UUID) -> None:
+    if await uow.customers.has_active_installations(customer_id):
+        raise ConflictError("ลูกค้ารายนี้ยังมีอุปกรณ์ติดตั้งอยู่ ต้องรับคืนอุปกรณ์ก่อนระงับ")
+
+
 async def update_customer(uow: UnitOfWork, actor: Actor, customer_id: UUID, changes: dict[str, Any]) -> Customer:
     require_write(actor.role)
     customer = await uow.customers.get(customer_id)
     if customer is None:
         raise NotFoundError("ไม่พบลูกค้า")
     changes.pop("tenant_id", None)
+    if "is_active" in changes and changes["is_active"] != customer.is_active:
+        require_admin(actor.role)
+        if not changes["is_active"]:
+            await _ensure_can_deactivate(uow, customer_id)
     customer = replace(customer, **changes)
     await uow.customers.update(customer)
     await uow.flush()
     return customer
 
 
-async def delete_customer(uow: UnitOfWork, actor: Actor, customer_id: UUID) -> None:
-    require_admin(actor.role)
-    if await uow.customers.get(customer_id) is None:
-        raise NotFoundError("ไม่พบลูกค้า")
-    if await uow.customers.has_installations(customer_id):
-        raise ConflictError("ลูกค้ารายนี้มีประวัติการติดตั้ง ไม่สามารถลบได้")
-    await uow.customers.delete(customer_id)
-    await uow.flush()
+async def deactivate_customer(uow: UnitOfWork, actor: Actor, customer_id: UUID) -> Customer:
+    """Customers are never hard-deleted: movements and installations keep pointing at them."""
+    return await update_customer(uow, actor, customer_id, {"is_active": False})

@@ -244,7 +244,16 @@ class SqlDeviceRepository(_Repo):
 class SqlTransactionRepository(_Repo):
     orm, entity = InventoryTransactionORM, InventoryTransaction
 
-    async def list_views(self, *, device_id: UUID | None = None, limit: int = 500) -> list[TransactionView]:
+    async def list_views(
+        self,
+        *,
+        device_id: UUID | None = None,
+        limit: int = 500,
+        since: datetime | None = None,
+        until: datetime | None = None,
+        tx_types: list[TransactionType] | None = None,
+        user_id: UUID | None = None,
+    ) -> list[TransactionView]:
         tx = InventoryTransactionORM
         stmt = (
             select(tx, DeviceORM.serial_number, TenantORM.name, CustomerORM.company_name, UserORM.full_name)
@@ -258,6 +267,14 @@ class SqlTransactionRepository(_Repo):
         )
         if device_id:
             stmt = stmt.where(tx.device_id == device_id)
+        if since:
+            stmt = stmt.where(tx.occurred_at >= since)
+        if until:
+            stmt = stmt.where(tx.occurred_at < until)
+        if tx_types:
+            stmt = stmt.where(tx.transaction_type.in_([t.value for t in tx_types]))
+        if user_id:
+            stmt = stmt.where(tx.user_id == user_id)
         result = []
         for t, serial, tenant_name, customer_name, user_name in (await self.s.execute(stmt)).all():
             result.append(
@@ -302,13 +319,10 @@ class SqlCustomerRepository(_Repo):
     async def list(self) -> list[Customer]:
         return await self._list(select(CustomerORM).order_by(CustomerORM.company_name))
 
-    async def delete(self, customer_id: UUID) -> None:
-        row = await self.s.get(CustomerORM, customer_id)
-        if row:
-            await self.s.delete(row)
-
-    async def has_installations(self, customer_id: UUID) -> bool:
-        stmt = select(func.count()).where(InstallationORM.customer_id == customer_id)
+    async def has_active_installations(self, customer_id: UUID) -> bool:
+        stmt = select(func.count()).where(
+            InstallationORM.customer_id == customer_id, InstallationORM.removed_at.is_(None)
+        )
         return bool(await self.s.scalar(stmt))
 
 

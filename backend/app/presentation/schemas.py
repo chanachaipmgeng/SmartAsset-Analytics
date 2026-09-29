@@ -226,6 +226,7 @@ class CustomerPatch(BaseModel):
     phone: Annotated[str, StringConstraints(max_length=50)] | None = None
     email: EmailStr | None = None
     service_level: ServiceLevel | None = None
+    is_active: bool | None = None
 
 
 class CustomerOut(Out):
@@ -236,6 +237,7 @@ class CustomerOut(Out):
     phone: str | None
     email: str | None
     service_level: ServiceLevel
+    is_active: bool
 
 
 class InstallationIn(BaseModel):

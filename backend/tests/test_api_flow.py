@@ -221,6 +221,52 @@ async def test_repair_flow(client: httpx.AsyncClient, world: dict) -> None:
     assert history[1]["customer_name"] == customer["company_name"]
 
 
+async def test_edit_audit_customer_deactivate_and_tx_filters(client: httpx.AsyncClient, world: dict) -> None:
+    a, b = world["a"], world["b"]
+    res = await client.post("/inventory/check-in", headers=a, json={"serial_number": f"E-{world['tag']}", "model_id": world["model"]["id"]})
+    assert res.status_code == 201, res.text
+    device_id = res.json()["id"]
+
+    # Editing descriptive fields writes one EDIT row listing what changed; a no-op edit writes nothing.
+    res = await client.patch(f"/devices/{device_id}", headers=a, json={"cost": "990.00", "notes": "ชั้น 2"})
+    assert res.status_code == 200 and res.json()["status"] == "IN_STOCK"
+    await client.patch(f"/devices/{device_id}", headers=a, json={"cost": "990.00"})
+    history = (await client.get("/inventory/transactions", headers=a, params={"device_id": device_id})).json()
+    assert [t["transaction_type"] for t in history] == ["EDIT", "CHECK_IN"]
+    assert history[0]["note"] == "แก้ไข: ต้นทุน, หมายเหตุ"
+    assert history[0]["from_status"] == history[0]["to_status"] == "IN_STOCK"
+
+    # Filters: type, date range (business days), and tenant isolation still applies.
+    edits = (await client.get("/inventory/transactions", headers=a, params={"transaction_type": ["EDIT", "RETIRE"]})).json()
+    assert edits and all(t["transaction_type"] in ("EDIT", "RETIRE") for t in edits)
+    old = (await client.get("/inventory/transactions", headers=a, params={"date_from": "2020-01-01", "date_to": "2020-01-31"})).json()
+    assert old == []
+    today = history[0]["occurred_at"][:10]
+    ranged = (await client.get("/inventory/transactions", headers=a, params={"date_from": today, "date_to": today})).json()
+    assert any(t["device_id"] == device_id for t in ranged)
+    reversed_range = {"date_from": "2026-12-31", "date_to": "2026-01-01"}
+    assert (await client.get("/inventory/transactions", headers=a, params=reversed_range)).status_code == 422
+    assert all(t["device_id"] != device_id for t in (await client.get("/inventory/transactions", headers=b)).json())
+
+    # Customers are deactivated, not deleted, and not while a device is installed there.
+    customer = (await client.post("/customers", headers=a, json={"company_name": f"Soft {world['tag']}"})).json()
+    assert customer["is_active"] is True
+    install_body = {"device_id": device_id, "customer_id": customer["id"], "install_date": "2026-09-01", "latitude": 13.7, "longitude": 100.5}
+    assert (await client.post("/inventory/check-out", headers=a, json={"device_id": device_id})).status_code == 200
+    assert (await client.post("/installations", headers=a, json=install_body)).status_code == 201
+    res = await client.delete(f"/customers/{customer['id']}", headers=a)
+    assert res.status_code == 409
+    assert (await client.post("/inventory/return", headers=a, json={"device_id": device_id})).status_code == 200
+    res = await client.delete(f"/customers/{customer['id']}", headers=a)
+    assert res.status_code == 200 and res.json()["is_active"] is False
+    listed = {c["id"]: c for c in (await client.get("/customers", headers=a)).json()}
+    assert listed[customer["id"]]["is_active"] is False
+    assert (await client.post("/inventory/check-out", headers=a, json={"device_id": device_id})).status_code == 200
+    assert (await client.post("/installations", headers=a, json=install_body)).status_code == 422
+    res = await client.patch(f"/customers/{customer['id']}", headers=a, json={"is_active": True})
+    assert res.status_code == 200 and res.json()["is_active"] is True
+
+
 def _xlsx(rows: list[list[object]]) -> bytes:
     book = Workbook()
     for row in rows:
