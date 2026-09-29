@@ -72,7 +72,7 @@
 
       <ejs-checkbox label="จดจำอีเมลบนเครื่องนี้" [(checked)]="remember"></ejs-checkbox>
 
-      <button ejs-button type="submit" [isPrimary]="true" [disabled]="!canSubmit()" cssClass="submit">
+      <button ejs-button type="submit" [isPrimary]="true" [disabled]="loading()" cssClass="submit">
         @if (loading()) {
           <span class="e-icons e-refresh inline-block animate-spin"></span>
           กำลังเข้าสู่ระบบ...

@@ -34,7 +34,7 @@ const THRESHOLD_PX = 400;
       font-size: 18px;
       background: rgb(var(--color-sf-primary-container));
       color: rgb(var(--color-sf-on-primary-container));
-      box-shadow: 0 6px 20px -8px rgb(var(--color-sf-primary) / 0.6);
+      box-shadow: 0 6px 20px -8px rgba(var(--color-sf-primary), 0.6);
       transition: transform 160ms ease;
 
       &:hover {

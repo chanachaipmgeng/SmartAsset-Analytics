@@ -30,7 +30,7 @@
   font-size: 26px;
   background: rgb(var(--color-sf-primary));
   color: rgb(var(--color-sf-on-primary));
-  box-shadow: 0 0 0 0 rgb(var(--color-sf-primary) / 0.5);
+  box-shadow: 0 0 0 0 rgba(var(--color-sf-primary), 0.5);
   animation: scan-pulse 2.2s ease-out infinite;
 }
 
@@ -40,11 +40,11 @@
 
 @keyframes scan-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgb(var(--color-sf-primary) / 0.45);
+    box-shadow: 0 0 0 0 rgba(var(--color-sf-primary), 0.45);
   }
   70%,
   100% {
-    box-shadow: 0 0 0 18px rgb(var(--color-sf-primary) / 0);
+    box-shadow: 0 0 0 18px rgba(var(--color-sf-primary), 0);
   }
 }
 

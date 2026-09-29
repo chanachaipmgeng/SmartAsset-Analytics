@@ -6,9 +6,9 @@ import {
   AccumulationDataLabelService,
   AccumulationLegendService,
   AccumulationTooltipService,
+  BarSeriesService,
   CategoryService,
   ChartModule,
-  ColumnSeriesService,
   DataLabelService,
   DateTimeService,
   LegendService,
@@ -79,7 +79,7 @@ const ACTIVITY_SERIES: { name: string; types: TransactionType[]; token: string }
     AccumulationLegendService,
     AccumulationTooltipService,
     AccumulationDataLabelService,
-    ColumnSeriesService,
+    BarSeriesService,
     SplineAreaSeriesService,
     CategoryService,
     DateTimeService,
@@ -166,8 +166,14 @@ export class DashboardPage {
 
   protected readonly installations = computed(() => this.data()?.installations ?? []);
 
-  protected readonly primaryXAxis = { valueType: 'Category', labelIntersectAction: 'Rotate45', majorGridLines: { width: 0 } };
-  protected readonly primaryYAxis = { minimum: 0, interval: 1, labelFormat: '{value}', lineStyle: { width: 0 } };
+  protected readonly primaryXAxis = {
+    valueType: 'Category',
+    labelIntersectAction: 'Trim',
+    maximumLabelWidth: 140,
+    majorGridLines: { width: 0 },
+    majorTickLines: { width: 0 },
+  };
+  protected readonly primaryYAxis = { minimum: 0, visible: false, majorGridLines: { width: 0 } };
   protected readonly activityXAxis = {
     valueType: 'DateTime',
     labelFormat: 'd MMM',

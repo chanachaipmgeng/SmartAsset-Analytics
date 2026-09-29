@@ -133,16 +133,16 @@
             <ng-template #header><div class="panel-title">จำนวนตามรุ่น (ไม่รวมปลดระวาง)</div></ng-template>
             <ng-template #content>
               @for (chartTheme of [theme.chartTheme()]; track chartTheme) {
-                <ejs-chart [theme]="chartTheme" background="transparent" height="100%" width="100%" [primaryXAxis]="primaryXAxis" [primaryYAxis]="primaryYAxis" [tooltip]="tooltip">
+                <ejs-chart [theme]="chartTheme" background="transparent" height="100%" width="100%" [primaryXAxis]="primaryXAxis" [primaryYAxis]="primaryYAxis" [tooltip]="tooltip" [legendSettings]="{ visible: false }">
                   <e-series-collection>
                     <e-series
                       [dataSource]="modelChart()"
-                      type="Column"
+                      type="Bar"
                       xName="x"
                       yName="y"
                       name="จำนวน"
                       [fill]="primaryColor()"
-                      [cornerRadius]="{ topLeft: 6, topRight: 6 }"
+                      [cornerRadius]="{ topRight: 6, bottomRight: 6 }"
                       [marker]="{ dataLabel: columnLabels }"
                     ></e-series>
                   </e-series-collection>

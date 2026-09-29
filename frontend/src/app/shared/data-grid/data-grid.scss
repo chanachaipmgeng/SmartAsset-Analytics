@@ -10,7 +10,7 @@
   height: 3px;
   overflow: hidden;
   border-radius: 3px;
-  background: rgb(var(--color-sf-primary) / 0.15);
+  background: rgba(var(--color-sf-primary), 0.15);
 
   &::after {
     content: '';

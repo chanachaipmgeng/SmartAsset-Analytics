@@ -50,7 +50,7 @@
   }
 
   &:hover {
-    border-color: rgb(var(--color-sf-primary) / 0.5);
+    border-color: rgba(var(--color-sf-primary), 0.5);
   }
 
   &:focus-visible {
@@ -154,6 +154,7 @@
 
 .content {
   height: 100%;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   scrollbar-gutter: stable;
 }

@@ -64,12 +64,12 @@ export type StatVariant = 'gradient' | 'success' | 'warning' | 'info' | 'error' 
     }
     .card[data-variant='gradient'] {
       --fg: rgb(var(--color-sf-on-primary));
-      --muted: rgb(var(--color-sf-on-primary) / 0.8);
-      --icon-bg: rgb(var(--color-sf-on-primary) / 0.18);
+      --muted: rgba(var(--color-sf-on-primary), 0.8);
+      --icon-bg: rgba(var(--color-sf-on-primary), 0.18);
       --icon-fg: rgb(var(--color-sf-on-primary));
       border-color: transparent;
       background:
-        radial-gradient(120% 140% at 100% 0%, rgb(var(--color-sf-tertiary) / 0.9), transparent 60%),
+        radial-gradient(120% 140% at 100% 0%, rgba(var(--color-sf-tertiary), 0.9), transparent 60%),
         linear-gradient(135deg, rgb(var(--color-sf-primary)), color-mix(in srgb, rgb(var(--color-sf-primary)) 70%, rgb(var(--color-sf-tertiary))));
 
       &::after {
@@ -80,7 +80,7 @@ export type StatVariant = 'gradient' | 'success' | 'warning' | 'info' | 'error' 
         width: 160px;
         height: 160px;
         border-radius: 50%;
-        background: rgb(var(--color-sf-on-primary) / 0.08);
+        background: rgba(var(--color-sf-on-primary), 0.08);
       }
     }
     .top {

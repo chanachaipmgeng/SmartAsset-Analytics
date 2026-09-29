@@ -130,7 +130,7 @@ export class ScanPage {
   }
 
   protected submit(): void {
-    void this.scan(this.text());
+    void this.scan(this.input().nativeElement.value);
   }
 
   protected async scan(raw: string, record = true): Promise<void> {
