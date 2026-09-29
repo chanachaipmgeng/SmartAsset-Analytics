@@ -53,6 +53,15 @@ export interface DeviceModel {
   description: string | null;
 }
 
+export interface Supplier {
+  id: string;
+  name: string;
+  contact_person: string | null;
+  phone: string | null;
+  email: string | null;
+  notes: string | null;
+}
+
 export interface Device {
   id: string;
   serial_number: string;
@@ -81,6 +90,7 @@ export interface InventoryTransaction {
   tenant_id: string | null;
   tenant_name: string | null;
   customer_name: string | null;
+  supplier_name: string | null;
   user_name: string;
   note: string | null;
   occurred_at: string;

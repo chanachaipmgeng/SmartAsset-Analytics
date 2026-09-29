@@ -8,6 +8,7 @@ from app.domain.entities import (
     DeviceModel,
     Installation,
     InventoryTransaction,
+    Supplier,
     Tenant,
     User,
 )
@@ -38,6 +39,15 @@ class DeviceModelRepository(Protocol):
     async def update(self, model: DeviceModel) -> None: ...
     async def delete(self, model_id: UUID) -> None: ...
     async def is_in_use(self, model_id: UUID) -> bool: ...
+
+
+class SupplierRepository(Protocol):
+    async def get(self, supplier_id: UUID) -> Supplier | None: ...
+    async def list(self) -> list[Supplier]: ...
+    async def add(self, supplier: Supplier) -> None: ...
+    async def update(self, supplier: Supplier) -> None: ...
+    async def delete(self, supplier_id: UUID) -> None: ...
+    async def is_in_use(self, supplier_id: UUID) -> bool: ...
 
 
 class DeviceRepository(Protocol):
@@ -96,6 +106,7 @@ class UnitOfWork(Protocol):
     tenants: TenantRepository
     users: UserRepository
     device_models: DeviceModelRepository
+    suppliers: SupplierRepository
     devices: DeviceRepository
     transactions: TransactionRepository
     customers: CustomerRepository

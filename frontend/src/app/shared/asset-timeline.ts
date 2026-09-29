@@ -36,7 +36,9 @@ import { SkeletonBlock } from './skeleton-block';
               </div>
               <div class="meta">
                 {{ tx.user_name }}
-                @if (tx.customer_name) {
+                @if (tx.supplier_name) {
+                  · ผู้ซ่อม {{ tx.supplier_name }}
+                } @else if (tx.customer_name) {
                   · {{ tx.customer_name }}
                 } @else if (tx.tenant_name && tx.transaction_type === 'TRANSFER') {
                   · ไปยัง {{ tx.tenant_name }}

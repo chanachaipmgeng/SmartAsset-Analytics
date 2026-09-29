@@ -32,10 +32,10 @@ async def login(client: httpx.AsyncClient, email: str, password: str) -> dict[st
     return {"Authorization": f"Bearer {res.json()['access_token']}"}
 
 
-async def _cleanup(tenant_ids: list[str], model_id: str) -> None:
+async def _cleanup(tenant_ids: list[str], model_id: str, tag: str) -> None:
     """Remove this run's rows via the owner role (bypasses RLS) so the dev database stays clean."""
     engine = create_async_engine(get_settings().migration_database_url)
-    params = {"tenants": tenant_ids, "model": model_id}
+    params = {"tenants": tenant_ids, "model": model_id, "supplier": f"%{tag}"}
     device_filter = "SELECT id FROM devices WHERE model_id = CAST(:model AS uuid)"
     async with engine.begin() as conn:
         for stmt in (
@@ -46,6 +46,7 @@ async def _cleanup(tenant_ids: list[str], model_id: str) -> None:
             "DELETE FROM users WHERE tenant_id = ANY(CAST(:tenants AS uuid[]))",
             "DELETE FROM tenants WHERE id = ANY(CAST(:tenants AS uuid[]))",
             "DELETE FROM device_models WHERE id = CAST(:model AS uuid)",
+            "DELETE FROM suppliers WHERE name LIKE :supplier",
         ):
             await conn.execute(text(stmt), params)
     await engine.dispose()
@@ -76,7 +77,7 @@ async def world(client: httpx.AsyncClient) -> AsyncIterator[dict]:
         users[key] = await login(client, email, password)
 
     yield {"su": su, "tag": tag, "tenant_a": tenant_a, "tenant_b": tenant_b, "model": model, **users}
-    await _cleanup([tenant_a["id"], tenant_b["id"]], model["id"])
+    await _cleanup([tenant_a["id"], tenant_b["id"]], model["id"], tag)
 
 
 async def test_login_rejects_bad_password(client: httpx.AsyncClient) -> None:
@@ -401,3 +402,41 @@ async def test_tenant_admin_cannot_create_users_in_other_tenant(client: httpx.As
         },
     )
     assert res.status_code == 403
+
+
+async def test_suppliers_crud_and_send_repair(client: httpx.AsyncClient, world: dict) -> None:
+    a, su, tag = world["a"], world["su"], world["tag"]
+    body = {"name": f"Repair Shop {tag}", "phone": "02-000-0000", "email": f"shop.{tag.lower()}@example.com"}
+
+    assert (await client.post("/suppliers", headers=a, json=body)).status_code == 403
+    res = await client.post("/suppliers", headers=su, json=body)
+    assert res.status_code == 201, res.text
+    supplier = res.json()
+    dup = await client.post("/suppliers", headers=su, json={"name": f"repair shop {tag}"})
+    assert dup.status_code == 409 and dup.json()["detail"] == "ชื่อผู้จำหน่าย/ผู้ซ่อมนี้มีอยู่แล้ว"
+
+    res = await client.patch(f"/suppliers/{supplier['id']}", headers=su, json={"contact_person": "คุณช่าง"})
+    assert res.status_code == 200 and res.json()["contact_person"] == "คุณช่าง"
+    # Tenants read the shared list so they can pick a repair shop.
+    assert any(x["id"] == supplier["id"] for x in (await client.get("/suppliers", headers=a)).json())
+
+    device = (
+        await client.post("/inventory/check-in", headers=a, json={"serial_number": f"SUP-{tag}", "model_id": world["model"]["id"]})
+    ).json()
+    missing = await client.post(
+        "/inventory/send-repair",
+        headers=a,
+        json={"device_id": device["id"], "supplier_id": "00000000-0000-0000-0000-000000000000"},
+    )
+    assert missing.status_code == 404
+    res = await client.post(
+        "/inventory/send-repair", headers=a, json={"device_id": device["id"], "supplier_id": supplier["id"], "note": "จอเสีย"}
+    )
+    assert res.status_code == 200 and res.json()["status"] == "IN_REPAIR"
+    history = (await client.get("/inventory/transactions", headers=a, params={"device_id": device["id"]})).json()
+    assert history[0]["transaction_type"] == "SEND_REPAIR" and history[0]["supplier_name"] == body["name"]
+
+    res = await client.delete(f"/suppliers/{supplier['id']}", headers=su)
+    assert res.status_code == 409
+    spare = (await client.post("/suppliers", headers=su, json={"name": f"Spare {tag}"})).json()
+    assert (await client.delete(f"/suppliers/{spare['id']}", headers=su)).status_code == 204

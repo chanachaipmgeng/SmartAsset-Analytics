@@ -38,6 +38,18 @@ class DeviceModel:
 
 
 @dataclass
+class Supplier:
+    """Vendor or repair shop, shared across tenants like device models."""
+
+    name: str
+    contact_person: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    notes: str | None = None
+    id: UUID = field(default_factory=uuid4)
+
+
+@dataclass
 class Device:
     serial_number: str
     model_id: UUID
@@ -63,6 +75,7 @@ class InventoryTransaction:
     from_status: DeviceStatus | None = None
     from_tenant_id: UUID | None = None
     customer_id: UUID | None = None
+    supplier_id: UUID | None = None
     note: str | None = None
     id: UUID = field(default_factory=uuid4)
     occurred_at: datetime | None = None

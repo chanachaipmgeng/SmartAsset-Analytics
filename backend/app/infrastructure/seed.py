@@ -60,6 +60,10 @@ async def seed() -> None:
                 uow, su, brand="Hikvision", name="DS-K1T341", device_type="สแกนใบหน้า", firmware_version="3.2"
             )
 
+            await admin.create_supplier(
+                uow, su, name="ศูนย์บริการ ZKTeco ประเทศไทย", contact_person="แผนกซ่อม", phone="02-000-0100"
+            )
+
             today = date.today()
             specs = [
                 ("ZK-V5L-0001", face, "00:17:61:AA:00:01", 730),

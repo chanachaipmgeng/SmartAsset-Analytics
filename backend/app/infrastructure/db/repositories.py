@@ -14,6 +14,7 @@ from app.domain.entities import (
     DeviceModel,
     Installation,
     InventoryTransaction,
+    Supplier,
     Tenant,
     User,
 )
@@ -27,6 +28,7 @@ from app.infrastructure.db.models import (
     DeviceORM,
     InstallationORM,
     InventoryTransactionORM,
+    SupplierORM,
     TenantORM,
     UserORM,
 )
@@ -47,6 +49,8 @@ CONSTRAINT_MESSAGES = {
     "users_email_lower_uq": "อีเมลนี้ถูกใช้งานแล้ว",
     "tenants_code_key": "รหัสกลุ่มลูกค้านี้ถูกใช้งานแล้ว",
     "device_models_brand_name_uq": "รุ่นอุปกรณ์นี้มีอยู่แล้ว",
+    "suppliers_name_uq": "ชื่อผู้จำหน่าย/ผู้ซ่อมนี้มีอยู่แล้ว",
+    "inventory_tx_supplier_fk": "มีประวัติการส่งซ่อมอ้างถึงผู้จำหน่าย/ผู้ซ่อมรายนี้ ไม่สามารถลบได้",
     "installations_active_device_uq": "อุปกรณ์นี้มีจุดติดตั้งที่ใช้งานอยู่แล้ว",
 }
 
@@ -141,6 +145,26 @@ class SqlDeviceModelRepository(_Repo):
 
     async def is_in_use(self, model_id: UUID) -> bool:
         return bool(await self.s.scalar(select(func.count()).where(DeviceORM.model_id == model_id)))
+
+
+class SqlSupplierRepository(_Repo):
+    orm, entity = SupplierORM, Supplier
+
+    async def get(self, supplier_id: UUID) -> Supplier | None:
+        return await self._get(supplier_id)
+
+    async def list(self) -> list[Supplier]:
+        return await self._list(select(SupplierORM).order_by(SupplierORM.name))
+
+    async def delete(self, supplier_id: UUID) -> None:
+        row = await self.s.get(SupplierORM, supplier_id)
+        if row:
+            await self.s.delete(row)
+
+    async def is_in_use(self, supplier_id: UUID) -> bool:
+        # RLS limits this to visible rows; the FK still blocks deleting one referenced by another tenant.
+        stmt = select(func.count()).where(InventoryTransactionORM.supplier_id == supplier_id)
+        return bool(await self.s.scalar(stmt))
 
 
 def _device_view_stmt() -> Select:
@@ -257,12 +281,20 @@ class SqlTransactionRepository(_Repo):
     ) -> list[TransactionView]:
         tx = InventoryTransactionORM
         stmt = (
-            select(tx, DeviceORM.serial_number, TenantORM.name, CustomerORM.company_name, UserORM.full_name)
+            select(
+                tx,
+                DeviceORM.serial_number,
+                TenantORM.name,
+                CustomerORM.company_name,
+                UserORM.full_name,
+                SupplierORM.name,
+            )
             .join(DeviceORM, DeviceORM.id == tx.device_id)
             # Outer join: RLS hides platform staff from tenant users, but their movements must still show.
             .outerjoin(UserORM, UserORM.id == tx.user_id)
             .outerjoin(TenantORM, TenantORM.id == tx.tenant_id)
             .outerjoin(CustomerORM, CustomerORM.id == tx.customer_id)
+            .outerjoin(SupplierORM, SupplierORM.id == tx.supplier_id)
             .order_by(tx.occurred_at.desc())
             .limit(limit)
         )
@@ -277,7 +309,7 @@ class SqlTransactionRepository(_Repo):
         if user_id:
             stmt = stmt.where(tx.user_id == user_id)
         result = []
-        for t, serial, tenant_name, customer_name, user_name in (await self.s.execute(stmt)).all():
+        for t, serial, tenant_name, customer_name, user_name, supplier_name in (await self.s.execute(stmt)).all():
             result.append(
                 TransactionView(
                     id=t.id,
@@ -292,6 +324,7 @@ class SqlTransactionRepository(_Repo):
                     user_name=user_name or "ผู้ดูแลแพลตฟอร์ม",
                     note=t.note,
                     occurred_at=t.occurred_at,
+                    supplier_name=supplier_name,
                 )
             )
         return result
@@ -404,6 +437,7 @@ class SqlUnitOfWork:
         self.tenants = SqlTenantRepository(session)
         self.users = SqlUserRepository(session)
         self.device_models = SqlDeviceModelRepository(session)
+        self.suppliers = SqlSupplierRepository(session)
         self.devices = SqlDeviceRepository(session)
         self.transactions = SqlTransactionRepository(session)
         self.customers = SqlCustomerRepository(session)

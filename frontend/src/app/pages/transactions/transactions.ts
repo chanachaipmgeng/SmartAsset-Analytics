@@ -22,6 +22,7 @@ const COLUMNS: GridColumn[] = [
   { field: 'to_label', headerText: 'เป็นสถานะ', width: 120, hideAtMedia: WIDE },
   { field: 'tenant_label', headerText: 'กลุ่มลูกค้า', width: 190, hideAtMedia: WIDE },
   { field: 'customer_name', headerText: 'ลูกค้า', width: 180, hideAtMedia: WIDE },
+  { field: 'supplier_name', headerText: 'ผู้ซ่อม', width: 180, hideAtMedia: WIDE },
   { field: 'user_name', headerText: 'ผู้ทำรายการ', width: 150, hideAtMedia: WIDE },
   { field: 'note', headerText: 'หมายเหตุ', width: 200, hideAtMedia: WIDE },
 ];

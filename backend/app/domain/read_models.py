@@ -39,6 +39,7 @@ class TransactionView:
     user_name: str
     note: str | None
     occurred_at: datetime
+    supplier_name: str | None = None
 
 
 @dataclass(frozen=True)

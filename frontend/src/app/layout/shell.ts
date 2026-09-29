@@ -108,6 +108,7 @@ export class Shell {
   protected readonly menu = computed<MenuGroup[]>(() => {
     const settings: MenuItem[] = [];
     settings.push({ path: '/admin/device-models', label: 'รุ่นอุปกรณ์', icon: 'e-icons e-settings' });
+    settings.push({ path: '/admin/suppliers', label: 'ผู้จำหน่าย / ผู้ซ่อม', icon: 'e-icons e-repeat' });
     if (this.auth.isSuperadmin()) {
       settings.push({ path: '/admin/tenants', label: 'กลุ่มลูกค้า', icon: 'e-icons e-grid-view' });
     }

@@ -45,6 +45,18 @@ class DeviceModelORM(Base):
     description: Mapped[str | None]
 
 
+class SupplierORM(Base):
+    __tablename__ = "suppliers"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    contact_person: Mapped[str | None]
+    phone: Mapped[str | None]
+    email: Mapped[str | None]
+    notes: Mapped[str | None]
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class DeviceORM(Base):
     __tablename__ = "devices"
 
@@ -90,6 +102,7 @@ class InventoryTransactionORM(Base):
     from_status: Mapped[str | None]
     to_status: Mapped[str]
     customer_id: Mapped[UUID | None] = mapped_column(ForeignKey("customers.id"))
+    supplier_id: Mapped[UUID | None] = mapped_column(ForeignKey("suppliers.id"))
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
     note: Mapped[str | None]
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

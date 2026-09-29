@@ -1,11 +1,11 @@
-"""Tenants, users and device models: platform administration use cases."""
+"""Tenants, users, device models and suppliers: platform administration use cases."""
 
 from dataclasses import replace
 from typing import Any
 from uuid import UUID
 
 from app.application.context import Actor
-from app.domain.entities import DeviceModel, Tenant, User
+from app.domain.entities import DeviceModel, Supplier, Tenant, User
 from app.domain.enums import Role
 from app.domain.errors import ConflictError, NotFoundError, PermissionDeniedError
 from app.domain.ports import PasswordHasher, UnitOfWork
@@ -130,4 +130,39 @@ async def delete_device_model(uow: UnitOfWork, actor: Actor, model_id: UUID) -> 
     if await uow.device_models.is_in_use(model_id):
         raise ConflictError("มีอุปกรณ์ใช้งานรุ่นนี้อยู่ ไม่สามารถลบได้")
     await uow.device_models.delete(model_id)
+    await uow.flush()
+
+
+async def list_suppliers(uow: UnitOfWork, actor: Actor) -> list[Supplier]:
+    return await uow.suppliers.list()
+
+
+async def create_supplier(uow: UnitOfWork, actor: Actor, **data: Any) -> Supplier:
+    require_superadmin(actor.role)
+    supplier = Supplier(**{**data, "name": data["name"].strip()})
+    await uow.suppliers.add(supplier)
+    await uow.flush()
+    return supplier
+
+
+async def update_supplier(uow: UnitOfWork, actor: Actor, supplier_id: UUID, changes: dict[str, Any]) -> Supplier:
+    require_superadmin(actor.role)
+    supplier = await uow.suppliers.get(supplier_id)
+    if supplier is None:
+        raise NotFoundError("ไม่พบผู้จำหน่าย/ผู้ซ่อม")
+    if changes.get("name"):
+        changes["name"] = changes["name"].strip()
+    supplier = replace(supplier, **changes)
+    await uow.suppliers.update(supplier)
+    await uow.flush()
+    return supplier
+
+
+async def delete_supplier(uow: UnitOfWork, actor: Actor, supplier_id: UUID) -> None:
+    require_superadmin(actor.role)
+    if await uow.suppliers.get(supplier_id) is None:
+        raise NotFoundError("ไม่พบผู้จำหน่าย/ผู้ซ่อม")
+    if await uow.suppliers.is_in_use(supplier_id):
+        raise ConflictError("มีประวัติการส่งซ่อมอ้างถึงผู้จำหน่าย/ผู้ซ่อมรายนี้ ไม่สามารถลบได้")
+    await uow.suppliers.delete(supplier_id)
     await uow.flush()

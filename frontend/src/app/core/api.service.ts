@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { Customer, Device, DeviceModel, ImportResult, Installation, Tenant, User } from './models';
+import { Customer, Device, DeviceModel, ImportResult, Installation, Supplier, Tenant, User } from './models';
 
 const API = '/api/v1';
 
@@ -59,8 +59,8 @@ export class ApiService {
     return firstValueFrom(this.http.get(`${API}/inventory/import/template`, { responseType: 'blob' }));
   }
 
-  sendRepair(deviceId: string, note?: string | null) {
-    return this.post<Device>('/inventory/send-repair', { device_id: deviceId, note });
+  sendRepair(deviceId: string, note?: string | null, supplierId?: string | null) {
+    return this.post<Device>('/inventory/send-repair', { device_id: deviceId, note, supplier_id: supplierId });
   }
   repairDone(deviceId: string, qcNote: string) {
     return this.post<Device>('/inventory/repair-done', { device_id: deviceId, qc_note: qcNote });
@@ -111,5 +111,15 @@ export class ApiService {
   }
   deleteDeviceModel(id: string) {
     return this.delete<void>(`/device-models/${id}`);
+  }
+
+  createSupplier(body: Record<string, unknown>) {
+    return this.post<Supplier>('/suppliers', body);
+  }
+  updateSupplier(id: string, body: Record<string, unknown>) {
+    return this.patch<Supplier>(`/suppliers/${id}`, body);
+  }
+  deleteSupplier(id: string) {
+    return this.delete<void>(`/suppliers/${id}`);
   }
 }

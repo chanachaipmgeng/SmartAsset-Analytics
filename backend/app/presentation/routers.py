@@ -101,6 +101,27 @@ async def delete_device_model(model_id: UUID, actor: ActorDep, uow: UowDep):
     await admin.delete_device_model(uow, actor, model_id)
 
 
+# ---- suppliers ----
+@router.get("/suppliers", response_model=list[s.SupplierOut], tags=["suppliers"])
+async def list_suppliers(actor: ActorDep, uow: UowDep):
+    return await admin.list_suppliers(uow, actor)
+
+
+@router.post("/suppliers", response_model=s.SupplierOut, status_code=status.HTTP_201_CREATED, tags=["suppliers"])
+async def create_supplier(body: s.SupplierIn, actor: ActorDep, uow: UowDep):
+    return await admin.create_supplier(uow, actor, **body.model_dump())
+
+
+@router.patch("/suppliers/{supplier_id}", response_model=s.SupplierOut, tags=["suppliers"])
+async def update_supplier(supplier_id: UUID, body: s.SupplierPatch, actor: ActorDep, uow: UowDep):
+    return await admin.update_supplier(uow, actor, supplier_id, body.model_dump(exclude_unset=True))
+
+
+@router.delete("/suppliers/{supplier_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["suppliers"])
+async def delete_supplier(supplier_id: UUID, actor: ActorDep, uow: UowDep):
+    await admin.delete_supplier(uow, actor, supplier_id)
+
+
 # ---- devices ----
 @router.get("/devices", response_model=list[s.DeviceOut], tags=["devices"])
 async def list_devices(
@@ -194,8 +215,8 @@ async def import_template(actor: ActorDep, uow: UowDep):
 
 
 @router.post("/inventory/send-repair", response_model=s.DeviceOut, tags=["inventory"])
-async def send_repair(body: s.MovementIn, actor: ActorDep, uow: UowDep):
-    return await inventory.send_repair(uow, actor, body.device_id, body.note)
+async def send_repair(body: s.SendRepairIn, actor: ActorDep, uow: UowDep):
+    return await inventory.send_repair(uow, actor, body.device_id, body.note, body.supplier_id)
 
 
 @router.post("/inventory/repair-done", response_model=s.DeviceOut, tags=["inventory"])

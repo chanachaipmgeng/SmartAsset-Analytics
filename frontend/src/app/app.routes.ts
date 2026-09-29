@@ -62,6 +62,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/device-models').then((m) => m.DeviceModelsPage),
       },
       {
+        path: 'admin/suppliers',
+        title: 'ผู้จำหน่าย / ผู้ซ่อม',
+        loadComponent: () => import('./pages/admin/suppliers').then((m) => m.SuppliersPage),
+      },
+      {
         path: 'admin/users',
         title: 'ผู้ใช้งาน',
         canActivate: [adminGuard],

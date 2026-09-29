@@ -47,6 +47,7 @@ async def _record(
     *,
     from_tenant_id: UUID | None = None,
     customer_id: UUID | None = None,
+    supplier_id: UUID | None = None,
     note: str | None = None,
 ) -> None:
     await uow.transactions.add(
@@ -58,6 +59,7 @@ async def _record(
             tenant_id=device.tenant_id,
             from_tenant_id=from_tenant_id,
             customer_id=customer_id,
+            supplier_id=supplier_id,
             user_id=actor.user_id,
             note=note,
         )
@@ -215,9 +217,13 @@ async def return_device(uow: UnitOfWork, actor: Actor, device_id: UUID, note: st
     return await _view(uow, device.id)
 
 
-async def send_repair(uow: UnitOfWork, actor: Actor, device_id: UUID, note: str | None) -> DeviceView:
+async def send_repair(
+    uow: UnitOfWork, actor: Actor, device_id: UUID, note: str | None, supplier_id: UUID | None = None
+) -> DeviceView:
     """Send for repair from stock, checked-out or installed; an installed device leaves its site."""
     require_write(actor.role)
+    if supplier_id is not None and await uow.suppliers.get(supplier_id) is None:
+        raise NotFoundError("ไม่พบผู้จำหน่าย/ผู้ซ่อม")
     device = await _load_device(uow, device_id)
     from_status = device.status
     device = replace(device, status=next_status(device, TransactionType.SEND_REPAIR))
@@ -227,7 +233,16 @@ async def send_repair(uow: UnitOfWork, actor: Actor, device_id: UUID, note: str 
         customer_id = active.customer_id
         await uow.installations.update(replace(active, removed_at=datetime.now(UTC)))
     await uow.devices.update(device)
-    await _record(uow, actor, device, TransactionType.SEND_REPAIR, from_status, customer_id=customer_id, note=note)
+    await _record(
+        uow,
+        actor,
+        device,
+        TransactionType.SEND_REPAIR,
+        from_status,
+        customer_id=customer_id,
+        supplier_id=supplier_id,
+        note=note,
+    )
     return await _view(uow, device.id)
 
 

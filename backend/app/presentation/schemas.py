@@ -111,6 +111,35 @@ class DeviceModelOut(Out):
     description: str | None
 
 
+# ---- suppliers ----
+Phone = Annotated[str, StringConstraints(strip_whitespace=True, max_length=50)]
+
+
+class SupplierIn(BaseModel):
+    name: Name
+    contact_person: Name | None = None
+    phone: Phone | None = None
+    email: EmailStr | None = None
+    notes: Text | None = None
+
+
+class SupplierPatch(BaseModel):
+    name: Name | None = None
+    contact_person: Name | None = None
+    phone: Phone | None = None
+    email: EmailStr | None = None
+    notes: Text | None = None
+
+
+class SupplierOut(Out):
+    id: UUID
+    name: str
+    contact_person: str | None
+    phone: str | None
+    email: str | None
+    notes: str | None
+
+
 # ---- devices / inventory ----
 class DeviceIn(BaseModel):
     serial_number: Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=64)]
@@ -163,6 +192,10 @@ class LoanIn(MovementIn):
     due_date: date
 
 
+class SendRepairIn(MovementIn):
+    supplier_id: UUID | None = None
+
+
 class QcFailIn(BaseModel):
     device_id: UUID
     note: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
@@ -207,6 +240,7 @@ class TransactionOut(Out):
     user_name: str
     note: str | None
     occurred_at: datetime
+    supplier_name: str | None = None
 
 
 class CountOut(Out):

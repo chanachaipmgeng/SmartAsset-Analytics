@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, output, signal } 
 import { ApiService } from '../core/api.service';
 import { DeviceActionId, actionTitle } from '../core/device-actions';
 import { toIsoDate } from '../core/labels';
-import { Customer, Device, Tenant } from '../core/models';
+import { Customer, Device, Supplier, Tenant } from '../core/models';
 import { NotifyService } from '../core/notify.service';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from './syncfusion';
 
@@ -46,6 +46,19 @@ const CENTRAL_STOCK = '__central__';
           }
           @if (movement() === 'retire') {
             <div class="full muted">อุปกรณ์ที่ปลดระวางจะไม่นับรวมในสต็อก แต่ประวัติยังคงอยู่</div>
+          }
+          @if (movement() === 'send_repair') {
+            <div class="full">
+              <label>ผู้ซ่อม / ผู้จำหน่าย</label>
+              <ejs-dropdownlist
+                [dataSource]="supplierOptions()"
+                [fields]="{ value: 'value', text: 'text' }"
+                [(value)]="supplier"
+                [allowFiltering]="true"
+                [showClearButton]="true"
+                placeholder="ไม่ระบุ (ซ่อมเอง)"
+              ></ejs-dropdownlist>
+            </div>
           }
           @if (movement() === 'send_repair' && device()?.status === 'INSTALLED') {
             <div class="full muted">เครื่องนี้ติดตั้งอยู่ ระบบจะปิดจุดติดตั้งเดิมให้อัตโนมัติ</div>
@@ -136,6 +149,15 @@ export class DeviceActionDialogs {
   // Lookups load on first use so pages that never open a dialog skip the requests.
   private readonly needTenants = signal(false);
   private readonly needCustomers = signal(false);
+  private readonly needSuppliers = signal(false);
+  private readonly suppliers = httpResource<Supplier[]>(
+    () => (this.needSuppliers() ? '/api/v1/suppliers' : undefined),
+    { defaultValue: [] },
+  );
+  protected readonly supplierOptions = computed(() =>
+    this.suppliers.value().map((s) => ({ value: s.id, text: s.name })),
+  );
+  protected readonly supplier = signal<string | null>(null);
   private readonly tenants = httpResource<Tenant[]>(() => (this.needTenants() ? '/api/v1/tenants' : undefined), {
     defaultValue: [],
   });
@@ -227,6 +249,8 @@ export class DeviceActionDialogs {
       return;
     }
     if (action === 'transfer') this.needTenants.set(true);
+    if (action === 'send_repair') this.needSuppliers.set(true);
+    this.supplier.set(null);
     this.note.set('');
     this.transferTarget.set(null);
     this.dueDate.set(new Date(Date.now() + 14 * 86_400_000));
@@ -263,7 +287,7 @@ export class DeviceActionDialogs {
       if (kind === 'checkout') updated = await this.api.checkOut(d.id, note);
       else if (kind === 'return') updated = await this.api.returnDevice(d.id, note);
       else if (kind === 'retire') updated = await this.api.retireDevice(d.id, note);
-      else if (kind === 'send_repair') updated = await this.api.sendRepair(d.id, note);
+      else if (kind === 'send_repair') updated = await this.api.sendRepair(d.id, note, this.supplier());
       else if (kind === 'repair_done') updated = await this.api.repairDone(d.id, note ?? '');
       else if (kind === 'loan') updated = await this.api.loan(d.id, toIsoDate(this.dueDate())!, note);
       else if (kind === 'qc_pass') updated = await this.api.qcPass(d.id, note);
