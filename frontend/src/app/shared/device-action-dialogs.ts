@@ -5,6 +5,7 @@ import { DeviceActionId, actionTitle } from '../core/device-actions';
 import { toIsoDate } from '../core/labels';
 import { Customer, Device, Supplier, Tenant } from '../core/models';
 import { NotifyService } from '../core/notify.service';
+import { InstallationMap, LatLng } from './installation-map';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from './syncfusion';
 
 type Movement = Exclude<DeviceActionId, 'install'>;
@@ -14,7 +15,7 @@ const CENTRAL_STOCK = '__central__';
 /** Movement and install dialogs shared by the devices page and the scan station. */
 @Component({
   selector: 'app-device-action-dialogs',
-  imports: [...FORM_IMPORTS],
+  imports: [...FORM_IMPORTS, InstallationMap],
   template: `
     <ejs-dialog
       [visible]="movement() !== null"
@@ -106,6 +107,12 @@ const CENTRAL_STOCK = '__central__';
           <div>
             <label>วันที่ติดตั้ง *</label>
             <ejs-datepicker [(value)]="installDate" format="dd/MM/yyyy"></ejs-datepicker>
+          </div>
+          <div class="full">
+            <label>ตำแหน่งติดตั้ง * <span class="muted">คลิกบนแผนที่เพื่อปักหมุด</span></label>
+            @if (installOpen()) {
+              <app-installation-map [pin]="installPin()" [focus]="installPin()" [pickable]="true" (pick)="onPickInstall($event)" height="260px" />
+            }
           </div>
           <div>
             <label>ละติจูด *</label>
@@ -221,6 +228,11 @@ export class DeviceActionDialogs {
   protected readonly longitude = signal<number | null>(null);
   protected readonly address = signal('');
   protected readonly locating = signal(false);
+  protected readonly installPin = computed(() => {
+    const latitude = this.latitude();
+    const longitude = this.longitude();
+    return latitude === null || longitude === null ? null : { latitude, longitude };
+  });
   protected readonly customerOptions = computed(() => {
     const tenant = this.device()?.tenant_id;
     return this.customers
@@ -255,6 +267,11 @@ export class DeviceActionDialogs {
     this.transferTarget.set(null);
     this.dueDate.set(new Date(Date.now() + 14 * 86_400_000));
     this.movement.set(action);
+  }
+
+  protected onPickInstall(point: LatLng): void {
+    this.latitude.set(point.latitude);
+    this.longitude.set(point.longitude);
   }
 
   protected useMyLocation(): void {

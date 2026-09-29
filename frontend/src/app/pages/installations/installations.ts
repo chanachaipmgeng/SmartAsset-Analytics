@@ -1,11 +1,12 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { SliderModule } from '@syncfusion/ej2-angular-inputs';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
 import { SERVICE_LEVEL_LABELS, toDate, toIsoDate } from '../../core/labels';
 import { Installation } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
-import { InstallationMap } from '../../shared/installation-map';
+import { InstallationMap, LatLng } from '../../shared/installation-map';
 import { PageHeader } from '../../shared/page-header';
 import { DataGrid, GridCell, GridColumn } from '../../shared/data-grid';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
@@ -18,7 +19,7 @@ interface NearbyQuery {
 
 @Component({
   selector: 'app-installations',
-  imports: [...FORM_IMPORTS, InstallationMap, PageHeader, DataGrid, GridCell],
+  imports: [...FORM_IMPORTS, SliderModule, InstallationMap, PageHeader, DataGrid, GridCell],
   templateUrl: './installations.html',
   styleUrl: './installations.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,7 +48,13 @@ export class InstallationsPage {
 
   protected readonly searchLat = signal<number | null>(13.7563);
   protected readonly searchLng = signal<number | null>(100.5018);
-  protected readonly searchRadiusKm = signal<number | null>(10);
+  protected readonly searchRadiusKm = signal(10);
+  protected readonly radiusTooltip = { isVisible: true, placement: 'Before' as const, format: 'N0' };
+  protected readonly searchPin = computed(() => {
+    const latitude = this.searchLat();
+    const longitude = this.searchLng();
+    return latitude === null || longitude === null ? null : { latitude, longitude };
+  });
 
   protected readonly displayed = computed(() =>
     this.nearbyQuery() ? (this.nearby.value() ?? []) : this.installations.value(),
@@ -90,6 +97,11 @@ export class InstallationsPage {
   protected readonly editLat = signal<number | null>(null);
   protected readonly editLng = signal<number | null>(null);
   protected readonly editAddress = signal('');
+  protected readonly editPin = computed(() => {
+    const latitude = this.editLat();
+    const longitude = this.editLng();
+    return latitude === null || longitude === null ? null : { latitude, longitude };
+  });
   protected readonly editValid = computed(
     () => !!this.editDate() && this.editLat() !== null && this.editLng() !== null,
   );
@@ -109,8 +121,24 @@ export class InstallationsPage {
     this.nearbyQuery.set(null);
   }
 
+  protected onPick(point: LatLng): void {
+    this.searchLat.set(point.latitude);
+    this.searchLng.set(point.longitude);
+    this.refreshNearby();
+  }
+
+  /** Re-runs an active nearby search after the centre or radius changes. */
+  protected refreshNearby(): void {
+    if (this.nearbyQuery()) this.searchNearby();
+  }
+
   protected onRowSelected(row: { id: string } | null): void {
     this.selected.set(row ? (this.displayed().find((i) => i.id === row.id) ?? null) : null);
+  }
+
+  protected onPickEdit(point: LatLng): void {
+    this.editLat.set(point.latitude);
+    this.editLng.set(point.longitude);
   }
 
   protected openEdit(): void {

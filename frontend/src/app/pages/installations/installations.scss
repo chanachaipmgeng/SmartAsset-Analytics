@@ -1,7 +1,11 @@
 .nearby {
   .title {
     font-weight: 600;
-    margin-bottom: 10px;
+  }
+
+  .hint {
+    margin: 2px 0 10px;
+    font-size: 13px;
   }
 
   .fields {
@@ -15,6 +19,15 @@
 
       @media (max-width: 599px) {
         width: calc(50% - 6px);
+      }
+    }
+
+    > .radius {
+      width: 260px;
+      padding-bottom: 14px;
+
+      @media (max-width: 599px) {
+        width: 100%;
       }
     }
 

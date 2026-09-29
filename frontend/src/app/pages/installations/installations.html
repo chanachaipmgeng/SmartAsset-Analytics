@@ -8,6 +8,7 @@
 
   <div class="panel nearby">
     <div class="title">ค้นหาอุปกรณ์ในรัศมี</div>
+    <p class="hint muted">คลิกบนแผนที่เพื่อตั้งจุดกลาง แล้วเลื่อนแถบเพื่อปรับรัศมี</p>
     <div class="fields">
       <div>
         <label>ละติจูด</label>
@@ -17,9 +18,17 @@
         <label>ลองจิจูด</label>
         <ejs-numerictextbox [(value)]="searchLng" [min]="-180" [max]="180" format="N6" [decimals]="6" [showSpinButton]="false"></ejs-numerictextbox>
       </div>
-      <div>
-        <label>รัศมี (กม.)</label>
-        <ejs-numerictextbox [(value)]="searchRadiusKm" [min]="0.1" [max]="500" format="N1"></ejs-numerictextbox>
+      <div class="radius">
+        <label>รัศมี {{ searchRadiusKm() }} กม.</label>
+        <ejs-slider
+          [value]="searchRadiusKm()"
+          [min]="1"
+          [max]="100"
+          [step]="1"
+          [tooltip]="radiusTooltip"
+          (change)="searchRadiusKm.set($any($event).value)"
+          (changed)="refreshNearby()"
+        ></ejs-slider>
       </div>
       <button ejs-button [isPrimary]="true" iconCss="e-icons e-search" (click)="searchNearby()">ค้นหา</button>
       @if (nearbyQuery()) {
@@ -30,7 +39,15 @@
   </div>
 
   <div class="panel map">
-    <app-installation-map [installations]="mapPoints()" [focus]="mapFocus()" height="440px" />
+    <app-installation-map
+      [installations]="mapPoints()"
+      [focus]="mapFocus()"
+      [pin]="searchPin()"
+      [radiusKm]="searchRadiusKm()"
+      [pickable]="true"
+      (pick)="onPick($event)"
+      height="440px"
+    />
   </div>
 
   <div class="panel">
@@ -69,6 +86,12 @@
       <div class="full">
         <label>วันที่ติดตั้ง *</label>
         <ejs-datepicker [(value)]="editDate" format="dd/MM/yyyy"></ejs-datepicker>
+      </div>
+      <div class="full">
+        <label>ตำแหน่ง * <span class="muted">คลิกบนแผนที่เพื่อย้ายหมุด</span></label>
+        @if (editOpen()) {
+          <app-installation-map [pin]="editPin()" [focus]="editPin()" [pickable]="true" (pick)="onPickEdit($event)" height="240px" />
+        }
       </div>
       <div>
         <label>ละติจูด *</label>
