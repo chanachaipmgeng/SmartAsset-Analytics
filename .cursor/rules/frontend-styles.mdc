@@ -1,0 +1,37 @@
+---
+description: Styling with Syncfusion M3 tokens, Tailwind v4 and cascade layers
+globs: frontend/src/**/*.scss,frontend/src/**/*.css,frontend/src/**/*.html,frontend/angular.json
+alwaysApply: false
+---
+
+# Styling
+
+Cascade, lowest first: `@layer syncfusion.base` (ej2-base SCSS in `styles.scss`) → `@layer syncfusion.components`
+(package CSS imported in `tailwind.css`) → `@layer utilities` (Tailwind) → unlayered `styles.scss` + component styles.
+Add new Syncfusion packages to `tailwind.css` with `layer(syncfusion.components)`, not to `angular.json`.
+
+## Colours
+
+Syncfusion tokens are `r, g, b` triplets. Never hard-code hex; it breaks dark mode and the brand.
+
+```scss
+// ❌ color: #4f46e5;  background: rgba($primary, .1);
+// ✅
+@use 'tokens' as *;
+.x { color: sf(primary); border-color: sf-a(primary, 0.4); }
+// plain CSS: rgb(var(--color-sf-primary)) / rgba(var(--color-sf-primary), 0.4)
+```
+
+- Tailwind colours map to M3 roles: `bg-surface`, `text-on-surface-variant`, `bg-primary-container`, `text-error` …; `dark:` = `.e-dark-mode`.
+- Brand overrides live only in `:root` / `:root.e-dark-mode` in `styles.scss`.
+- Mixins (`@use 'mixins' as *;`): `card`, `card-hover`, `status-badge($tone)`, `mono`, `up($bp)`.
+  Existing globals: `.page`, `.panel`, `.form-grid`, `.tone-chip[data-tone]`, `.lift`, `.stagger`, `.bento*`, `.serial-number`.
+
+## Syncfusion overrides
+
+- Prefer `cssClass` or component SCSS (`:host ::ng-deep .e-...`). Avoid `!important`: inside layers a Syncfusion
+  `!important` beats ours.
+- Overriding a base property (e.g. background) also overrides Syncfusion `:hover`/`:focus` states; exclude them
+  (`.e-row.e-altrow:not(:hover)`).
+- No Tailwind preflight. Font is Sarabun (index.html); charts/maps are forced to Sarabun in `styles.scss`.
+- Respect `prefers-reduced-motion`; reuse keyframes `fade-up`, `fade-in`, `scale-in`, `shimmer`.

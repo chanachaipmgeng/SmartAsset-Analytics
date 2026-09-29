@@ -1,6 +1,24 @@
 # myAssets-office — ระบบสต็อกและติดตามเครื่องลงเวลา
 
-Angular 22 (Syncfusion 32.2.3, Material 3) · FastAPI · PostgreSQL 16 + PostGIS · nginx
+ติดตามอุปกรณ์ (เครื่องสแกนหน้า/ลายนิ้วมือ ฯลฯ) รายเครื่องตั้งแต่รับเข้าคลัง โอนให้กลุ่มลูกค้า เบิกออก ติดตั้งที่หน้างานพร้อมพิกัด ส่งซ่อม/QC จนปลดระวาง โดยทุกการเคลื่อนไหวถูกบันทึกเป็นประวัติ ข้อมูลแต่ละกลุ่มลูกค้าแยกกันด้วย Row-Level Security
+
+Angular 22 (Syncfusion 32.2.3 Material 3, Tailwind v4) · FastAPI · PostgreSQL 16 + PostGIS · nginx
+
+## เอกสาร
+
+| เอกสาร | สำหรับ |
+| --- | --- |
+| [docs/user-guide/README.md](docs/user-guide/README.md) | คู่มือผู้ใช้ พร้อมภาพหน้าจอทุกขั้นตอน |
+| [docs/architecture.md](docs/architecture.md) | สถาปัตยกรรม, กฎธุรกิจ, API, แนวทางเขียนโค้ดและสไตล์ |
+| `.cursor/rules/`, `.cursor/skills/` | กฎและขั้นตอนงานสำหรับ AI agent ใน Cursor |
+
+## ความสามารถหลัก
+
+- แดชบอร์ด: จำนวนตามสถานะพร้อมแนวโน้ม 7 วัน, กราฟ 30 วัน, กิจกรรมล่าสุด
+- อุปกรณ์: รับเข้า, นำเข้าจาก Excel/CSV (ตรวจก่อนบันทึก), โอน, เบิก, ติดตั้ง, รับคืน, ส่งซ่อม/QC, ปลดระวาง, ประวัติรายเครื่อง
+- สถานีสแกน: เครื่องยิงบาร์โค้ดหรือกล้อง แล้วทำรายการได้ทันที
+- ลูกค้า, จุดติดตั้งบนแผนที่ และค้นหาอุปกรณ์ในรัศมี
+- ตั้งค่ารุ่นอุปกรณ์ กลุ่มลูกค้า ผู้ใช้ (4 บทบาท), ธีมสว่าง/มืด, ใช้งานบนมือถือได้
 
 ## ติดตั้งด้วย Docker
 
@@ -34,7 +52,16 @@ docker compose exec db pg_dump -U inventory_owner inventory > backup.sql   # ส
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db   # เปิด DB ที่ 127.0.0.1:5434
 cd backend && uv sync && uv run uvicorn app.main:app --port 8001 --reload
-cd frontend && npm ci && npm run license:generate && npx ng serve --port 4210
+cd frontend && npm ci && npm run license:generate && npx ng serve --port 4210   # proxy /api → 8001
 ```
 
 `backend/.env` ต้องใช้รหัสผ่านเดียวกับ `POSTGRES_PASSWORD` / `APP_DB_PASSWORD` ใน `.env` ของ Docker
+
+ถ้าเคยรัน `docker compose up` แบบไม่มีไฟล์ dev ภายหลัง DB จะไม่เปิดพอร์ต 5434 ให้รันคำสั่งบรรทัดแรกอีกครั้ง
+
+## ทดสอบ
+
+```bash
+cd backend && uv run pytest          # test_api_flow ต้องมี DB ที่ migrate + seed แล้ว
+cd frontend && npx ng build && npx ng test
+```

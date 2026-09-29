@@ -1,0 +1,46 @@
+---
+description: FastAPI backend layering, errors, tenancy and migrations
+globs: backend/**/*.py
+alwaysApply: false
+---
+
+# Backend conventions
+
+Layers: `domain` (entities, enums, errors, `ports` Protocols, `rules`) ← `application` (use cases)
+← `infrastructure` (SQLAlchemy repos, security, spreadsheet) / `presentation` (routers, schemas, deps).
+`domain` and `application` never import SQLAlchemy or FastAPI.
+
+## Router → use case
+
+```python
+# ✅ router stays thin: schema in, one use case call
+@router.post("/inventory/send-repair", response_model=s.DeviceOut, tags=["inventory"])
+async def send_repair(body: s.MovementIn, actor: ActorDep, uow: UowDep):
+    return await inventory.send_repair(uow, actor, body.device_id, body.note)
+```
+
+- Use cases take `(uow: UnitOfWork, actor: Actor, ...)`, check permissions with `require_write/require_admin/require_superadmin`,
+  and status with `next_status(device, TransactionType.X)`; return read models (`DeviceView`).
+- Load rows you will mutate with `uow.devices.get(id, for_update=True)`; record the movement via `_record(...)`.
+- `UowDep` commits before the response is sent; do not commit manually.
+
+## Errors
+
+Raise `DomainError` subclasses with a Thai message; `presentation/errors.py` maps them:
+`AuthenticationError` 401, `PermissionDeniedError` 403, `NotFoundError` 404,
+`ConflictError`/`InvalidTransitionError` 409, `ValidationError` 422. Never raise `HTTPException` from use cases.
+
+## Tenancy
+
+- Use `actor.resolve_tenant(requested)` for writes that need a tenant.
+- New tables with `tenant_id`: `ENABLE ROW LEVEL SECURITY` + policy on `current_setting('app.tenant_id', true)` in the same migration.
+
+## Migrations
+
+`alembic/versions/000N_<snake_name>.py`, `revision = "000N_<snake_name>"`, `down_revision` = previous file.
+Changing an enum: rewrite the CHECK constraint like `0003_repair_status.py`, with a working `downgrade()`.
+
+## Tests
+
+`tests/test_rules.py` for pure rules; `tests/test_api_flow.py` for end-to-end through `httpx.ASGITransport`
+against the dev DB, creating its own tenants/users and deleting them in `_cleanup`.

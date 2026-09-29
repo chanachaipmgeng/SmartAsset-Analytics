@@ -1,0 +1,29 @@
+---
+description: myAssets project map, language and cross-cutting invariants
+alwaysApply: true
+---
+
+# myAssets project
+
+Device stock and lifecycle tracking (check-in → transfer → check-out → install → repair → retire), multi-tenant.
+Details: `docs/architecture.md`. User guide: `docs/user-guide/README.md`.
+
+- `backend/` FastAPI + SQLAlchemy async + PostgreSQL/PostGIS with Row-Level Security
+- `frontend/` Angular 22 + Syncfusion 32 Material 3 + Tailwind v4
+- Deploy: `docker-compose.yml` (nginx, frontend, api, db); dev DB on `127.0.0.1:5434` via `docker-compose.dev.yml`
+
+## Invariants
+
+- User-facing text (UI labels, API error messages) is Thai. Code, comments and commit messages are English.
+- The device state machine exists twice and must stay in sync:
+  `backend/app/domain/rules.py` (`ALLOWED_TRANSITIONS`) and `frontend/src/app/core/device-actions.ts`.
+- Enums (status, transaction type, role) exist in `backend/app/domain/enums.py`, a CHECK constraint in migrations,
+  `frontend/src/app/core/models.ts` and Thai labels in `frontend/src/app/core/labels.ts`.
+- Every status change writes one `inventory_transactions` row in the same DB transaction.
+- Never bypass tenant isolation: the app DB role is subject to RLS; do not query with the owner role outside migrations/tests.
+
+## Verification before commit
+
+- Backend: `cd backend && uv run pytest` (API flow tests need the dev DB migrated + seeded)
+- Frontend: `cd frontend && npx ng build`
+- Commit per feature with a descriptive message (`feat:`, `fix(ui):`, `style:`, `docs:`).

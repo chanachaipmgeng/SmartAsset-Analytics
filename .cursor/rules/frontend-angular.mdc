@@ -1,0 +1,39 @@
+---
+description: Angular component, data and form patterns for the frontend
+globs: frontend/src/app/**/*.ts,frontend/src/app/**/*.html
+alwaysApply: false
+---
+
+# Angular conventions
+
+- Standalone components, `changeDetection: ChangeDetectionStrategy.OnPush`, `inject()`, signals, `@if/@for` control flow.
+- Zoneless: state that drives the template must be a signal (or `computed`); never rely on zone.js.
+
+## Data
+
+```ts
+// ✅ read with httpResource, mutate with ApiService, then reload
+protected readonly models = httpResource<DeviceModel[]>(() => '/api/v1/device-models', { defaultValue: [] });
+
+await this.api.createDeviceModel(body);
+this.notify.success('บันทึกรุ่นอุปกรณ์แล้ว');
+this.models.reload();
+```
+
+- Add mutation methods to `core/api.service.ts` (returns `Promise`); do not call `HttpClient` from pages.
+- Wrap mutations in try/catch → `this.notify.error(err)`; track `busy` with a signal and disable buttons while busy.
+- Destructive actions: `await this.confirm.ask({ ..., danger: true })` first.
+
+## Forms and Syncfusion
+
+- Import `FORM_IMPORTS` and `DIALOG_ANIMATION` from `shared/syncfusion.ts`.
+- One signal per field + `computed` validity. Put `[liveValue]="field"` next to `[(value)]` on `ejs-textbox`/`ejs-textarea`
+  (Syncfusion only emits on blur).
+- Dialogs: `<ejs-dialog [visible]="open()" target="body" [isModal]="true">` with `.form-grid` content; `.full` spans both columns.
+- Tables: `<app-data-grid [data] [columns] perspectiveKey exportName [loading] [error] (selectionChange) (retry)>`.
+- Device actions come from `availableActions()` (`core/device-actions.ts`) and `shared/device-action-dialogs.ts`.
+
+## Text
+
+Thai UI strings inline in templates; status/transaction labels from `core/labels.ts`;
+Syncfusion built-in strings from `core/locale.ts` (add missing keys there, never leave English).
