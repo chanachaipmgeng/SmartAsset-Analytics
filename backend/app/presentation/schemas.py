@@ -13,6 +13,11 @@ Password = Annotated[str, StringConstraints(min_length=8, max_length=128)]
 Latitude = Annotated[float, Field(ge=-90, le=90)]
 Longitude = Annotated[float, Field(ge=-180, le=180)]
 Mac = Annotated[str, StringConstraints(strip_whitespace=True, pattern=r"^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$")]
+AssetTag = Annotated[str, StringConstraints(strip_whitespace=True, max_length=50)]
+Firmware = Annotated[str, StringConstraints(strip_whitespace=True, max_length=50)]
+TaxId = Annotated[str, StringConstraints(strip_whitespace=True, pattern=r"^[0-9]{13}$")]
+Short = Annotated[str, StringConstraints(strip_whitespace=True, max_length=200)]
+PhoneText = Annotated[str, StringConstraints(strip_whitespace=True, max_length=50)]
 
 
 class Out(BaseModel):
@@ -150,6 +155,9 @@ class DeviceIn(BaseModel):
     cost: Annotated[Decimal, Field(ge=0, max_digits=12, decimal_places=2)] | None = None
     warranty_end: date | None = None
     notes: Text | None = None
+    asset_tag: AssetTag | None = None
+    firmware_version: Firmware | None = None
+    supplier_id: UUID | None = None
 
 
 class DevicePatch(BaseModel):
@@ -159,6 +167,9 @@ class DevicePatch(BaseModel):
     cost: Annotated[Decimal, Field(ge=0, max_digits=12, decimal_places=2)] | None = None
     warranty_end: date | None = None
     notes: Text | None = None
+    asset_tag: AssetTag | None = None
+    firmware_version: Firmware | None = None
+    supplier_id: UUID | None = None
 
 
 class DeviceOut(Out):
@@ -177,6 +188,10 @@ class DeviceOut(Out):
     notes: str | None
     created_at: datetime
     loan_due_date: date | None = None
+    asset_tag: str | None = None
+    firmware_version: str | None = None
+    supplier_id: UUID | None = None
+    supplier_name: str | None = None
 
 
 class MovementIn(BaseModel):
@@ -211,6 +226,9 @@ class ImportRowOut(Out):
     warranty_end: date | None
     notes: str | None
     tenant_code: str | None
+    asset_tag: str | None = None
+    firmware_version: str | None = None
+    supplier: str | None = None
     errors: list[str]
 
 
@@ -262,6 +280,9 @@ class CustomerIn(BaseModel):
     email: EmailStr | None = None
     service_level: ServiceLevel = ServiceLevel.STANDARD
     tenant_id: UUID | None = None
+    address: Text | None = None
+    tax_id: TaxId | None = None
+    notes: Text | None = None
 
 
 class CustomerPatch(BaseModel):
@@ -271,6 +292,9 @@ class CustomerPatch(BaseModel):
     email: EmailStr | None = None
     service_level: ServiceLevel | None = None
     is_active: bool | None = None
+    address: Text | None = None
+    tax_id: TaxId | None = None
+    notes: Text | None = None
 
 
 class CustomerOut(Out):
@@ -282,6 +306,9 @@ class CustomerOut(Out):
     email: str | None
     service_level: ServiceLevel
     is_active: bool
+    address: str | None = None
+    tax_id: str | None = None
+    notes: str | None = None
 
 
 class InstallationIn(BaseModel):
@@ -291,6 +318,9 @@ class InstallationIn(BaseModel):
     latitude: Latitude
     longitude: Longitude
     address: Text | None = None
+    site_contact: Short | None = None
+    site_phone: PhoneText | None = None
+    notes: Text | None = None
 
 
 class InstallationPatch(BaseModel):
@@ -298,6 +328,9 @@ class InstallationPatch(BaseModel):
     latitude: Latitude | None = None
     longitude: Longitude | None = None
     address: Text | None = None
+    site_contact: Short | None = None
+    site_phone: PhoneText | None = None
+    notes: Text | None = None
 
 
 class InstallationOut(Out):
@@ -315,6 +348,10 @@ class InstallationOut(Out):
     address: str | None
     removed_at: datetime | None
     distance_m: float | None = None
+    site_contact: str | None = None
+    site_phone: str | None = None
+    notes: str | None = None
+    removal_reason: str | None = None
 
 
 class ActivityDayOut(Out):

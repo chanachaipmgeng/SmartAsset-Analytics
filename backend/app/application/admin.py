@@ -164,6 +164,6 @@ async def delete_supplier(uow: UnitOfWork, actor: Actor, supplier_id: UUID) -> N
     if await uow.suppliers.get(supplier_id) is None:
         raise NotFoundError("ไม่พบผู้จำหน่าย/ผู้ซ่อม")
     if await uow.suppliers.is_in_use(supplier_id):
-        raise ConflictError("มีประวัติการส่งซ่อมอ้างถึงผู้จำหน่าย/ผู้ซ่อมรายนี้ ไม่สามารถลบได้")
+        raise ConflictError("มีอุปกรณ์หรือประวัติการส่งซ่อมอ้างถึงผู้จำหน่าย/ผู้ซ่อมรายนี้ ไม่สามารถลบได้")
     await uow.suppliers.delete(supplier_id)
     await uow.flush()

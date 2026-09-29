@@ -71,6 +71,9 @@ class DeviceORM(Base):
     warranty_end: Mapped[date | None] = mapped_column(Date)
     notes: Mapped[str | None]
     loan_due_date: Mapped[date | None] = mapped_column(Date)
+    asset_tag: Mapped[str | None]
+    firmware_version: Mapped[str | None]
+    supplier_id: Mapped[UUID | None] = mapped_column(ForeignKey("suppliers.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
@@ -87,6 +90,9 @@ class CustomerORM(Base):
     phone: Mapped[str | None]
     email: Mapped[str | None]
     service_level: Mapped[str] = mapped_column(String)
+    address: Mapped[str | None]
+    tax_id: Mapped[str | None]
+    notes: Mapped[str | None]
     is_active: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -125,6 +131,10 @@ class InstallationORM(Base):
         )
     )
     address: Mapped[str | None]
+    site_contact: Mapped[str | None]
+    site_phone: Mapped[str | None]
+    notes: Mapped[str | None]
+    removal_reason: Mapped[str | None]
     removed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

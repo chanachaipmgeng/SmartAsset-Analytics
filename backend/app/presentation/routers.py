@@ -221,7 +221,10 @@ async def import_devices(
 async def import_template(actor: ActorDep, uow: UowDep):
     models = [f"{m.brand} {m.name}" for m in await uow.device_models.list()]
     headers = device_import.template_headers(include_tenant=actor.is_superadmin)
-    example = ["SN-0001", models[0] if models else "", "00:11:22:33:44:55", "2026-09-29", 12500, "2027-09-29", "ตัวอย่าง"]
+    example = [
+        "SN-0001", models[0] if models else "", "00:11:22:33:44:55", "2026-09-29", 12500, "2027-09-29", "ตัวอย่าง",
+        "AT-0001", "", "",
+    ]
     content = spreadsheet.build_template(headers, example[: len(headers)], models)
     return Response(
         content,

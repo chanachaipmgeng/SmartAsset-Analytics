@@ -13,14 +13,6 @@
     }
   </app-page-header>
 
-  <app-record-view
-    [(open)]="viewOpen"
-    [header]="selected()?.company_name ?? 'ลูกค้า'"
-    [fields]="viewFields()"
-    [editable]="auth.canWrite()"
-    (edit)="openEdit()"
-  />
-
   <app-filter-chips [options]="filters()" [(value)]="activeFilter" label="กรองตามสถานะลูกค้า" />
 
   <div class="panel">
@@ -39,6 +31,9 @@
       (rowAction)="onRowAction($event)"
       (retry)="customers.reload()"
     >
+      <ng-template gridCell="company_name" let-row>
+        <a class="company-link" [routerLink]="['/customers', row.id]" (click)="$event.stopPropagation()">{{ row.company_name }}</a>
+      </ng-template>
       <ng-template gridCell="level_label" let-row>
         <span class="level-chip" [attr.data-level]="row.service_level">{{ row.level_label }}</span>
       </ng-template>
@@ -86,6 +81,21 @@
       <div>
         <label>ระดับบริการ</label>
         <ejs-dropdownlist [dataSource]="levelOptions" [fields]="{ value: 'value', text: 'text' }" [(value)]="serviceLevel"></ejs-dropdownlist>
+      </div>
+      <div>
+        <label>เลขประจำตัวผู้เสียภาษี</label>
+        <ejs-textbox [(value)]="taxId" [liveValue]="taxId" [cssClass]="taxIdInvalid() ? 'e-error' : ''" placeholder="13 หลัก"></ejs-textbox>
+        @if (taxIdInvalid()) {
+          <p class="m-0 mt-1 text-xs text-error">ต้องเป็นตัวเลข 13 หลัก</p>
+        }
+      </div>
+      <div class="full">
+        <label>ที่อยู่</label>
+        <ejs-textarea [(value)]="address" [liveValue]="address" rows="2"></ejs-textarea>
+      </div>
+      <div class="full">
+        <label>หมายเหตุ</label>
+        <ejs-textarea [(value)]="notes" [liveValue]="notes" rows="2"></ejs-textarea>
       </div>
     </div>
   </ng-template>

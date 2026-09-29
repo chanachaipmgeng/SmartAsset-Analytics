@@ -76,6 +76,8 @@
                     <th>ซีเรียล</th>
                     <th>รุ่น</th>
                     <th>MAC</th>
+                    <th>รหัสทรัพย์สิน</th>
+                    <th>ผู้จำหน่าย</th>
                     <th>วันที่ซื้อ</th>
                     <th class="num">ต้นทุน</th>
                     <th>หมดประกัน</th>
@@ -89,6 +91,8 @@
                       <td class="mono">{{ row.serial_number || '-' }}</td>
                       <td>{{ row.model || '-' }}</td>
                       <td class="mono">{{ row.mac_address || '' }}</td>
+                      <td class="mono">{{ row.asset_tag || '' }}</td>
+                      <td>{{ row.supplier || '' }}</td>
                       <td>{{ row.purchase_date || '' }}</td>
                       <td class="num">{{ row.cost !== null ? (+row.cost | number: '1.2-2') : '' }}</td>
                       <td>{{ row.warranty_end || '' }}</td>

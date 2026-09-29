@@ -140,6 +140,18 @@ const PHOTO_MOVEMENTS: ReadonlySet<Movement> = new Set(['return', 'send_repair',
             <label>ที่อยู่จุดติดตั้ง</label>
             <ejs-textarea [(value)]="address" [liveValue]="address" rows="2"></ejs-textarea>
           </div>
+          <div>
+            <label>ผู้ติดต่อหน้างาน</label>
+            <ejs-textbox [(value)]="siteContact" [liveValue]="siteContact"></ejs-textbox>
+          </div>
+          <div>
+            <label>โทรศัพท์หน้างาน</label>
+            <ejs-textbox [(value)]="sitePhone" [liveValue]="sitePhone"></ejs-textbox>
+          </div>
+          <div class="full">
+            <label>หมายเหตุการติดตั้ง</label>
+            <ejs-textarea [(value)]="installNotes" [liveValue]="installNotes" rows="2"></ejs-textarea>
+          </div>
           <div class="full">
             <label>รูปหน้างาน <span class="muted">จุดติดตั้ง การเดินสาย ป้ายหน้าอาคาร</span></label>
             <app-photo-picker [(files)]="photoFiles" />
@@ -245,6 +257,9 @@ export class DeviceActionDialogs {
   protected readonly latitude = signal<number | null>(null);
   protected readonly longitude = signal<number | null>(null);
   protected readonly address = signal('');
+  protected readonly siteContact = signal('');
+  protected readonly sitePhone = signal('');
+  protected readonly installNotes = signal('');
   protected readonly locating = signal(false);
   protected readonly installPin = computed(() => {
     const latitude = this.latitude();
@@ -276,6 +291,9 @@ export class DeviceActionDialogs {
       this.latitude.set(null);
       this.longitude.set(null);
       this.address.set('');
+      this.siteContact.set('');
+      this.sitePhone.set('');
+      this.installNotes.set('');
       this.installOpen.set(true);
       return;
     }
@@ -366,6 +384,9 @@ export class DeviceActionDialogs {
         latitude: this.latitude(),
         longitude: this.longitude(),
         address: this.address().trim() || null,
+        site_contact: this.siteContact().trim() || null,
+        site_phone: this.sitePhone().trim() || null,
+        notes: this.installNotes().trim() || null,
       });
       this.notify.success('บันทึกการติดตั้งแล้ว');
       const files = this.photoFiles();

@@ -23,6 +23,10 @@ class DeviceView:
     notes: str | None
     created_at: datetime
     loan_due_date: date | None = None
+    asset_tag: str | None = None
+    firmware_version: str | None = None
+    supplier_id: UUID | None = None
+    supplier_name: str | None = None
 
 
 # Keys accepted by `GET /devices?sort=`; prefix with "-" for descending.
@@ -38,6 +42,7 @@ DEVICE_SORT_FIELDS = frozenset(
         "warranty_end",
         "cost",
         "created_at",
+        "asset_tag",
     }
 )
 
@@ -84,6 +89,10 @@ class InstallationView:
     address: str | None
     removed_at: datetime | None
     distance_m: float | None = None
+    site_contact: str | None = None
+    site_phone: str | None = None
+    notes: str | None = None
+    removal_reason: str | None = None
 
 
 @dataclass(frozen=True)

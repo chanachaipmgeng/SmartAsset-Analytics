@@ -120,15 +120,24 @@ async def check_in(
     cost: Decimal | None = None,
     warranty_end: date | None = None,
     notes: str | None = None,
+    asset_tag: str | None = None,
+    firmware_version: str | None = None,
+    supplier_id: UUID | None = None,
 ) -> DeviceView:
-    """Receive a new device. Superadmin may leave tenant empty (central stock)."""
+    """Receive a new device. Superadmin may leave tenant empty (central stock).
+
+    Firmware defaults to the model's current version when not given.
+    """
     require_write(actor.role)
     if not actor.is_superadmin:
         tenant_id = actor.tenant_id
     elif tenant_id is not None and await uow.tenants.get(tenant_id) is None:
         raise NotFoundError("ไม่พบกลุ่มลูกค้า")
-    if await uow.device_models.get(model_id) is None:
+    model = await uow.device_models.get(model_id)
+    if model is None:
         raise NotFoundError("ไม่พบรุ่นอุปกรณ์")
+    if supplier_id is not None and await uow.suppliers.get(supplier_id) is None:
+        raise NotFoundError("ไม่พบผู้จำหน่าย/ผู้ซ่อม")
     if purchase_date and warranty_end and warranty_end < purchase_date:
         raise ValidationError("วันสิ้นสุดประกันต้องไม่ก่อนวันที่ซื้อ")
 
@@ -141,6 +150,9 @@ async def check_in(
         cost=cost,
         warranty_end=warranty_end,
         notes=notes,
+        asset_tag=asset_tag.strip().upper() if asset_tag and asset_tag.strip() else None,
+        firmware_version=(firmware_version or "").strip() or model.firmware_version,
+        supplier_id=supplier_id,
     )
     await uow.devices.add(device)
     await uow.flush()
@@ -155,6 +167,9 @@ EDITABLE_FIELDS_TH = {
     "cost": "ต้นทุน",
     "warranty_end": "วันหมดประกัน",
     "notes": "หมายเหตุ",
+    "asset_tag": "รหัสทรัพย์สิน",
+    "firmware_version": "เฟิร์มแวร์",
+    "supplier_id": "ผู้จำหน่าย",
 }
 
 
@@ -164,8 +179,12 @@ async def update_device(uow: UnitOfWork, actor: Actor, device_id: UUID, changes:
     device = await _load_device(uow, device_id)
     if "model_id" in changes and await uow.device_models.get(changes["model_id"]) is None:
         raise NotFoundError("ไม่พบรุ่นอุปกรณ์")
+    if changes.get("supplier_id") is not None and await uow.suppliers.get(changes["supplier_id"]) is None:
+        raise NotFoundError("ไม่พบผู้จำหน่าย/ผู้ซ่อม")
     if changes.get("mac_address"):
         changes["mac_address"] = changes["mac_address"].strip().upper()
+    if "asset_tag" in changes:
+        changes["asset_tag"] = (changes["asset_tag"] or "").strip().upper() or None
     changed = [EDITABLE_FIELDS_TH.get(k, k) for k, v in changes.items() if getattr(device, k) != v]
     device = replace(device, **changes)
     if device.purchase_date and device.warranty_end and device.warranty_end < device.purchase_date:
@@ -227,7 +246,9 @@ async def return_device(uow: UnitOfWork, actor: Actor, device_id: UUID, note: st
     active = await uow.installations.get_active_for_device(device.id)
     if active is not None:
         customer_id = active.customer_id
-        await uow.installations.update(replace(active, removed_at=datetime.now(UTC)))
+        await uow.installations.update(
+            replace(active, removed_at=datetime.now(UTC), removal_reason=note or "รับคืน")
+        )
     await uow.devices.update(device)
     await _record(uow, actor, device, TransactionType.RETURN, from_status, customer_id=customer_id, note=note)
     return await _view(uow, device.id)
@@ -247,7 +268,9 @@ async def send_repair(
     active = await uow.installations.get_active_for_device(device.id)
     if active is not None:
         customer_id = active.customer_id
-        await uow.installations.update(replace(active, removed_at=datetime.now(UTC)))
+        await uow.installations.update(
+            replace(active, removed_at=datetime.now(UTC), removal_reason="ส่งซ่อม" + (f": {note}" if note else ""))
+        )
     await uow.devices.update(device)
     await _record(
         uow,
@@ -343,6 +366,9 @@ async def install(
     latitude: float,
     longitude: float,
     address: str | None = None,
+    site_contact: str | None = None,
+    site_phone: str | None = None,
+    notes: str | None = None,
 ) -> InstallationView:
     require_write(actor.role)
     validate_coordinates(latitude, longitude)
@@ -366,6 +392,9 @@ async def install(
         latitude=latitude,
         longitude=longitude,
         address=address,
+        site_contact=site_contact,
+        site_phone=site_phone,
+        notes=notes,
     )
     await uow.devices.update(device)
     await uow.installations.add(installation)

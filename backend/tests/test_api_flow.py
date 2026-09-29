@@ -447,7 +447,77 @@ async def test_import_devices(client: httpx.AsyncClient, world: dict) -> None:
     template = await client.get("/inventory/import/template", headers=a)
     assert template.status_code == 200 and template.headers["content-type"] == XLSX
     sheet = load_workbook(io.BytesIO(template.content)).worksheets[0]
-    assert [c.value for c in sheet[1]] == header
+    assert [c.value for c in sheet[1]] == [*header, "รหัสทรัพย์สิน", "เฟิร์มแวร์", "ผู้จำหน่าย"]
+
+
+async def test_extra_fields(client: httpx.AsyncClient, world: dict) -> None:
+    a, su, tag = world["a"], world["su"], world["tag"]
+    supplier = (await client.post("/suppliers", headers=su, json={"name": f"Vendor {tag}"})).json()
+
+    res = await client.post(
+        "/inventory/check-in",
+        headers=a,
+        json={
+            "serial_number": f"FLD-{tag}",
+            "model_id": world["model"]["id"],
+            "asset_tag": f"at-{tag}",
+            "supplier_id": supplier["id"],
+        },
+    )
+    assert res.status_code == 201, res.text
+    device = res.json()
+    assert device["asset_tag"] == f"AT-{tag}" and device["supplier_name"] == f"Vendor {tag}"
+    dup = await client.post(
+        "/inventory/check-in",
+        headers=a,
+        json={"serial_number": f"FLD2-{tag}", "model_id": world["model"]["id"], "asset_tag": f"AT-{tag}"},
+    )
+    assert dup.status_code == 409, dup.text
+    found = (await client.get("/devices", headers=a, params={"search": f"at-{tag}"})).json()
+    assert [d["serial_number"] for d in found] == [f"FLD-{tag}"]
+    res = await client.patch(f"/devices/{device['id']}", headers=a, json={"firmware_version": "9.9.9"})
+    assert res.status_code == 200 and res.json()["firmware_version"] == "9.9.9"
+    # A supplier referenced by a device cannot be deleted.
+    assert (await client.delete(f"/suppliers/{supplier['id']}", headers=su)).status_code == 409
+
+    bad = await client.post("/customers", headers=a, json={"company_name": f"TaxBad {tag}", "tax_id": "12345"})
+    assert bad.status_code == 422
+    res = await client.post(
+        "/customers",
+        headers=a,
+        json={"company_name": f"Tax {tag}", "tax_id": "0105555123456", "address": "กรุงเทพฯ", "notes": "VIP"},
+    )
+    assert res.status_code == 201, res.text
+    customer = res.json()
+    assert (customer["tax_id"], customer["address"], customer["notes"]) == ("0105555123456", "กรุงเทพฯ", "VIP")
+
+    assert (await client.post("/inventory/check-out", headers=a, json={"device_id": device["id"]})).status_code == 200
+    res = await client.post(
+        "/installations",
+        headers=a,
+        json={
+            "device_id": device["id"],
+            "customer_id": customer["id"],
+            "install_date": "2026-09-01",
+            "latitude": 13.75,
+            "longitude": 100.5,
+            "site_contact": "คุณสมชาย",
+            "site_phone": "081-000-0000",
+            "notes": "ติดผนังหน้าลิฟต์",
+        },
+    )
+    assert res.status_code == 201, res.text
+    installation = res.json()
+    assert (installation["site_contact"], installation["site_phone"], installation["notes"]) == (
+        "คุณสมชาย",
+        "081-000-0000",
+        "ติดผนังหน้าลิฟต์",
+    )
+    res = await client.post("/inventory/return", headers=a, json={"device_id": device["id"], "note": "ลูกค้ายกเลิกสัญญา"})
+    assert res.status_code == 200, res.text
+    installs = (await client.get("/installations", headers=a, params={"active_only": "false"})).json()
+    removed = next(i for i in installs if i["id"] == installation["id"])
+    assert removed["removal_reason"] == "ลูกค้ายกเลิกสัญญา"
 
 
 async def test_change_own_password(client: httpx.AsyncClient, world: dict) -> None:

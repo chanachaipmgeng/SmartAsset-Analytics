@@ -1,5 +1,6 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
 import { SERVICE_LEVEL_LABELS, toOptions } from '../../core/labels';
@@ -9,14 +10,15 @@ import { ConfirmService } from '../../shared/confirm.service';
 import { PageHeader } from '../../shared/page-header';
 import { DataGrid, GridCell, GridColumn, GridRowAction, GridRowActionId } from '../../shared/data-grid';
 import { FilterChip, FilterChips } from '../../shared/filter-chips';
-import { RecordField, RecordView } from '../../shared/record-view';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
 
 type ActiveFilter = 'ACTIVE' | 'INACTIVE' | 'ALL';
 
+const TAX_ID_RE = /^\d{13}$/;
+
 @Component({
   selector: 'app-customers',
-  imports: [...FORM_IMPORTS, PageHeader, DataGrid, GridCell, FilterChips, RecordView],
+  imports: [...FORM_IMPORTS, RouterLink, PageHeader, DataGrid, GridCell, FilterChips],
   templateUrl: './customers.html',
   styleUrl: './customers.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,6 +28,7 @@ export class CustomersPage {
   private readonly api = inject(ApiService);
   private readonly notify = inject(NotifyService);
   private readonly confirm = inject(ConfirmService);
+  private readonly router = inject(Router);
 
   protected readonly animation = DIALOG_ANIMATION;
   protected readonly columns = computed<GridColumn[]>(() => [
@@ -35,6 +38,8 @@ export class CustomersPage {
     { field: 'email', headerText: 'อีเมล', width: 200 },
     { field: 'level_label', headerText: 'ระดับบริการ', width: 130 },
     { field: 'active_label', headerText: 'สถานะ', width: 110 },
+    { field: 'address', headerText: 'ที่อยู่', width: 260, hidden: true },
+    { field: 'tax_id', headerText: 'เลขผู้เสียภาษี', width: 150, hidden: true },
     ...(this.auth.isSuperadmin() ? [{ field: 'tenant_name', headerText: 'กลุ่มลูกค้า', width: 200 }] : []),
   ]);
   protected readonly levelOptions = toOptions(SERVICE_LEVEL_LABELS);
@@ -78,29 +83,20 @@ export class CustomersPage {
   protected readonly email = signal('');
   protected readonly serviceLevel = signal<ServiceLevel>('STANDARD');
   protected readonly tenantId = signal<string | null>(null);
+  protected readonly taxId = signal('');
+  protected readonly address = signal('');
+  protected readonly notes = signal('');
+  protected readonly taxIdInvalid = computed(() => !!this.taxId().trim() && !TAX_ID_RE.test(this.taxId().trim()));
   protected readonly formValid = computed(
     () =>
       !!this.companyName().trim() &&
+      !this.taxIdInvalid() &&
       (this.editingId() !== null || !this.auth.isSuperadmin() || !!this.tenantId()),
   );
 
   protected readonly rowActions = computed<GridRowActionId[]>(() =>
     this.auth.canWrite() ? ['view', 'edit'] : ['view'],
   );
-  protected readonly viewOpen = signal(false);
-  protected readonly viewFields = computed<RecordField[]>(() => {
-    const c = this.selected();
-    if (!c) return [];
-    return [
-      { label: 'ชื่อบริษัท', value: c.company_name, wide: true },
-      { label: 'ผู้ติดต่อ', value: c.contact_person },
-      { label: 'โทรศัพท์', value: c.phone },
-      { label: 'อีเมล', value: c.email },
-      { label: 'ระดับบริการ', value: SERVICE_LEVEL_LABELS[c.service_level] },
-      { label: 'สถานะ', value: c.is_active ? 'ใช้งาน' : 'ระงับ' },
-      ...(this.auth.isSuperadmin() ? [{ label: 'กลุ่มลูกค้า', value: this.tenantNames().get(c.tenant_id) }] : []),
-    ];
-  });
 
   protected onRowSelected(row: { id: string } | null): void {
     this.selected.set(row ? (this.customers.value().find((c) => c.id === row.id) ?? null) : null);
@@ -109,7 +105,7 @@ export class CustomersPage {
   protected onRowAction({ action, row }: GridRowAction<{ id: string }>): void {
     this.onRowSelected(row);
     if (action === 'edit') this.openEdit();
-    else this.viewOpen.set(true);
+    else void this.router.navigate(['/customers', row.id]);
   }
 
   protected editRow(row: { id: string }): void {
@@ -125,6 +121,9 @@ export class CustomersPage {
     this.email.set('');
     this.serviceLevel.set('STANDARD');
     this.tenantId.set(null);
+    this.taxId.set('');
+    this.address.set('');
+    this.notes.set('');
     this.formOpen.set(true);
   }
 
@@ -137,6 +136,9 @@ export class CustomersPage {
     this.phone.set(c.phone ?? '');
     this.email.set(c.email ?? '');
     this.serviceLevel.set(c.service_level);
+    this.taxId.set(c.tax_id ?? '');
+    this.address.set(c.address ?? '');
+    this.notes.set(c.notes ?? '');
     this.formOpen.set(true);
   }
 
@@ -148,6 +150,9 @@ export class CustomersPage {
       phone: this.phone().trim() || null,
       email: this.email().trim() || null,
       service_level: this.serviceLevel(),
+      tax_id: this.taxId().trim() || null,
+      address: this.address().trim() || null,
+      notes: this.notes().trim() || null,
     };
     const id = this.editingId();
     await this.run(async () => {

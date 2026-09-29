@@ -26,6 +26,9 @@ COLUMNS: list[tuple[str, str]] = [
     ("cost", "ต้นทุน"),
     ("warranty_end", "หมดประกัน"),
     ("notes", "หมายเหตุ"),
+    ("asset_tag", "รหัสทรัพย์สิน"),
+    ("firmware_version", "เฟิร์มแวร์"),
+    ("supplier", "ผู้จำหน่าย"),
     ("tenant_code", "รหัสกลุ่มลูกค้า"),
 ]
 _ALIASES = {alias.lower(): key for key, th in COLUMNS for alias in (key, th)}
@@ -41,6 +44,9 @@ class ImportRow:
     cost: Decimal | None = None
     warranty_end: date | None = None
     notes: str | None = None
+    asset_tag: str | None = None
+    firmware_version: str | None = None
+    supplier: str | None = None
     tenant_code: str | None = None
     errors: list[str] = field(default_factory=list)
 
@@ -129,8 +135,10 @@ async def _validate(uow: UnitOfWork, actor: Actor, table: list[tuple[int, dict[s
         models[m.name.lower()] = m.id
         models[f"{m.brand} {m.name}".lower()] = m.id
     tenants = {t.code.upper(): t for t in await uow.tenants.list()} if actor.is_superadmin else {}
+    suppliers = {s.name.lower() for s in await uow.suppliers.list()}
 
     seen: dict[str, int] = {}
+    seen_tags: dict[str, int] = {}
     rows: list[ImportRow] = []
     for number, cells in table:
         raw = {_ALIASES[k.strip().lower()]: v for k, v in cells.items() if k.strip().lower() in _ALIASES}
@@ -175,6 +183,26 @@ async def _validate(uow: UnitOfWork, actor: Actor, table: list[tuple[int, dict[s
             errors.append("หมายเหตุยาวเกิน 2000 ตัวอักษร")
         row.notes = notes
 
+        tag = _text(raw.get("asset_tag"))
+        if tag:
+            tag = tag.upper()
+            if len(tag) > 50:
+                errors.append("รหัสทรัพย์สินยาวเกิน 50 ตัวอักษร")
+            elif tag in seen_tags:
+                errors.append(f"รหัสทรัพย์สินซ้ำกับแถว {seen_tags[tag]} ในไฟล์")
+            seen_tags.setdefault(tag, number)
+        row.asset_tag = tag
+
+        firmware = _text(raw.get("firmware_version"))
+        if firmware and len(firmware) > 50:
+            errors.append("เฟิร์มแวร์ยาวเกิน 50 ตัวอักษร")
+        row.firmware_version = firmware
+
+        supplier = _text(raw.get("supplier"))
+        if supplier and supplier.lower() not in suppliers:
+            errors.append(f"ไม่พบผู้จำหน่าย '{supplier}'")
+        row.supplier = supplier
+
         if actor.is_superadmin:
             code = _text(raw.get("tenant_code"))
             if code and code.upper() not in tenants:
@@ -199,6 +227,7 @@ async def import_devices(
     models = {m.name.lower(): m.id for m in await uow.device_models.list()}
     models |= {f"{m.brand} {m.name}".lower(): m.id for m in await uow.device_models.list()}
     tenants = {t.code.upper(): t.id for t in await uow.tenants.list()} if actor.is_superadmin else {}
+    suppliers = {s.name.lower(): s.id for s in await uow.suppliers.list()}
     for r in rows:
         assert r.serial_number and r.model
         try:
@@ -213,6 +242,9 @@ async def import_devices(
                 cost=r.cost,
                 warranty_end=r.warranty_end,
                 notes=r.notes,
+                asset_tag=r.asset_tag,
+                firmware_version=r.firmware_version,
+                supplier_id=suppliers[r.supplier.lower()] if r.supplier else None,
             )
         except ConflictError as exc:
             # Serials owned by other tenants are hidden by RLS, so they only surface here.

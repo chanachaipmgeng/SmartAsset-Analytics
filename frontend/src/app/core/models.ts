@@ -94,6 +94,10 @@ export interface Device {
   notes: string | null;
   loan_due_date: string | null;
   created_at: string;
+  asset_tag: string | null;
+  firmware_version: string | null;
+  supplier_id: string | null;
+  supplier_name: string | null;
 }
 
 export interface InventoryTransaction {
@@ -121,6 +125,9 @@ export interface Customer {
   email: string | null;
   service_level: ServiceLevel;
   is_active: boolean;
+  address: string | null;
+  tax_id: string | null;
+  notes: string | null;
 }
 
 export interface Installation {
@@ -138,6 +145,10 @@ export interface Installation {
   address: string | null;
   removed_at: string | null;
   distance_m: number | null;
+  site_contact: string | null;
+  site_phone: string | null;
+  notes: string | null;
+  removal_reason: string | null;
 }
 
 export interface CountItem {
@@ -155,6 +166,9 @@ export interface ImportRow {
   cost: string | null;
   warranty_end: string | null;
   notes: string | null;
+  asset_tag: string | null;
+  firmware_version: string | null;
+  supplier: string | null;
   tenant_code: string | null;
   errors: string[];
 }

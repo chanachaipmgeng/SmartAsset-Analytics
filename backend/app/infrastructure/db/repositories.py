@@ -62,6 +62,9 @@ CONSTRAINT_MESSAGES = {
     "suppliers_name_uq": "ชื่อผู้จำหน่าย/ผู้ซ่อมนี้มีอยู่แล้ว",
     "inventory_tx_supplier_fk": "มีประวัติการส่งซ่อมอ้างถึงผู้จำหน่าย/ผู้ซ่อมรายนี้ ไม่สามารถลบได้",
     "installations_active_device_uq": "อุปกรณ์นี้มีจุดติดตั้งที่ใช้งานอยู่แล้ว",
+    "devices_asset_tag_uq": "รหัสทรัพย์สินนี้ถูกใช้กับอุปกรณ์อื่นในกลุ่มลูกค้าเดียวกันแล้ว",
+    "devices_supplier_fk": "มีอุปกรณ์ที่ซื้อจากผู้จำหน่ายรายนี้ ไม่สามารถลบได้",
+    "customers_tax_id_format": "เลขประจำตัวผู้เสียภาษีต้องเป็นตัวเลข 13 หลัก",
 }
 
 
@@ -174,14 +177,17 @@ class SqlSupplierRepository(_Repo):
     async def is_in_use(self, supplier_id: UUID) -> bool:
         # RLS limits this to visible rows; the FK still blocks deleting one referenced by another tenant.
         stmt = select(func.count()).where(InventoryTransactionORM.supplier_id == supplier_id)
-        return bool(await self.s.scalar(stmt))
+        if await self.s.scalar(stmt):
+            return True
+        return bool(await self.s.scalar(select(func.count()).where(DeviceORM.supplier_id == supplier_id)))
 
 
 def _device_view_stmt() -> Select:
     return (
-        select(DeviceORM, DeviceModelORM.name, DeviceModelORM.brand, TenantORM.name)
+        select(DeviceORM, DeviceModelORM.name, DeviceModelORM.brand, TenantORM.name, SupplierORM.name)
         .join(DeviceModelORM, DeviceModelORM.id == DeviceORM.model_id)
         .outerjoin(TenantORM, TenantORM.id == DeviceORM.tenant_id)
+        .outerjoin(SupplierORM, SupplierORM.id == DeviceORM.supplier_id)
     )
 
 
@@ -196,6 +202,7 @@ DEVICE_SORT_COLUMNS: dict[str, Any] = {
     "warranty_end": DeviceORM.warranty_end,
     "cost": DeviceORM.cost,
     "created_at": DeviceORM.created_at,
+    "asset_tag": DeviceORM.asset_tag,
 }
 
 
@@ -206,6 +213,7 @@ def _filter_devices(stmt: Select, search: str | None, status: DeviceStatus | Non
             or_(
                 DeviceORM.serial_number.ilike(pattern),
                 DeviceORM.mac_address.ilike(pattern),
+                DeviceORM.asset_tag.ilike(pattern),
                 DeviceModelORM.name.ilike(pattern),
             )
         )
@@ -217,7 +225,7 @@ def _filter_devices(stmt: Select, search: str | None, status: DeviceStatus | Non
 
 
 def _device_view(row: Any) -> DeviceView:
-    d, model_name, brand, tenant_name = row
+    d, model_name, brand, tenant_name, supplier_name = row
     return DeviceView(
         id=d.id,
         serial_number=d.serial_number,
@@ -234,6 +242,10 @@ def _device_view(row: Any) -> DeviceView:
         notes=d.notes,
         created_at=d.created_at,
         loan_due_date=d.loan_due_date,
+        asset_tag=d.asset_tag,
+        firmware_version=d.firmware_version,
+        supplier_id=d.supplier_id,
+        supplier_name=supplier_name,
     )
 
 
@@ -365,7 +377,7 @@ class SqlDeviceRepository(_Repo):
         )
         if status:
             stmt = stmt.where(DeviceORM.status == status.value)
-        return [(_device_view(r[:4]), r[4]) for r in (await self.s.execute(stmt)).all()]
+        return [(_device_view(r[:5]), r[5]) for r in (await self.s.execute(stmt)).all()]
 
 
 class SqlTransactionRepository(_Repo):
@@ -501,6 +513,10 @@ class SqlInstallationRepository(_Repo):
             address=i.address,
             removed_at=i.removed_at,
             distance_m=float(rest[0]) if rest else None,
+            site_contact=i.site_contact,
+            site_phone=i.site_phone,
+            notes=i.notes,
+            removal_reason=i.removal_reason,
         )
 
     async def get(self, installation_id: UUID) -> Installation | None:

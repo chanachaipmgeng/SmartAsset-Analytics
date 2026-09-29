@@ -79,6 +79,9 @@ export class InstallationsPage {
     { field: 'latitude', headerText: 'ละติจูด', type: 'number', format: 'N6', width: 120, hidden: true },
     { field: 'longitude', headerText: 'ลองจิจูด', type: 'number', format: 'N6', width: 120, hidden: true },
     { field: 'address', headerText: 'ที่อยู่', width: 260 },
+    { field: 'site_contact', headerText: 'ผู้ติดต่อหน้างาน', width: 160, hidden: true },
+    { field: 'site_phone', headerText: 'โทรหน้างาน', width: 130, hidden: true },
+    { field: 'removal_reason', headerText: 'เหตุผลที่ถอน', width: 200, hidden: true },
   ]);
 
   protected readonly rows = computed(() =>
@@ -99,6 +102,9 @@ export class InstallationsPage {
   protected readonly editLat = signal<number | null>(null);
   protected readonly editLng = signal<number | null>(null);
   protected readonly editAddress = signal('');
+  protected readonly editContact = signal('');
+  protected readonly editPhone = signal('');
+  protected readonly editNotes = signal('');
   protected readonly editPin = computed(() => {
     const latitude = this.editLat();
     const longitude = this.editLng();
@@ -154,6 +160,10 @@ export class InstallationsPage {
       { label: 'สถานะ', value: i.removed_at ? `ถอนการติดตั้งแล้ว (${date(i.removed_at)})` : 'ใช้งานอยู่' },
       { label: 'พิกัด', value: `${i.latitude.toFixed(6)}, ${i.longitude.toFixed(6)}`, mono: true, wide: true },
       { label: 'ที่อยู่', value: i.address, wide: true },
+      { label: 'ผู้ติดต่อหน้างาน', value: i.site_contact },
+      { label: 'โทรศัพท์หน้างาน', value: i.site_phone },
+      { label: 'หมายเหตุ', value: i.notes, wide: true },
+      ...(i.removed_at ? [{ label: 'เหตุผลที่ถอน', value: i.removal_reason, wide: true }] : []),
     ];
   });
 
@@ -184,6 +194,9 @@ export class InstallationsPage {
     this.editLat.set(i.latitude);
     this.editLng.set(i.longitude);
     this.editAddress.set(i.address ?? '');
+    this.editContact.set(i.site_contact ?? '');
+    this.editPhone.set(i.site_phone ?? '');
+    this.editNotes.set(i.notes ?? '');
     this.editOpen.set(true);
   }
 
@@ -197,6 +210,9 @@ export class InstallationsPage {
         latitude: this.editLat(),
         longitude: this.editLng(),
         address: this.editAddress().trim() || null,
+        site_contact: this.editContact().trim() || null,
+        site_phone: this.editPhone().trim() || null,
+        notes: this.editNotes().trim() || null,
       });
       this.notify.success('บันทึกจุดติดตั้งแล้ว');
       this.editOpen.set(false);

@@ -27,6 +27,7 @@ import {
   Installation,
   InventoryTransaction,
   Photo,
+  Supplier,
   Tenant,
 } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
@@ -47,6 +48,7 @@ const WIDE = '(min-width: 768px)';
 
 const COLUMNS: GridColumn[] = [
   { field: 'serial_number', headerText: 'ซีเรียล', width: 150, isPrimaryKey: true },
+  { field: 'asset_tag', headerText: 'รหัสทรัพย์สิน', width: 130, hideAtMedia: WIDE },
   { field: 'brand', headerText: 'ยี่ห้อ', width: 110, hideAtMedia: WIDE },
   { field: 'model_name', headerText: 'รุ่น', width: 150 },
   { field: 'status_label', headerText: 'สถานะ', width: 140 },
@@ -55,6 +57,8 @@ const COLUMNS: GridColumn[] = [
   { field: 'purchase_date', headerText: 'วันที่ซื้อ', type: 'date', format: 'dd/MM/yyyy', width: 120, hideAtMedia: WIDE },
   { field: 'warranty_end', headerText: 'หมดประกัน', type: 'date', format: 'dd/MM/yyyy', width: 120, hideAtMedia: WIDE },
   { field: 'cost', headerText: 'ต้นทุน', type: 'number', format: 'N2', textAlign: 'Right', width: 120, hideAtMedia: WIDE },
+  { field: 'firmware_version', headerText: 'เฟิร์มแวร์', width: 110, hidden: true },
+  { field: 'supplier_name', headerText: 'ผู้จำหน่าย', width: 180, hidden: true },
 ];
 
 /** Grid column field to the `GET /devices?sort=` key; unlisted columns aren't server-sortable. */
@@ -68,6 +72,7 @@ const SORT_KEYS: Record<string, string> = {
   purchase_date: 'purchase_date',
   warranty_end: 'warranty_end',
   cost: 'cost',
+  asset_tag: 'asset_tag',
 };
 
 function toRow(d: Device) {
@@ -254,8 +259,21 @@ export class DevicesPage {
   protected readonly cost = signal<number | null>(null);
   protected readonly warrantyEnd = signal<Date | null>(null);
   protected readonly notes = signal('');
+  protected readonly assetTag = signal('');
+  protected readonly firmware = signal('');
+  protected readonly supplierId = signal<string | null>(null);
   protected readonly modelOptions = computed(() =>
     this.models.value().map((m) => ({ value: m.id, text: `${m.brand} ${m.name}` })),
+  );
+  protected readonly suppliers = httpResource<Supplier[]>(() => (this.formOpen() ? '/api/v1/suppliers' : undefined), {
+    defaultValue: [],
+  });
+  protected readonly supplierOptions = computed(() =>
+    this.suppliers.value().map((s) => ({ value: s.id, text: s.name })),
+  );
+  /** Firmware field hint: the chosen model's current version. */
+  protected readonly modelFirmware = computed(
+    () => this.models.value().find((m) => m.id === this.modelId())?.firmware_version ?? null,
   );
   protected readonly tenantOptions = computed(() => this.tenants.value().map((t) => ({ value: t.id, text: t.name })));
   protected readonly formValid = computed(
@@ -372,6 +390,9 @@ export class DevicesPage {
     this.cost.set(null);
     this.warrantyEnd.set(null);
     this.notes.set('');
+    this.assetTag.set('');
+    this.firmware.set('');
+    this.supplierId.set(null);
     this.formOpen.set(true);
   }
 
@@ -385,6 +406,9 @@ export class DevicesPage {
     this.cost.set(d.cost === null ? null : Number(d.cost));
     this.warrantyEnd.set(toDate(d.warranty_end));
     this.notes.set(d.notes ?? '');
+    this.assetTag.set(d.asset_tag ?? '');
+    this.firmware.set(d.firmware_version ?? '');
+    this.supplierId.set(d.supplier_id);
     this.formOpen.set(true);
   }
 
@@ -397,6 +421,9 @@ export class DevicesPage {
       cost: this.cost(),
       warranty_end: toIsoDate(this.warrantyEnd()),
       notes: this.notes().trim() || null,
+      asset_tag: this.assetTag().trim() || null,
+      firmware_version: this.firmware().trim() || null,
+      supplier_id: this.supplierId(),
     };
     const id = this.editingId();
     this.busy.set(true);

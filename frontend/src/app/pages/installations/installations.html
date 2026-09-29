@@ -126,6 +126,18 @@
         <label>ที่อยู่</label>
         <ejs-textarea [(value)]="editAddress" [liveValue]="editAddress" rows="2"></ejs-textarea>
       </div>
+      <div>
+        <label>ผู้ติดต่อหน้างาน</label>
+        <ejs-textbox [(value)]="editContact" [liveValue]="editContact"></ejs-textbox>
+      </div>
+      <div>
+        <label>โทรศัพท์หน้างาน</label>
+        <ejs-textbox [(value)]="editPhone" [liveValue]="editPhone"></ejs-textbox>
+      </div>
+      <div class="full">
+        <label>หมายเหตุ</label>
+        <ejs-textarea [(value)]="editNotes" [liveValue]="editNotes" rows="2"></ejs-textarea>
+      </div>
     </div>
   </ng-template>
   <ng-template #footerTemplate>

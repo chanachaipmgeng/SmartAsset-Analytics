@@ -61,6 +61,9 @@ class Device:
     warranty_end: date | None = None
     notes: str | None = None
     loan_due_date: date | None = None
+    asset_tag: str | None = None
+    firmware_version: str | None = None
+    supplier_id: UUID | None = None
     id: UUID = field(default_factory=uuid4)
     created_at: datetime | None = None
 
@@ -89,6 +92,9 @@ class Customer:
     phone: str | None = None
     email: str | None = None
     service_level: ServiceLevel = ServiceLevel.STANDARD
+    address: str | None = None
+    tax_id: str | None = None
+    notes: str | None = None
     is_active: bool = True
     id: UUID = field(default_factory=uuid4)
     created_at: datetime | None = None
@@ -103,6 +109,10 @@ class Installation:
     latitude: float
     longitude: float
     address: str | None = None
+    site_contact: str | None = None
+    site_phone: str | None = None
+    notes: str | None = None
+    removal_reason: str | None = None
     removed_at: datetime | None = None
     id: UUID = field(default_factory=uuid4)
 
