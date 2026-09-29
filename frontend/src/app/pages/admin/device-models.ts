@@ -4,6 +4,7 @@ import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
 import { DeviceModel } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
+import { ConfirmService } from '../../shared/confirm.service';
 import { PageHeader } from '../../shared/page-header';
 import { DIALOG_ANIMATION, FORM_IMPORTS, GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
 
@@ -90,6 +91,7 @@ export class DeviceModelsPage {
   protected readonly auth = inject(AuthStore);
   private readonly api = inject(ApiService);
   private readonly notify = inject(NotifyService);
+  private readonly confirm = inject(ConfirmService);
 
   protected readonly grid = GRID_DEFAULTS;
   protected readonly animation = DIALOG_ANIMATION;
@@ -155,6 +157,13 @@ export class DeviceModelsPage {
   protected async remove(): Promise<void> {
     const m = this.selected();
     if (!m) return;
+    const ok = await this.confirm.ask({
+      title: 'ยืนยันการลบรุ่นอุปกรณ์',
+      message: `ต้องการลบรุ่น "${m.brand} ${m.name}" ใช่หรือไม่`,
+      okText: 'ลบ',
+      danger: true,
+    });
+    if (!ok) return;
     await this.run(async () => {
       await this.api.deleteDeviceModel(m.id);
       this.notify.success('ลบรุ่นอุปกรณ์แล้ว');

@@ -2,6 +2,15 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ToastComponent } from '@syncfusion/ej2-angular-notifications';
 
+type Tone = 'success' | 'error' | 'info' | 'warning';
+
+const TOASTS: Record<Tone, { title: string; icon: string; timeOut: number }> = {
+  success: { title: 'สำเร็จ', icon: 'e-icons e-check', timeOut: 3500 },
+  error: { title: 'เกิดข้อผิดพลาด', icon: 'e-icons e-circle-close', timeOut: 6000 },
+  info: { title: 'แจ้งให้ทราบ', icon: 'e-icons e-circle-info', timeOut: 4000 },
+  warning: { title: 'โปรดตรวจสอบ', icon: 'e-icons e-warning', timeOut: 5000 },
+};
+
 @Injectable({ providedIn: 'root' })
 export class NotifyService {
   private toast: ToastComponent | null = null;
@@ -11,17 +20,24 @@ export class NotifyService {
   }
 
   success(content: string): void {
-    this.toast?.show({ title: 'สำเร็จ', content, cssClass: 'e-toast-success', icon: 'e-success toast-icons' });
+    this.show('success', content);
+  }
+
+  info(content: string): void {
+    this.show('info', content);
+  }
+
+  warning(content: string): void {
+    this.show('warning', content);
   }
 
   error(err: unknown): void {
-    this.toast?.show({
-      title: 'เกิดข้อผิดพลาด',
-      content: errorMessage(err),
-      cssClass: 'e-toast-danger',
-      icon: 'e-error toast-icons',
-      timeOut: 6000,
-    });
+    this.show('error', errorMessage(err));
+  }
+
+  private show(tone: Tone, content: string): void {
+    const t = TOASTS[tone];
+    this.toast?.show({ title: t.title, content, icon: t.icon, timeOut: t.timeOut, cssClass: `m3-toast m3-toast-${tone}` });
   }
 }
 

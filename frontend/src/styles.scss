@@ -197,6 +197,73 @@ body {
   color: rgb(var(--color-sf-on-surface-variant));
 }
 
+// ---- M3 toasts: tonal surface, coloured accent bar and icon, progress bar in the accent colour ----
+.e-toast-container .e-toast.m3-toast {
+  --toast-accent: var(--color-sf-primary);
+  border-radius: 12px;
+  border: 1px solid rgb(var(--color-sf-outline-variant));
+  border-left: 4px solid rgb(var(--toast-accent));
+  background: rgb(var(--color-sf-surface));
+  color: rgb(var(--color-sf-on-surface));
+  box-shadow: 0 12px 32px -16px rgb(0 0 0 / 0.45);
+  overflow: hidden;
+
+  .e-toast-icon {
+    color: rgb(var(--toast-accent));
+    font-size: 20px;
+  }
+
+  .e-toast-title {
+    color: rgb(var(--color-sf-on-surface));
+    font-weight: 600;
+  }
+
+  .e-toast-content {
+    color: rgb(var(--color-sf-on-surface-variant));
+  }
+
+  .e-toast-close-icon {
+    color: rgb(var(--color-sf-on-surface-variant));
+  }
+
+  .e-toast-progress {
+    background: rgb(var(--toast-accent));
+    opacity: 0.6;
+  }
+
+  &.m3-toast-success {
+    --toast-accent: var(--color-sf-success);
+  }
+  &.m3-toast-error {
+    --toast-accent: var(--color-sf-error);
+  }
+  &.m3-toast-warning {
+    --toast-accent: var(--color-sf-warning);
+  }
+  &.m3-toast-info {
+    --toast-accent: var(--color-sf-info);
+  }
+}
+
+// ---- confirm dialog (ConfirmService) ----
+.e-dialog.confirm-dialog {
+  border-radius: 28px;
+
+  .e-dlg-header {
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .confirm-message {
+    color: rgb(var(--color-sf-on-surface-variant));
+    line-height: 1.6;
+  }
+
+  .e-footer-content .e-btn {
+    border-radius: 999px;
+  }
+}
+
 // Syncfusion dialogs are fixed-width; keep them inside small screens.
 .e-dialog {
   max-width: calc(100vw - 24px);

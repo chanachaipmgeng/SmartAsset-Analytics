@@ -5,6 +5,7 @@ import { AuthStore } from '../../core/auth.store';
 import { SERVICE_LEVEL_LABELS, toOptions } from '../../core/labels';
 import { Customer, ServiceLevel, Tenant } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
+import { ConfirmService } from '../../shared/confirm.service';
 import { PageHeader } from '../../shared/page-header';
 import { DIALOG_ANIMATION, FORM_IMPORTS, GRID_DEFAULTS, GRID_IMPORTS, GRID_PROVIDERS } from '../../shared/syncfusion';
 
@@ -19,6 +20,7 @@ export class CustomersPage {
   protected readonly auth = inject(AuthStore);
   private readonly api = inject(ApiService);
   private readonly notify = inject(NotifyService);
+  private readonly confirm = inject(ConfirmService);
 
   protected readonly grid = GRID_DEFAULTS;
   protected readonly animation = DIALOG_ANIMATION;
@@ -40,7 +42,6 @@ export class CustomersPage {
   protected readonly selected = signal<Customer | null>(null);
   protected readonly busy = signal(false);
   protected readonly formOpen = signal(false);
-  protected readonly confirmDelete = signal(false);
   protected readonly editingId = signal<string | null>(null);
 
   protected readonly companyName = signal('');
@@ -106,10 +107,16 @@ export class CustomersPage {
   protected async remove(): Promise<void> {
     const c = this.selected();
     if (!c) return;
+    const ok = await this.confirm.ask({
+      title: 'ยืนยันการลบลูกค้า',
+      message: `ต้องการลบลูกค้า "${c.company_name}" ใช่หรือไม่`,
+      okText: 'ลบ',
+      danger: true,
+    });
+    if (!ok) return;
     await this.run(async () => {
       await this.api.deleteCustomer(c.id);
       this.notify.success('ลบลูกค้าแล้ว');
-      this.confirmDelete.set(false);
     });
   }
 

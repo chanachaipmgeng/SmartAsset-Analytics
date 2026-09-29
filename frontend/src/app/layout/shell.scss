@@ -27,6 +27,47 @@
   }
 }
 
+.search-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  margin-right: 4px;
+  padding: 0 12px;
+  border: 1px solid rgb(var(--color-sf-outline-variant));
+  border-radius: 999px;
+  background: color-mix(in srgb, rgb(var(--color-sf-surface)) 92%, rgb(var(--color-sf-primary)));
+  color: rgb(var(--color-sf-on-surface-variant));
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+
+  @media (min-width: 768px) {
+    min-width: 220px;
+  }
+
+  &:hover {
+    border-color: rgb(var(--color-sf-primary) / 0.5);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-sf-primary));
+    outline-offset: 2px;
+  }
+
+  kbd {
+    margin-left: auto;
+    padding: 1px 6px;
+    border: 1px solid rgb(var(--color-sf-outline-variant));
+    border-radius: 6px;
+    font: inherit;
+    font-size: 11px;
+  }
+}
+
 .body {
   flex: 1;
   position: relative;

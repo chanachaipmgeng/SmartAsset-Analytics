@@ -4,7 +4,7 @@
       <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">เพิ่มลูกค้า</button>
       <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">แก้ไข</button>
       @if (auth.isAdmin()) {
-        <button ejs-button cssClass="e-danger" iconCss="e-icons e-trash" [disabled]="!selected()" (click)="confirmDelete.set(true)">ลบ</button>
+        <button ejs-button cssClass="e-danger" iconCss="e-icons e-trash" [disabled]="!selected() || busy()" (click)="remove()">ลบ</button>
       }
     }
   </app-page-header>
@@ -76,21 +76,5 @@
   <ng-template #footerTemplate>
     <button ejs-button (click)="formOpen.set(false)">ยกเลิก</button>
     <button ejs-button [isPrimary]="true" [disabled]="!formValid() || busy()" (click)="save()">บันทึก</button>
-  </ng-template>
-</ejs-dialog>
-
-<ejs-dialog
-  [visible]="confirmDelete()"
-  (close)="confirmDelete.set(false)"
-  header="ยืนยันการลบ"
-  [isModal]="true"
-  [animationSettings]="animation"
-  width="420px"
-  target="body"
->
-  <ng-template #content>ต้องการลบลูกค้า <b>{{ selected()?.company_name }}</b> ใช่หรือไม่</ng-template>
-  <ng-template #footerTemplate>
-    <button ejs-button (click)="confirmDelete.set(false)">ยกเลิก</button>
-    <button ejs-button cssClass="e-danger" [disabled]="busy()" (click)="remove()">ลบ</button>
   </ng-template>
 </ejs-dialog>

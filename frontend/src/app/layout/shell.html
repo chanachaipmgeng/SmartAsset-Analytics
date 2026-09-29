@@ -20,6 +20,12 @@
 
   <div class="e-appbar-spacer"></div>
 
+  <button type="button" class="search-trigger" (click)="paletteOpen.set(true)" aria-label="ค้นหาและคำสั่ง (Ctrl+K)">
+    <span class="e-icons e-search"></span>
+    <span class="hidden md:inline">ค้นหา...</span>
+    <kbd class="hidden md:inline">Ctrl K</kbd>
+  </button>
+
   <button
     ejs-button
     cssClass="e-flat e-round"
@@ -82,7 +88,18 @@
 
   <main class="content e-main-content" #content>
     <router-outlet />
+    <app-back-to-top [target]="content" />
   </main>
 </div>
 
-<ejs-toast #toast [position]="{ X: 'Right', Y: 'Top' }" [timeOut]="3500" [showCloseButton]="true"></ejs-toast>
+<app-command-palette [(open)]="paletteOpen" [commands]="commands()" />
+
+<ejs-toast
+  #toast
+  [position]="{ X: 'Right', Y: 'Top' }"
+  [timeOut]="3500"
+  [showCloseButton]="true"
+  [showProgressBar]="true"
+  [newestOnTop]="true"
+  [animation]="toastAnimation"
+></ejs-toast>
