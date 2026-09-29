@@ -107,7 +107,12 @@
       <section class="panel">
         <h3>แผนที่จุดติดตั้ง</h3>
         @if (activeInstallations().length) {
-          <app-installation-map [installations]="activeInstallations()" height="340px" />
+          <app-installation-map
+            [installations]="activeInstallations()"
+            [focus]="mapFit()?.focus ?? null"
+            [radiusKm]="mapFit()?.radiusKm ?? null"
+            height="340px"
+          />
         } @else {
           <app-empty-state icon="e-icons e-location" title="ยังไม่มีจุดติดตั้งที่ใช้งาน" />
         }

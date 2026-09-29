@@ -20,7 +20,7 @@ import { AuditHistory } from '../../shared/audit-history';
 import { DataGrid, GridCell, GridColumn, GridRowAction } from '../../shared/data-grid';
 import { EmptyState } from '../../shared/empty-state';
 import { ErrorState } from '../../shared/error-state';
-import { InstallationMap } from '../../shared/installation-map';
+import { InstallationMap, fitPoints } from '../../shared/installation-map';
 import { PageHeader } from '../../shared/page-header';
 import { SkeletonBlock } from '../../shared/skeleton-block';
 import { StatCard } from '../../shared/stat-card';
@@ -120,6 +120,7 @@ export class CustomerDetailPage {
   protected readonly activeInstallations = computed(() =>
     this.installations.value().filter((i) => !i.removed_at),
   );
+  protected readonly mapFit = computed(() => fitPoints(this.activeInstallations()));
   protected readonly installRows = computed(() =>
     this.installations.value().map((i) => ({
       ...i,

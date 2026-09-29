@@ -45,6 +45,28 @@ function circlePoints(center: LatLng, radiusM: number): LatLng[] {
   });
 }
 
+/** Centre and radius (for `focus` / `radiusKm`) that frame all points; null when there are none. */
+export function fitPoints(points: readonly LatLng[]): { focus: LatLng; radiusKm: number } | null {
+  if (!points.length) return null;
+  const lats = points.map((p) => p.latitude);
+  const lngs = points.map((p) => p.longitude);
+  const focus = {
+    latitude: (Math.min(...lats) + Math.max(...lats)) / 2,
+    longitude: (Math.min(...lngs) + Math.max(...lngs)) / 2,
+  };
+  const kmPerDeg = (EARTH_RADIUS_M / 1000) * (Math.PI / 180);
+  const cosLat = Math.cos((focus.latitude * Math.PI) / 180);
+  const radiusKm = Math.max(
+    ...points.map((p) =>
+      Math.hypot(
+        (p.latitude - focus.latitude) * kmPerDeg,
+        (p.longitude - focus.longitude) * kmPerDeg * cosLat,
+      ),
+    ),
+  );
+  return { focus, radiusKm: Math.max(radiusKm * 1.2, 2) };
+}
+
 /**
  * OpenStreetMap tiles with Syncfusion marker clustering for dense installation areas.
  * With `pickable`, clicking the map emits `pick` with the clicked coordinates; `pin` and
