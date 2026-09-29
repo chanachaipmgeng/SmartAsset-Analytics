@@ -21,6 +21,8 @@ class Settings(BaseSettings):
 
     seed_admin_email: str = "admin@example.com"
     seed_admin_password: str = ""
+    # False on production: seed only the platform admin, without sample tenants and devices.
+    seed_sample_data: bool = True
 
     @property
     def cors_origin_list(self) -> list[str]:

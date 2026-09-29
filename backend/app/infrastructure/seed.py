@@ -35,6 +35,9 @@ async def seed() -> None:
             )
             await uow.users.add(root)
             await uow.flush()
+            if not settings.seed_sample_data:
+                print(f"seed: done. superadmin={settings.seed_admin_email} (no sample data)")
+                return
             su = Actor(user_id=root.id, role=Role.SUPERADMIN, tenant_id=None)
 
             demo = await admin.create_tenant(uow, su, name="บริษัท ไทมเทค โซลูชั่น จำกัด", code="TIMETECH")
