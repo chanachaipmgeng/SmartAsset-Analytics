@@ -259,6 +259,7 @@ class TransactionOut(Out):
     note: str | None
     occurred_at: datetime
     supplier_name: str | None = None
+    customer_id: UUID | None = None
 
 
 class CountOut(Out):
@@ -309,6 +310,17 @@ class CustomerOut(Out):
     address: str | None = None
     tax_id: str | None = None
     notes: str | None = None
+
+
+class CustomerSummaryOut(Out):
+    active_installations: int
+    total_installations: int
+    devices_by_status: list[CountOut]
+    under_warranty: int
+
+
+class CustomerDetailOut(CustomerOut):
+    summary: CustomerSummaryOut
 
 
 class InstallationIn(BaseModel):

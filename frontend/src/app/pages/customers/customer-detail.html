@@ -1,0 +1,134 @@
+<div class="page">
+  @if (customer.error()) {
+    <app-error-state title="ไม่พบข้อมูลลูกค้า" message="ลูกค้าอาจถูกลบหรือคุณไม่มีสิทธิ์เข้าถึง" (retry)="customer.reload()" />
+  } @else if (customer.value(); as c) {
+    <app-page-header [title]="c.company_name" [subtitle]="tenantName() ?? 'รายละเอียดลูกค้า จุดติดตั้ง และประวัติอุปกรณ์'">
+      <a ejs-button cssClass="e-outline" iconCss="e-icons e-arrow-left" routerLink="/customers">กลับไปรายชื่อลูกค้า</a>
+    </app-page-header>
+
+    <section class="panel profile">
+      <div class="profile-head">
+        <span class="tone-chip" [attr.data-tone]="c.is_active ? 'success' : 'neutral'">{{ c.is_active ? 'ใช้งาน' : 'ระงับ' }}</span>
+        <span class="tone-chip" data-tone="primary">ระดับบริการ{{ levelLabels[c.service_level] }}</span>
+      </div>
+      <dl class="facts">
+        <div><dt>ผู้ติดต่อ</dt><dd>{{ c.contact_person || '-' }}</dd></div>
+        <div>
+          <dt>โทรศัพท์</dt>
+          <dd>
+            @if (c.phone) {
+              <a [href]="'tel:' + c.phone">{{ c.phone }}</a>
+            } @else {
+              -
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>อีเมล</dt>
+          <dd>
+            @if (c.email) {
+              <a [href]="'mailto:' + c.email">{{ c.email }}</a>
+            } @else {
+              -
+            }
+          </dd>
+        </div>
+        <div><dt>เลขประจำตัวผู้เสียภาษี</dt><dd class="mono">{{ c.tax_id || '-' }}</dd></div>
+        <div class="wide"><dt>ที่อยู่</dt><dd>{{ c.address || '-' }}</dd></div>
+        @if (c.notes) {
+          <div class="wide"><dt>หมายเหตุ</dt><dd>{{ c.notes }}</dd></div>
+        }
+      </dl>
+    </section>
+
+    <div class="stats">
+      <app-stat-card label="จุดติดตั้งที่ใช้งาน" [value]="c.summary.active_installations" icon="e-icons e-location" variant="gradient" />
+      <app-stat-card label="ติดตั้งทั้งหมด (รวมที่ถอนแล้ว)" [value]="c.summary.total_installations" icon="e-icons e-box" variant="info" />
+      <app-stat-card label="อยู่ในประกัน" [value]="c.summary.under_warranty" icon="e-icons e-check-box" variant="success" hint="เฉพาะเครื่องที่ติดตั้งอยู่" />
+      <app-stat-card label="อยู่ระหว่างซ่อม" [value]="repairCount()" icon="e-icons e-settings" variant="error" />
+    </div>
+
+    @if (statusChips().length) {
+      <div class="status-row">
+        <span class="muted">สถานะปัจจุบันของอุปกรณ์ที่เคยติดตั้ง:</span>
+        @for (s of statusChips(); track s.key) {
+          <app-status-chip [tone]="s.tone" [text]="s.label + ' ' + s.count" />
+        }
+      </div>
+    }
+
+    <div class="grid-2">
+      <section class="panel">
+        <h3>แผนที่จุดติดตั้ง</h3>
+        @if (activeInstallations().length) {
+          <app-installation-map [installations]="activeInstallations()" height="340px" />
+        } @else {
+          <app-empty-state icon="e-icons e-location" title="ยังไม่มีจุดติดตั้งที่ใช้งาน" />
+        }
+      </section>
+      <section class="panel timeline-panel">
+        <h3>ประวัติความเคลื่อนไหว</h3>
+        <app-asset-timeline
+          [items]="transactions.value()"
+          [loading]="transactions.isLoading()"
+          [photos]="txPhotos.value()"
+          [showDevice]="true"
+        />
+      </section>
+    </div>
+
+    <section class="panel">
+      <h3>จุดติดตั้งทั้งหมด</h3>
+      <app-data-grid
+        [data]="installRows()"
+        [columns]="columns"
+        perspectiveKey="customer-installations"
+        [exportName]="'installations-' + c.company_name"
+        [loading]="installations.isLoading()"
+        [error]="installations.error()"
+        emptyTitle="ลูกค้ารายนี้ยังไม่มีการติดตั้ง"
+        [rowActions]="['view']"
+        (rowAction)="onInstallAction($event)"
+        (retry)="installations.reload()"
+      >
+        <ng-template gridCell="serial_number" let-row>
+          <a class="link mono" [routerLink]="['/devices', row.device_id]">{{ row.serial_number }}</a>
+        </ng-template>
+        <ng-template gridCell="state_label" let-row>
+          <span class="tone-chip" [attr.data-tone]="row.state_tone">{{ row.state_label }}</span>
+        </ng-template>
+      </app-data-grid>
+    </section>
+
+    @if (photoGroups().length) {
+      <section class="panel">
+        <h3>รูปหน้างาน</h3>
+        @for (g of photoGroups(); track g.installation.id) {
+          <div class="site">
+            <div class="site-head">
+              <a class="link mono" [routerLink]="['/devices', g.installation.device_id]">{{ g.installation.serial_number }}</a>
+              <span class="muted">{{ g.installation.address || g.installation.model_name }} · ติดตั้ง {{ g.installation.install_date | date: 'd MMM y' }}</span>
+            </div>
+            <div class="thumbs">
+              @for (p of g.photos; track p.id) {
+                <a [href]="p.url | photoSrc" target="_blank" rel="noopener" [title]="p.caption ?? 'เปิดรูปขนาดเต็ม'">
+                  <img [src]="p.thumb_url | photoSrc" [alt]="p.caption ?? 'รูปหน้างาน'" loading="lazy" decoding="async" />
+                </a>
+              }
+            </div>
+          </div>
+        }
+      </section>
+    }
+
+    <app-audit-history entityType="customer" [entityId]="c.id" />
+  } @else {
+    <app-skeleton-block height="48px" />
+    <div class="stats mt-4">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <app-skeleton-block height="96px" />
+      }
+    </div>
+    <app-skeleton-block height="320px" class="mt-4 block" />
+  }
+</div>

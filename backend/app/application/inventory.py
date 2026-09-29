@@ -342,6 +342,7 @@ async def list_transactions(
     date_to: date | None = None,
     tx_types: list[TransactionType] | None = None,
     user_id: UUID | None = None,
+    customer_id: UUID | None = None,
 ) -> list[TransactionView]:
     """`date_from`/`date_to` are inclusive business-calendar days (Asia/Bangkok)."""
     if date_from and date_to and date_to < date_from:
@@ -349,7 +350,13 @@ async def list_transactions(
     since = datetime.combine(date_from, time.min, tzinfo=BUSINESS_OFFSET) if date_from else None
     until = datetime.combine(date_to + timedelta(days=1), time.min, tzinfo=BUSINESS_OFFSET) if date_to else None
     return await uow.transactions.list_views(
-        device_id=device_id, limit=limit, since=since, until=until, tx_types=tx_types, user_id=user_id
+        device_id=device_id,
+        limit=limit,
+        since=since,
+        until=until,
+        tx_types=tx_types,
+        user_id=user_id,
+        customer_id=customer_id,
     )
 
 
@@ -432,8 +439,10 @@ async def update_installation(
     return view
 
 
-async def list_installations(uow: UnitOfWork, actor: Actor, *, active_only: bool = True) -> list[InstallationView]:
-    return await uow.installations.list_views(active_only=active_only)
+async def list_installations(
+    uow: UnitOfWork, actor: Actor, *, active_only: bool = True, customer_id: UUID | None = None
+) -> list[InstallationView]:
+    return await uow.installations.list_views(active_only=active_only, customer_id=customer_id)
 
 
 async def nearby_installations(

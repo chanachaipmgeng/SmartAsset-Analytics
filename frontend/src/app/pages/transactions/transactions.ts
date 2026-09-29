@@ -1,6 +1,6 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from '@syncfusion/ej2-angular-buttons';
 import { DateRangePickerModule, RangeEventArgs } from '@syncfusion/ej2-angular-calendars';
 import { STATUS_LABELS, TX_ICONS, TX_LABELS, TX_TONES, toDate, toIsoDate } from '../../core/labels';
@@ -36,7 +36,7 @@ function daysAgo(n: number): Date {
 
 @Component({
   selector: 'app-transactions',
-  imports: [ButtonModule, DateRangePickerModule, PageHeader, DataGrid, GridCell, FilterChips],
+  imports: [ButtonModule, DateRangePickerModule, RouterLink, PageHeader, DataGrid, GridCell, FilterChips],
   template: `
     <div class="page">
       <app-page-header title="ความเคลื่อนไหวสต็อก" subtitle="ประวัติทุกรายการที่เปลี่ยนสถานะหรือย้ายอุปกรณ์">
@@ -80,6 +80,11 @@ function daysAgo(n: number): Date {
             <span class="tone-chip has-icon" [attr.data-tone]="row.type_tone" [title]="row.type_label">
               <span [class]="row.type_icon"></span>{{ row.type_label }}
             </span>
+          </ng-template>
+          <ng-template gridCell="customer_name" let-row>
+            @if (row.customer_id) {
+              <a class="customer-link" [routerLink]="['/customers', row.customer_id]">{{ row.customer_name }}</a>
+            }
           </ng-template>
         </app-data-grid>
       </div>

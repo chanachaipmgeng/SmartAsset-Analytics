@@ -51,6 +51,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/customers/customers').then((m) => m.CustomersPage),
       },
       {
+        path: 'customers/:id',
+        title: 'รายละเอียดลูกค้า',
+        loadComponent: () => import('./pages/customers/customer-detail').then((m) => m.CustomerDetailPage),
+      },
+      {
         path: 'installations',
         title: 'จุดติดตั้ง',
         loadComponent: () => import('./pages/installations/installations').then((m) => m.InstallationsPage),

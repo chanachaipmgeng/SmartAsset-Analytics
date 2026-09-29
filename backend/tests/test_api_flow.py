@@ -561,6 +561,19 @@ async def test_extra_fields(client: httpx.AsyncClient, world: dict) -> None:
     removed = next(i for i in installs if i["id"] == installation["id"])
     assert removed["removal_reason"] == "ลูกค้ายกเลิกสัญญา"
 
+    # Customer detail: summary counts and customer filters.
+    detail = (await client.get(f"/customers/{customer['id']}", headers=a)).json()
+    assert detail["company_name"] == f"Tax {tag}"
+    summary = detail["summary"]
+    assert (summary["active_installations"], summary["total_installations"], summary["under_warranty"]) == (0, 1, 0)
+    assert [(c["key"], c["count"]) for c in summary["devices_by_status"]] == [("UNDER_QC", 1)]
+    history = (await client.get("/inventory/transactions", headers=a, params={"customer_id": customer["id"]})).json()
+    assert [t["transaction_type"] for t in history] == ["RETURN", "INSTALL"]
+    assert all(t["customer_id"] == customer["id"] for t in history)
+    params = {"customer_id": customer["id"], "active_only": "false"}
+    assert [i["id"] for i in (await client.get("/installations", headers=a, params=params)).json()] == [installation["id"]]
+    assert (await client.get(f"/customers/{customer['id']}", headers=world["b"])).status_code == 404
+
 
 async def test_change_own_password(client: httpx.AsyncClient, world: dict) -> None:
     email = f"pw.{world['tag'].lower()}@example.com"

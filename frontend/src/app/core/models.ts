@@ -127,6 +127,7 @@ export interface InventoryTransaction {
   tenant_id: string | null;
   tenant_name: string | null;
   customer_name: string | null;
+  customer_id: string | null;
   supplier_name: string | null;
   user_name: string;
   note: string | null;

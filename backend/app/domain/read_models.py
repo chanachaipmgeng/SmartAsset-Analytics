@@ -72,6 +72,7 @@ class TransactionView:
     note: str | None
     occurred_at: datetime
     supplier_name: str | None = None
+    customer_id: UUID | None = None
 
 
 @dataclass(frozen=True)
@@ -94,6 +95,16 @@ class InstallationView:
     site_phone: str | None = None
     notes: str | None = None
     removal_reason: str | None = None
+
+
+@dataclass(frozen=True)
+class CustomerSummary:
+    active_installations: int
+    total_installations: int
+    # Current status of every device ever installed for the customer.
+    devices_by_status: list["CountItem"]
+    # Devices installed now whose warranty has not ended.
+    under_warranty: int
 
 
 @dataclass(frozen=True)

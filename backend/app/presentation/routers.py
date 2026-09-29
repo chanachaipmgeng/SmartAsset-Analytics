@@ -268,6 +268,7 @@ async def list_transactions(
     date_to: date | None = None,
     transaction_type: Annotated[list[TransactionType] | None, Query()] = None,
     user_id: UUID | None = None,
+    customer_id: UUID | None = None,
 ):
     return await inventory.list_transactions(
         uow,
@@ -278,6 +279,7 @@ async def list_transactions(
         date_to=date_to,
         tx_types=transaction_type,
         user_id=user_id,
+        customer_id=customer_id,
     )
 
 
@@ -297,6 +299,14 @@ async def create_customer(body: s.CustomerIn, actor: ActorDep, uow: UowDep):
     return await customers.create_customer(uow, actor, **body.model_dump())
 
 
+@router.get("/customers/{customer_id}", response_model=s.CustomerDetailOut, tags=["customers"])
+async def get_customer(customer_id: UUID, actor: ActorDep, uow: UowDep):
+    customer, summary = await customers.get_customer(uow, actor, customer_id)
+    return s.CustomerDetailOut(
+        **s.CustomerOut.model_validate(customer).model_dump(), summary=s.CustomerSummaryOut.model_validate(summary)
+    )
+
+
 @router.patch("/customers/{customer_id}", response_model=s.CustomerOut, tags=["customers"])
 async def update_customer(customer_id: UUID, body: s.CustomerPatch, actor: ActorDep, uow: UowDep):
     return await customers.update_customer(uow, actor, customer_id, body.model_dump(exclude_unset=True))
@@ -310,8 +320,8 @@ async def deactivate_customer(customer_id: UUID, actor: ActorDep, uow: UowDep):
 
 # ---- installations ----
 @router.get("/installations", response_model=list[s.InstallationOut], tags=["installations"])
-async def list_installations(actor: ActorDep, uow: UowDep, active_only: bool = True):
-    return await inventory.list_installations(uow, actor, active_only=active_only)
+async def list_installations(actor: ActorDep, uow: UowDep, active_only: bool = True, customer_id: UUID | None = None):
+    return await inventory.list_installations(uow, actor, active_only=active_only, customer_id=customer_id)
 
 
 @router.get("/installations/nearby", response_model=list[s.InstallationOut], tags=["installations"])

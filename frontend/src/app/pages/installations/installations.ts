@@ -1,5 +1,6 @@
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { SliderModule } from '@syncfusion/ej2-angular-inputs';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
@@ -24,6 +25,7 @@ interface NearbyQuery {
   selector: 'app-installations',
   imports: [
     ...FORM_IMPORTS,
+    RouterLink,
     SliderModule,
     InstallationMap,
     PageHeader,

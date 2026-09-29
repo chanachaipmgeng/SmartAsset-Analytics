@@ -148,7 +148,7 @@
           <section class="section">
             <h3>จุดติดตั้ง</h3>
             <div class="install-card">
-              <div class="font-semibold">{{ inst.customer_name }}</div>
+              <a class="customer-link font-semibold" [routerLink]="['/customers', inst.customer_id]">{{ inst.customer_name }}</a>
               <div class="text-sm text-on-surface-variant">
                 ติดตั้ง {{ inst.install_date | date: 'd MMM y' }} · ระดับบริการ {{ levelLabels[inst.service_level] }}
               </div>

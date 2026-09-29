@@ -259,6 +259,17 @@ body {
   @include glass-card($space-md);
 }
 
+// Customer names that open the customer detail page.
+.customer-link {
+  font-weight: 600;
+  color: rgb(var(--app-primary));
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 // Small tonal badge for grid cells: <span class="tone-chip" data-tone="success">ใช้งาน</span>
 .tone-chip {
   display: inline-flex;

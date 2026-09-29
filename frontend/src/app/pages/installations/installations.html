@@ -68,6 +68,9 @@
       <ng-template gridCell="state_label" let-row>
         <span class="state-chip" [class.removed]="!!row.removed_at">{{ row.state_label }}</span>
       </ng-template>
+      <ng-template gridCell="customer_name" let-row>
+        <a class="customer-link" [routerLink]="['/customers', row.customer_id]">{{ row.customer_name }}</a>
+      </ng-template>
     </app-data-grid>
   </div>
 </div>

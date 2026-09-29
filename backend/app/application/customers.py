@@ -1,18 +1,28 @@
 from dataclasses import replace
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
 from app.application import audit
 from app.application.context import Actor
+from app.application.dashboard import BUSINESS_OFFSET
 from app.domain.entities import Customer
 from app.domain.enums import AuditEntity
 from app.domain.errors import ConflictError, NotFoundError
 from app.domain.ports import UnitOfWork
+from app.domain.read_models import CustomerSummary
 from app.domain.rules import require_admin, require_write
 
 
 async def list_customers(uow: UnitOfWork, actor: Actor) -> list[Customer]:
     return await uow.customers.list()
+
+
+async def get_customer(uow: UnitOfWork, actor: Actor, customer_id: UUID) -> tuple[Customer, CustomerSummary]:
+    customer = await uow.customers.get(customer_id)
+    if customer is None:
+        raise NotFoundError("ไม่พบลูกค้า")
+    return customer, await uow.customers.summary(customer_id, datetime.now(BUSINESS_OFFSET).date())
 
 
 async def create_customer(uow: UnitOfWork, actor: Actor, *, tenant_id: UUID | None, **data: Any) -> Customer:

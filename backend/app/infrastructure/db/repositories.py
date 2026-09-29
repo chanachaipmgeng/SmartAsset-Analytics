@@ -25,6 +25,7 @@ from app.domain.errors import ConflictError, PermissionDeniedError
 from app.domain.read_models import (
     AuditView,
     CountItem,
+    CustomerSummary,
     DailyCount,
     DeviceView,
     InstallationView,
@@ -398,6 +399,7 @@ class SqlTransactionRepository(_Repo):
         until: datetime | None = None,
         tx_types: list[TransactionType] | None = None,
         user_id: UUID | None = None,
+        customer_id: UUID | None = None,
     ) -> list[TransactionView]:
         tx = InventoryTransactionORM
         stmt = (
@@ -428,6 +430,8 @@ class SqlTransactionRepository(_Repo):
             stmt = stmt.where(tx.transaction_type.in_([t.value for t in tx_types]))
         if user_id:
             stmt = stmt.where(tx.user_id == user_id)
+        if customer_id:
+            stmt = stmt.where(tx.customer_id == customer_id)
         result = []
         for t, serial, tenant_name, customer_name, user_name, supplier_name in (await self.s.execute(stmt)).all():
             result.append(
@@ -445,6 +449,7 @@ class SqlTransactionRepository(_Repo):
                     note=t.note,
                     occurred_at=t.occurred_at,
                     supplier_name=supplier_name,
+                    customer_id=t.customer_id,
                 )
             )
         return result
@@ -478,6 +483,35 @@ class SqlCustomerRepository(_Repo):
             InstallationORM.customer_id == customer_id, InstallationORM.removed_at.is_(None)
         )
         return bool(await self.s.scalar(stmt))
+
+    async def summary(self, customer_id: UUID, today: date) -> CustomerSummary:
+        i = InstallationORM
+        active, total = (
+            await self.s.execute(
+                select(func.count().filter(i.removed_at.is_(None)), func.count()).where(i.customer_id == customer_id)
+            )
+        ).one()
+        ever_installed = select(i.device_id).where(i.customer_id == customer_id).distinct()
+        rows = await self.s.execute(
+            select(DeviceORM.status, func.count()).where(DeviceORM.id.in_(ever_installed)).group_by(DeviceORM.status)
+        )
+        counts = dict(rows.all())
+        under_warranty = await self.s.scalar(
+            select(func.count())
+            .select_from(i)
+            .join(DeviceORM, DeviceORM.id == i.device_id)
+            .where(i.customer_id == customer_id, i.removed_at.is_(None), DeviceORM.warranty_end >= today)
+        )
+        return CustomerSummary(
+            active_installations=active,
+            total_installations=total,
+            devices_by_status=[
+                CountItem(key=s.value, label=STATUS_LABELS_TH[s], count=counts[s.value])
+                for s in DeviceStatus
+                if counts.get(s.value)
+            ],
+            under_warranty=int(under_warranty or 0),
+        )
 
 
 class SqlInstallationRepository(_Repo):
@@ -536,10 +570,12 @@ class SqlInstallationRepository(_Repo):
         row = (await self.s.execute(self._view_stmt().where(InstallationORM.id == installation_id))).first()
         return self._view(row) if row else None
 
-    async def list_views(self, *, active_only: bool = True) -> list[InstallationView]:
+    async def list_views(self, *, active_only: bool = True, customer_id: UUID | None = None) -> list[InstallationView]:
         stmt = self._view_stmt().order_by(InstallationORM.install_date.desc())
         if active_only:
             stmt = stmt.where(InstallationORM.removed_at.is_(None))
+        if customer_id:
+            stmt = stmt.where(InstallationORM.customer_id == customer_id)
         return [self._view(r) for r in (await self.s.execute(stmt)).all()]
 
     async def nearby(self, latitude: float, longitude: float, radius_m: float) -> list[InstallationView]:
