@@ -510,18 +510,15 @@ class DemoLoader:
     async def finish_times(self, started: datetime) -> None:
         for photo_id, at in self.photo_times:
             await self.session.execute(text("UPDATE photos SET created_at = :at WHERE id = :id"), {"at": at, "id": photo_id})
-        # Spread this run's audit entries over the history window, keeping their order.
-        first = self.now - timedelta(days=HISTORY_DAYS)
-        await self.session.execute(
-            text(
-                "WITH run AS (SELECT id, row_number() OVER (ORDER BY occurred_at, id) AS n, count(*) OVER () AS total "
-                "FROM audit_logs WHERE occurred_at >= :started) "
-                "UPDATE audit_logs a SET occurred_at = CAST(:first AS timestamptz) "
-                "+ (run.n::float / run.total) * interval '89 days' "
-                "FROM run WHERE a.id = run.id"
-            ),
-            {"started": started, "first": first},
+        # Spread this run's audit entries over the history window in working hours, keeping their order.
+        rows = await self.session.execute(
+            text("SELECT id FROM audit_logs WHERE occurred_at >= :started ORDER BY occurred_at, id"), {"started": started}
         )
+        ids = rows.scalars().all()
+        span = HISTORY_DAYS - 1
+        for i, audit_id in enumerate(ids):
+            at = _moment(span - span * (i + 1) / (len(ids) + 1), self.now)
+            await self.session.execute(text("UPDATE audit_logs SET occurred_at = :at WHERE id = :id"), {"at": at, "id": audit_id})
 
 
 async def load_demo() -> None:
