@@ -116,7 +116,13 @@ export class Shell {
       settings.push({ path: '/admin/users', label: 'ผู้ใช้งาน', icon: 'e-icons e-user' });
     }
     return [
-      { label: 'ภาพรวม', items: [{ path: '/dashboard', label: 'แดชบอร์ด', icon: 'e-icons e-chart' }] },
+      {
+        label: 'ภาพรวม',
+        items: [
+          { path: '/dashboard', label: 'แดชบอร์ด', icon: 'e-icons e-chart' },
+          { path: '/reports', label: 'รายงาน', icon: 'e-icons e-table-2' },
+        ],
+      },
       {
         label: 'คลังอุปกรณ์',
         items: [

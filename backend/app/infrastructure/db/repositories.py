@@ -20,7 +20,14 @@ from app.domain.entities import (
 )
 from app.domain.enums import DeviceStatus, Role, ServiceLevel, TransactionType
 from app.domain.errors import ConflictError, PermissionDeniedError
-from app.domain.read_models import CountItem, DailyCount, DeviceView, InstallationView, TransactionView
+from app.domain.read_models import (
+    CountItem,
+    DailyCount,
+    DeviceView,
+    InstallationView,
+    StockBalanceRow,
+    TransactionView,
+)
 from app.domain.rules import STATUS_LABELS_TH
 from app.infrastructure.db.models import (
     CustomerORM,
@@ -272,6 +279,31 @@ class SqlDeviceRepository(_Repo):
             .order_by(DeviceORM.loan_due_date)
         )
         return [_device_view(r) for r in (await self.s.execute(stmt)).all()]
+
+    async def stock_balance(self) -> list[StockBalanceRow]:
+        stmt = (
+            select(
+                DeviceModelORM.id,
+                DeviceModelORM.brand,
+                DeviceModelORM.name,
+                DeviceORM.tenant_id,
+                TenantORM.name,
+                DeviceORM.status,
+                func.count(DeviceORM.id),
+                func.coalesce(func.sum(DeviceORM.cost), 0),
+            )
+            .join(DeviceModelORM, DeviceModelORM.id == DeviceORM.model_id)
+            .outerjoin(TenantORM, TenantORM.id == DeviceORM.tenant_id)
+            .group_by(DeviceModelORM.id, DeviceORM.tenant_id, TenantORM.name, DeviceORM.status)
+            .order_by(DeviceModelORM.brand, DeviceModelORM.name, TenantORM.name.nulls_first(), DeviceORM.status)
+        )
+        return [
+            StockBalanceRow(
+                model_id=m, brand=b, model_name=n, tenant_id=t, tenant_name=tn,
+                status=DeviceStatus(s), count=c, total_cost=cost,
+            )
+            for m, b, n, t, tn, s, c, cost in (await self.s.execute(stmt)).all()
+        ]
 
     async def status_since(self, status: DeviceStatus | None = None) -> list[tuple[DeviceView, datetime]]:
         tx = InventoryTransactionORM

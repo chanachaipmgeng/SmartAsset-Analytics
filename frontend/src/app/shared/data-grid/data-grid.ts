@@ -11,11 +11,13 @@ import {
   viewChild,
 } from '@angular/core';
 import {
+  AggregateService,
   ColumnChooserService,
   ExcelExportService,
   FilterService,
   GridComponent,
   GridModule,
+  GroupService,
   PageService,
   PdfExportService,
   ResizeService,
@@ -43,6 +45,19 @@ export interface GridColumn {
   hideAtMedia?: string;
   isPrimaryKey?: boolean;
 }
+
+export interface GridAggregate {
+  field: string;
+  type: 'Sum' | 'Average' | 'Max' | 'Count';
+  format?: string;
+}
+
+const AGGREGATE_LABELS: Record<GridAggregate['type'], string> = {
+  Sum: 'รวม',
+  Average: 'เฉลี่ย',
+  Max: 'สูงสุด',
+  Count: 'จำนวน',
+};
 
 interface Perspective {
   hidden: string[];
@@ -82,6 +97,8 @@ function today(): string {
     ExcelExportService,
     PdfExportService,
     ColumnChooserService,
+    GroupService,
+    AggregateService,
   ],
   templateUrl: './data-grid.html',
   styleUrl: './data-grid.scss',
@@ -98,6 +115,10 @@ export class DataGrid<T extends object = Record<string, unknown>> {
   readonly error = input<unknown>(null);
   readonly emptyTitle = input('ยังไม่มีข้อมูล');
   readonly emptyMessage = input<string | null>(null);
+  /** Initial group columns; non-empty also shows the drop area so users can regroup. */
+  readonly groupBy = input<string[]>([]);
+  /** Footer and group-footer totals; exported with Excel/PDF. */
+  readonly aggregates = input<GridAggregate[]>([]);
 
   readonly selectionChange = output<T | null>();
   readonly rowDoubleClick = output<T>();
@@ -129,6 +150,26 @@ export class DataGrid<T extends object = Record<string, unknown>> {
     pageSize: this.saved()?.pageSize ?? PAGE_SIZES[0],
     pageSizes: PAGE_SIZES,
   }));
+
+  protected readonly groupSettings = computed(() => ({
+    columns: this.groupBy(),
+    showDropArea: this.groupBy().length > 0,
+    showGroupedColumn: true,
+  }));
+  /** Passed as a property (not projected `e-aggregates`) so modules inject after the grid renders. */
+  protected readonly aggregateRows = computed(() => {
+    const columns = this.aggregates().map((a) => {
+      const template = `${AGGREGATE_LABELS[a.type]} \${${a.type}}`;
+      return {
+        field: a.field,
+        type: a.type,
+        format: a.format ?? 'N0',
+        footerTemplate: template,
+        groupFooterTemplate: template,
+      };
+    });
+    return columns.length ? [{ columns }] : [];
+  });
 
   protected readonly errorText = computed(() => (this.error() ? errorMessage(this.error()) : ''));
 

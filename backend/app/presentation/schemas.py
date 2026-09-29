@@ -329,6 +329,17 @@ class AgedDeviceOut(Out):
     days: int
 
 
+class StockBalanceOut(Out):
+    model_id: UUID
+    brand: str
+    model_name: str
+    tenant_id: UUID | None
+    tenant_name: str | None
+    status: DeviceStatus
+    count: int
+    total_cost: Decimal
+
+
 class DashboardOut(Out):
     total_devices: int
     by_status: list[CountOut]

@@ -77,6 +77,18 @@ class CountItem:
 
 
 @dataclass(frozen=True)
+class StockBalanceRow:
+    model_id: UUID
+    brand: str
+    model_name: str
+    tenant_id: UUID | None
+    tenant_name: str | None
+    status: DeviceStatus
+    count: int
+    total_cost: Decimal
+
+
+@dataclass(frozen=True)
 class DailyCount:
     day: date
     transaction_type: TransactionType

@@ -345,6 +345,29 @@ async def test_dashboard_backlog(client: httpx.AsyncClient, world: dict) -> None
     assert ids["repair"] not in [x["device"]["id"] for x in other["repair_aging"]]
 
 
+async def test_reports(client: httpx.AsyncClient, world: dict) -> None:
+    a, b, tag, model_id = world["a"], world["b"], world["tag"], world["model"]["id"]
+    for i, cost in enumerate((1000, 2500)):
+        await client.post(
+            "/inventory/check-in", headers=a, json={"serial_number": f"RP-{tag}-{i}", "model_id": model_id, "cost": cost}
+        )
+
+    def rows_for(report: list[dict], tenant_id: str) -> list[dict]:
+        return [r for r in report if r["model_id"] == model_id and r["tenant_id"] == tenant_id]
+
+    balance = (await client.get("/reports/stock-balance", headers=a)).json()
+    stocked = [r for r in rows_for(balance, world["tenant_a"]["id"]) if r["status"] == "IN_STOCK"]
+    assert len(stocked) == 1 and stocked[0]["count"] >= 2 and float(stocked[0]["total_cost"]) >= 3500
+    assert all(r["status"] != "RETIRED" for r in balance)
+    assert not rows_for((await client.get("/reports/stock-balance", headers=b)).json(), world["tenant_a"]["id"])
+
+    aging = (await client.get("/reports/aging", headers=a, params={"status": "IN_STOCK"})).json()
+    fresh = [x for x in aging if x["device"]["serial_number"] == f"RP-{tag}-0"]
+    assert fresh and fresh[0]["days"] == 0
+    assert all(x["device"]["status"] == "IN_STOCK" for x in aging)
+    assert all(x["device"]["tenant_id"] != world["tenant_a"]["id"] for x in (await client.get("/reports/aging", headers=b)).json())
+
+
 def _xlsx(rows: list[list[object]]) -> bytes:
     book = Workbook()
     for row in rows:

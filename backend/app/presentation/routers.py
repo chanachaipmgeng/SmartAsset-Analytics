@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, File, Path, Query, Response, UploadFile, status
 
-from app.application import admin, auth, customers, dashboard, device_import, inventory
+from app.application import admin, auth, customers, dashboard, device_import, inventory, reports
 from app.domain.enums import DeviceStatus, TransactionType
 from app.domain.errors import NotFoundError, ValidationError
 from app.infrastructure import spreadsheet
@@ -322,3 +322,16 @@ async def update_installation(installation_id: UUID, body: s.InstallationPatch, 
 @router.get("/dashboard/summary", response_model=s.DashboardOut, tags=["dashboard"])
 async def dashboard_summary(actor: ActorDep, uow: UowDep):
     return await dashboard.dashboard_summary(uow, actor)
+
+
+# ---- reports ----
+@router.get("/reports/stock-balance", response_model=list[s.StockBalanceOut], tags=["reports"])
+async def stock_balance_report(actor: ActorDep, uow: UowDep, include_retired: bool = False):
+    return await reports.stock_balance(uow, actor, include_retired=include_retired)
+
+
+@router.get("/reports/aging", response_model=list[s.AgedDeviceOut], tags=["reports"])
+async def aging_report(
+    actor: ActorDep, uow: UowDep, status_: Annotated[DeviceStatus | None, Query(alias="status")] = None
+):
+    return await reports.aging(uow, actor, status=status_)

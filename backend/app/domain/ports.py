@@ -13,7 +13,14 @@ from app.domain.entities import (
     User,
 )
 from app.domain.enums import DeviceStatus, TransactionType
-from app.domain.read_models import CountItem, DailyCount, DeviceView, InstallationView, TransactionView
+from app.domain.read_models import (
+    CountItem,
+    DailyCount,
+    DeviceView,
+    InstallationView,
+    StockBalanceRow,
+    TransactionView,
+)
 
 
 class TenantRepository(Protocol):
@@ -68,6 +75,7 @@ class DeviceRepository(Protocol):
     async def count_by_model(self) -> list[CountItem]: ...
     async def warranty_expiring(self, until: date) -> list[DeviceView]: ...
     async def loan_overdue(self, today: date) -> list[DeviceView]: ...
+    async def stock_balance(self) -> list[StockBalanceRow]: ...
     async def status_since(self, status: DeviceStatus | None = None) -> list[tuple[DeviceView, datetime]]: ...
 
 
