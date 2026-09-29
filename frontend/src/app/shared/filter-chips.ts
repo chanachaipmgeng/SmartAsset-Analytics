@@ -50,10 +50,10 @@ export interface FilterChip<K extends string = string> {
       margin: 0;
       padding: 0 12px;
       gap: 6px;
-      border: 1px solid rgba(var(--color-sf-outline-variant), 0.9);
+      border: 1px solid rgba(var(--app-outline-variant), 0.9);
       border-radius: 999px;
-      background: rgba(var(--color-sf-surface), 0.72);
-      color: rgb(var(--color-sf-on-surface-variant));
+      background: rgba(var(--app-surface), 0.72);
+      color: rgb(var(--app-on-surface-variant));
       box-shadow: none;
       cursor: pointer;
       font: inherit;
@@ -74,28 +74,28 @@ export interface FilterChip<K extends string = string> {
     }
     .e-chip:hover {
       transform: translateY(-1px);
-      border-color: rgba(var(--color-sf-primary), 0.5);
-      background: rgba(var(--color-sf-primary), 0.06);
-      color: rgb(var(--color-sf-primary));
-      box-shadow: 0 6px 16px -10px rgba(var(--color-sf-primary), 0.6);
+      border-color: rgba(var(--app-primary), 0.5);
+      background: rgba(var(--app-primary), 0.06);
+      color: rgb(var(--app-primary));
+      box-shadow: 0 6px 16px -10px rgba(var(--app-primary), 0.6);
     }
     .e-chip:active {
       transform: scale(0.96);
     }
     .e-chip:focus-visible {
-      outline: 2px solid rgb(var(--color-sf-primary));
+      outline: 2px solid rgb(var(--app-primary));
       outline-offset: 2px;
     }
     .e-chip.e-active {
       border-color: transparent;
       background: linear-gradient(
         135deg,
-        rgb(var(--color-sf-primary)),
-        color-mix(in srgb, rgb(var(--color-sf-primary)) 60%, rgb(var(--color-sf-tertiary)))
+        rgb(var(--app-primary)),
+        color-mix(in srgb, rgb(var(--app-primary)) 60%, rgb(var(--app-tertiary)))
       );
-      color: rgb(var(--color-sf-on-primary));
+      color: rgb(var(--app-on-primary));
       font-weight: 600;
-      box-shadow: 0 8px 20px -10px rgba(var(--color-sf-primary), 0.85);
+      box-shadow: 0 8px 20px -10px rgba(var(--app-primary), 0.85);
     }
     /* Light sweep across the chip when it becomes active. */
     .e-chip.e-active::after {
@@ -115,13 +115,13 @@ export interface FilterChip<K extends string = string> {
       font-weight: 700;
       line-height: 20px;
       text-align: center;
-      background: rgba(var(--color-sf-on-surface-variant), 0.1);
+      background: rgba(var(--app-on-surface-variant), 0.1);
       color: inherit;
       font-variant-numeric: tabular-nums;
     }
     .e-chip.e-active .count {
       background: rgb(255 255 255 / 0.22);
-      color: rgb(var(--color-sf-on-primary));
+      color: rgb(var(--app-on-primary));
     }
     @keyframes chip-in {
       from {

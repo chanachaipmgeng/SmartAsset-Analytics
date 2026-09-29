@@ -135,12 +135,12 @@ function normalize(text: string): string {
       border: 0;
       outline: none;
       background: transparent;
-      color: rgb(var(--color-sf-on-surface));
+      color: rgb(var(--app-on-surface));
       font: inherit;
       font-size: 16px;
 
       &::placeholder {
-        color: rgb(var(--color-sf-on-surface-variant));
+        color: rgb(var(--app-on-surface-variant));
       }
     }
 
@@ -148,13 +148,13 @@ function normalize(text: string): string {
       display: inline-block;
       min-width: 22px;
       padding: 1px 6px;
-      border: 1px solid rgb(var(--color-sf-outline-variant));
+      border: 1px solid rgb(var(--app-outline-variant));
       border-bottom-width: 2px;
       border-radius: 6px;
       font: inherit;
       font-size: 11px;
       text-align: center;
-      color: rgb(var(--color-sf-on-surface-variant));
+      color: rgb(var(--app-on-surface-variant));
     }
 
     .palette-item {
@@ -172,7 +172,7 @@ function normalize(text: string): string {
       transition: background-color 100ms ease;
 
       &.active {
-        background: rgb(var(--color-sf-secondary-container));
+        background: rgb(var(--app-secondary-container));
       }
     }
 
@@ -183,8 +183,8 @@ function normalize(text: string): string {
       width: 32px;
       height: 32px;
       border-radius: 10px;
-      background: rgb(var(--color-sf-primary-container));
-      color: rgb(var(--color-sf-on-primary-container));
+      background: rgb(var(--app-primary-container));
+      color: rgb(var(--app-on-primary-container));
       font-size: 16px;
     }
   `,

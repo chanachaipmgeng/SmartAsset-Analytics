@@ -17,7 +17,7 @@
   gap: 12px;
   padding: 14px 16px;
   border-radius: 16px;
-  background: color-mix(in srgb, rgb(var(--color-sf-surface)) 90%, rgb(var(--color-sf-primary)));
+  background: color-mix(in srgb, rgb(var(--app-surface)) 90%, rgb(var(--app-primary)));
 }
 
 .drop-zone {
@@ -26,7 +26,7 @@
   align-items: center;
   gap: 6px;
   padding: 28px 16px;
-  border: 2px dashed rgb(var(--color-sf-outline-variant));
+  border: 2px dashed rgb(var(--app-outline-variant));
   border-radius: 20px;
   text-align: center;
   transition:
@@ -35,8 +35,8 @@
 
   &:hover,
   &.e-upload-drag-hover {
-    border-color: rgb(var(--color-sf-primary));
-    background: color-mix(in srgb, rgb(var(--color-sf-surface)) 94%, rgb(var(--color-sf-primary)));
+    border-color: rgb(var(--app-primary));
+    background: color-mix(in srgb, rgb(var(--app-surface)) 94%, rgb(var(--app-primary)));
   }
 
   &.busy {
@@ -60,14 +60,14 @@
 
 .drop-icon {
   font-size: 32px;
-  color: rgb(var(--color-sf-primary));
+  color: rgb(var(--app-primary));
 }
 
 .spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid rgba(var(--color-sf-primary), 0.2);
-  border-top-color: rgb(var(--color-sf-primary));
+  border: 3px solid rgba(var(--app-primary), 0.2);
+  border-top-color: rgb(var(--app-primary));
   border-radius: 50%;
   animation: spin 800ms linear infinite;
 }
@@ -85,8 +85,8 @@
   padding: 10px 14px;
   border-radius: 12px;
   font-size: 14px;
-  background: rgb(var(--color-sf-error-container));
-  color: rgb(var(--color-sf-on-error-container));
+  background: rgb(var(--app-error-container));
+  color: rgb(var(--app-on-error-container));
 }
 
 .summary {
@@ -111,14 +111,14 @@
     width: 16px;
     height: 16px;
     margin: 0;
-    accent-color: rgb(var(--color-sf-primary));
+    accent-color: rgb(var(--app-primary));
   }
 }
 
 .preview {
   max-height: min(52vh, 460px);
   overflow: auto;
-  border: 1px solid rgb(var(--color-sf-outline-variant));
+  border: 1px solid rgb(var(--app-outline-variant));
   border-radius: 12px;
 
   table {
@@ -135,17 +135,17 @@
     font-weight: 600;
     text-align: left;
     white-space: nowrap;
-    background: color-mix(in srgb, rgb(var(--color-sf-surface)) 88%, rgb(var(--color-sf-primary)));
+    background: color-mix(in srgb, rgb(var(--app-surface)) 88%, rgb(var(--app-primary)));
   }
 
   td {
     padding: 8px 10px;
     vertical-align: top;
-    border-top: 1px solid rgb(var(--color-sf-outline-variant));
+    border-top: 1px solid rgb(var(--app-outline-variant));
   }
 
   tr.bad td {
-    background: color-mix(in srgb, rgb(var(--color-sf-error-container)) 55%, transparent);
+    background: color-mix(in srgb, rgb(var(--app-error-container)) 55%, transparent);
   }
 
   .num {
@@ -158,18 +158,18 @@
   }
 
   .muted {
-    color: rgb(var(--color-sf-on-surface-variant));
+    color: rgb(var(--app-on-surface-variant));
   }
 }
 
 .errors {
   margin: 0;
   padding-left: 16px;
-  color: rgb(var(--color-sf-error));
+  color: rgb(var(--app-error));
 }
 
 .ok {
-  color: rgb(var(--color-sf-success));
+  color: rgb(var(--app-success));
   white-space: nowrap;
 }
 
@@ -190,8 +190,8 @@
   margin-bottom: 8px;
   border-radius: 50%;
   font-size: 32px;
-  background: rgb(var(--color-sf-success-container));
-  color: rgb(var(--color-sf-on-success-container));
+  background: rgb(var(--app-success-container));
+  color: rgb(var(--app-on-success-container));
   animation: pop-in 480ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
 }
 

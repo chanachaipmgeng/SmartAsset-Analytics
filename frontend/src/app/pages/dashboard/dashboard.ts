@@ -58,12 +58,12 @@ const STATUS_CARD: Record<DeviceStatus, { icon: string; variant: StatVariant }> 
 
 /** Activity chart series; each groups transaction types that read as one flow. */
 const ACTIVITY_SERIES: { name: string; types: TransactionType[]; token: string }[] = [
-  { name: 'รับเข้า / QC ผ่าน', types: ['CHECK_IN', 'QC_PASS'], token: '--color-sf-success' },
-  { name: 'เบิกออก / โอน', types: ['CHECK_OUT', 'TRANSFER'], token: '--color-sf-warning' },
-  { name: 'ติดตั้ง', types: ['INSTALL'], token: '--color-sf-info' },
-  { name: 'ยืม / รับคืน', types: ['LOAN', 'RETURN'], token: '--color-sf-tertiary' },
-  { name: 'ซ่อม', types: ['SEND_REPAIR', 'QC_FAIL', 'REPAIR_DONE'], token: '--color-sf-error' },
-  { name: 'ปลดระวาง', types: ['RETIRE'], token: '--color-sf-outline' },
+  { name: 'รับเข้า / QC ผ่าน', types: ['CHECK_IN', 'QC_PASS'], token: '--app-success' },
+  { name: 'เบิกออก / โอน', types: ['CHECK_OUT', 'TRANSFER'], token: '--app-warning' },
+  { name: 'ติดตั้ง', types: ['INSTALL'], token: '--app-info' },
+  { name: 'ยืม / รับคืน', types: ['LOAN', 'RETURN'], token: '--app-tertiary' },
+  { name: 'ซ่อม', types: ['SEND_REPAIR', 'QC_FAIL', 'REPAIR_DONE'], token: '--app-error' },
+  { name: 'ปลดระวาง', types: ['RETIRE'], token: '--app-outline' },
 ];
 
 @Component({
@@ -142,7 +142,7 @@ export class DashboardPage {
 
   protected readonly primaryColor = computed(() => {
     this.theme.isDark();
-    return cssColor('--color-sf-primary');
+    return cssColor('--app-primary');
   });
 
   protected readonly statusChart = computed(() =>

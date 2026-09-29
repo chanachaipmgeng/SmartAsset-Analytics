@@ -48,9 +48,7 @@
     >
       <span class="flex items-center gap-2">
         <span class="avatar-ring">
-          <span class="grid size-8 place-items-center rounded-full bg-primary-container text-sm font-semibold text-on-primary-container">
-            {{ initials() }}
-          </span>
+          <app-avatar [name]="auth.user()?.full_name ?? ''" [src]="avatar.photo()?.thumb_url" [size]="32" />
         </span>
         <span class="hidden text-left leading-tight lg:block">
           <span class="block text-sm font-medium text-on-surface">{{ user.full_name }}</span>

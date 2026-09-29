@@ -1,13 +1,13 @@
-// Design tokens for SCSS. Colours resolve to the Syncfusion Material 3 CSS variables at runtime,
-// so they follow the brand overrides in styles.scss and switch with `.e-dark-mode`.
-// Syncfusion stores colours as "r, g, b" triplets: use sf() / sf-a() instead of Sass colour functions.
+// Design tokens for SCSS. Colours resolve to the `--app-*` CSS variables defined in styles.scss,
+// so they switch with `.e-dark-mode` at runtime.
+// The variables hold "r, g, b" triplets: use sf() / sf-a() instead of Sass colour functions.
 
 @function sf($name) {
-  @return rgb(var(--color-sf-#{$name}));
+  @return rgb(var(--app-#{$name}));
 }
 
 @function sf-a($name, $alpha) {
-  @return rgba(var(--color-sf-#{$name}), $alpha);
+  @return rgba(var(--app-#{$name}), $alpha);
 }
 
 // ---- typography ----
@@ -45,19 +45,19 @@ $bp-md: 768px;
 $bp-lg: 1024px;
 
 // ---- AI-era glassmorphism / glow tokens ----
-$glass-bg: rgba(var(--color-sf-surface), 0.72);
-$glass-border: rgba(var(--color-sf-outline-variant), 0.5);
+$glass-bg: rgba(var(--app-surface), 0.72);
+$glass-border: rgba(var(--app-outline-variant), 0.5);
 $glass-blur: 20px;
-$glow-primary: 0 0 40px -8px rgba(var(--color-sf-primary), 0.35);
-$glow-primary-hover: 0 0 56px -4px rgba(var(--color-sf-primary), 0.5);
+$glow-primary: 0 0 40px -8px rgba(var(--app-primary), 0.35);
+$glow-primary-hover: 0 0 56px -4px rgba(var(--app-primary), 0.5);
 $gradient-mesh: radial-gradient(
     ellipse 80% 50% at 20% 120%,
-    rgba(var(--color-sf-primary), 0.12),
+    rgba(var(--app-primary), 0.12),
     transparent
   ),
   radial-gradient(
     ellipse 60% 60% at 80% -20%,
-    rgba(var(--color-sf-tertiary), 0.09),
+    rgba(var(--app-tertiary), 0.09),
     transparent
   );
 $noise-overlay: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");

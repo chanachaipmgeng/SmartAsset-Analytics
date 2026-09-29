@@ -39,11 +39,11 @@ export type StatVariant = 'gradient' | 'success' | 'warning' | 'info' | 'error' 
       min-width: 0;
     }
     .card {
-      --bg: rgb(var(--color-sf-surface));
-      --fg: rgb(var(--color-sf-on-surface));
-      --muted: rgb(var(--color-sf-on-surface-variant));
-      --icon-bg: rgb(var(--color-sf-surface-variant));
-      --icon-fg: rgb(var(--color-sf-on-surface-variant));
+      --bg: rgb(var(--app-surface));
+      --fg: rgb(var(--app-on-surface));
+      --muted: rgb(var(--app-on-surface-variant));
+      --icon-bg: rgb(var(--app-surface-variant));
+      --icon-fg: rgb(var(--app-on-surface-variant));
       position: relative;
       display: flex;
       height: 100%;
@@ -51,7 +51,7 @@ export type StatVariant = 'gradient' | 'success' | 'warning' | 'info' | 'error' 
       gap: 6px;
       overflow: hidden;
       padding: 18px;
-      border: 1px solid rgba(var(--color-sf-outline-variant), 0.6);
+      border: 1px solid rgba(var(--app-outline-variant), 0.6);
       border-radius: 20px;
       background: var(--bg);
       color: var(--fg);
@@ -69,7 +69,7 @@ export type StatVariant = 'gradient' | 'success' | 'warning' | 'info' | 'error' 
       border-radius: inherit;
       background: radial-gradient(
         ellipse 80% 80% at 80% 120%,
-        rgba(var(--color-sf-primary), 0.06),
+        rgba(var(--app-primary), 0.06),
         transparent
       );
       pointer-events: none;
@@ -90,19 +90,19 @@ export type StatVariant = 'gradient' | 'success' | 'warning' | 'info' | 'error' 
 
     @each $tone in success, warning, info, error, primary, tertiary {
       .card[data-variant='#{$tone}'] {
-        --icon-bg: rgb(var(--color-sf-#{$tone}-container));
-        --icon-fg: rgb(var(--color-sf-on-#{$tone}-container));
+        --icon-bg: rgb(var(--app-#{$tone}-container));
+        --icon-fg: rgb(var(--app-on-#{$tone}-container));
       }
     }
     .card[data-variant='gradient'] {
-      --fg: rgb(var(--color-sf-on-primary));
-      --muted: rgba(var(--color-sf-on-primary), 0.85);
-      --icon-bg: rgba(var(--color-sf-on-primary), 0.18);
-      --icon-fg: rgb(var(--color-sf-on-primary));
+      --fg: rgb(var(--app-on-primary));
+      --muted: rgba(var(--app-on-primary), 0.85);
+      --icon-bg: rgba(var(--app-on-primary), 0.18);
+      --icon-fg: rgb(var(--app-on-primary));
       border-color: transparent;
       background:
-        radial-gradient(120% 140% at 100% 0%, rgba(var(--color-sf-tertiary), 0.85), transparent 60%),
-        linear-gradient(135deg, rgb(var(--color-sf-primary)), color-mix(in srgb, rgb(var(--color-sf-primary)) 65%, rgb(var(--color-sf-tertiary))));
+        radial-gradient(120% 140% at 100% 0%, rgba(var(--app-tertiary), 0.85), transparent 60%),
+        linear-gradient(135deg, rgb(var(--app-primary)), color-mix(in srgb, rgb(var(--app-primary)) 65%, rgb(var(--app-tertiary))));
       background-size: 200% 200%;
       animation: gradient-shift 8s ease infinite;
 
@@ -114,14 +114,14 @@ export type StatVariant = 'gradient' | 'success' | 'warning' | 'info' | 'error' 
         width: 140px;
         height: 140px;
         border-radius: 50%;
-        background: rgba(var(--color-sf-on-primary), 0.08);
+        background: rgba(var(--app-on-primary), 0.08);
         filter: blur(2px);
       }
 
       .card-glow {
         background: radial-gradient(
           circle at 20% 80%,
-          rgba(var(--color-sf-on-primary), 0.1),
+          rgba(var(--app-on-primary), 0.1),
           transparent 60%
         );
       }
@@ -204,13 +204,13 @@ export type StatVariant = 'gradient' | 'success' | 'warning' | 'info' | 'error' 
       color: var(--icon-fg);
 
       &.up {
-        background: rgba(var(--color-sf-success), 0.15);
-        color: rgb(var(--color-sf-success));
+        background: rgba(var(--app-success), 0.15);
+        color: rgb(var(--app-success));
       }
 
       &.down {
-        background: rgba(var(--color-sf-error), 0.15);
-        color: rgb(var(--color-sf-error));
+        background: rgba(var(--app-error), 0.15);
+        color: rgb(var(--app-error));
       }
     }
 

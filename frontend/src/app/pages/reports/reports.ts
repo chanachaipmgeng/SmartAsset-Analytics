@@ -103,7 +103,7 @@ const AGING_STATUSES: DeviceStatus[] = ['IN_STOCK', 'CHECKED_OUT', 'INSTALLED', 
       display: flex;
       gap: 4px;
       margin-bottom: 12px;
-      border-bottom: 1px solid rgb(var(--color-sf-outline-variant));
+      border-bottom: 1px solid rgb(var(--app-outline-variant));
     }
     .tab {
       display: inline-flex;
@@ -114,20 +114,20 @@ const AGING_STATUSES: DeviceStatus[] = ['IN_STOCK', 'CHECKED_OUT', 'INSTALLED', 
       border: 0;
       border-bottom: 3px solid transparent;
       background: none;
-      color: rgb(var(--color-sf-on-surface-variant));
+      color: rgb(var(--app-on-surface-variant));
       font: inherit;
       font-weight: 500;
       cursor: pointer;
 
       &:hover {
-        color: rgb(var(--color-sf-on-surface));
+        color: rgb(var(--app-on-surface));
       }
       &.active {
-        border-bottom-color: rgb(var(--color-sf-primary));
-        color: rgb(var(--color-sf-primary));
+        border-bottom-color: rgb(var(--app-primary));
+        color: rgb(var(--app-primary));
       }
       &:focus-visible {
-        outline: 2px solid rgb(var(--color-sf-primary));
+        outline: 2px solid rgb(var(--app-primary));
         outline-offset: -2px;
       }
     }

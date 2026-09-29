@@ -6,16 +6,16 @@
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  background: rgb(var(--color-sf-surface-variant));
-  color: rgb(var(--color-sf-on-surface-variant));
+  background: rgb(var(--app-surface-variant));
+  color: rgb(var(--app-on-surface-variant));
 
   &[data-level='STANDARD'] {
-    background: rgb(var(--color-sf-info-container));
-    color: rgb(var(--color-sf-on-info-container));
+    background: rgb(var(--app-info-container));
+    color: rgb(var(--app-on-info-container));
   }
 
   &[data-level='PREMIUM'] {
-    background: rgb(var(--color-sf-tertiary-container));
-    color: rgb(var(--color-sf-on-tertiary-container));
+    background: rgb(var(--app-tertiary-container));
+    color: rgb(var(--app-on-tertiary-container));
   }
 }

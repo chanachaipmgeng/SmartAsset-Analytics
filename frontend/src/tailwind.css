@@ -1,29 +1,29 @@
 /*
- * Tailwind is the layout/spacing layer; Syncfusion Material 3 owns component styling.
+ * Tailwind is the layout/spacing layer; Syncfusion Tailwind 3 owns component styling.
  * Preflight is intentionally not imported: its reset strips Syncfusion buttons, inputs and grids.
  *
  * Cascade order, lowest first: Syncfusion < Tailwind utilities < unlayered CSS (styles.scss and
  * component styles). Utilities therefore override Syncfusion regardless of selector specificity.
  * Caveat: inside layers `!important` flips, so a Syncfusion `!important` beats one in styles.scss.
  *
- * ej2-base is compiled from SCSS in styles.scss (into syncfusion.base) so its Roboto @import can be
+ * ej2-base is compiled from SCSS in styles.scss (into syncfusion.base) so its Inter @import can be
  * switched off; the precompiled CSS would leave that @import stranded inside the layer.
  */
 @layer theme, base, syncfusion, components, utilities;
 @layer syncfusion.base, syncfusion.components;
 @import 'tailwindcss/theme.css' layer(theme);
 
-@import '@syncfusion/ej2-buttons/styles/material3.css' layer(syncfusion.components);
-@import '@syncfusion/ej2-inputs/styles/material3.css' layer(syncfusion.components);
-@import '@syncfusion/ej2-popups/styles/material3.css' layer(syncfusion.components);
-@import '@syncfusion/ej2-lists/styles/material3.css' layer(syncfusion.components);
-@import '@syncfusion/ej2-dropdowns/styles/material3.css' layer(syncfusion.components);
-@import '@syncfusion/ej2-calendars/styles/material3.css' layer(syncfusion.components);
-@import '@syncfusion/ej2-splitbuttons/styles/material3.css' layer(syncfusion.components);
-@import '@syncfusion/ej2-navigations/styles/material3.css' layer(syncfusion.components);
-@import '@syncfusion/ej2-layouts/styles/material3.css' layer(syncfusion.components);
-@import '@syncfusion/ej2-notifications/styles/material3.css' layer(syncfusion.components);
-@import '@syncfusion/ej2-grids/styles/material3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-buttons/styles/tailwind3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-inputs/styles/tailwind3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-popups/styles/tailwind3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-lists/styles/tailwind3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-dropdowns/styles/tailwind3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-calendars/styles/tailwind3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-splitbuttons/styles/tailwind3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-navigations/styles/tailwind3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-layouts/styles/tailwind3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-notifications/styles/tailwind3.css' layer(syncfusion.components);
+@import '@syncfusion/ej2-grids/styles/tailwind3.css' layer(syncfusion.components);
 
 @import 'tailwindcss/utilities.css' layer(utilities);
 
@@ -31,8 +31,8 @@
 @custom-variant dark (&:where(.e-dark-mode, .e-dark-mode *));
 
 /*
- * `inline` makes utilities emit rgb(var(--color-sf-*)) directly, so each element resolves
- * the Syncfusion token in its own scope (light or .e-dark-mode) instead of inheriting :root's value.
+ * `inline` makes utilities emit rgb(var(--app-*)) directly, so each element resolves
+ * the app token in its own scope (light or .e-dark-mode) instead of inheriting :root's value.
  */
 @theme inline {
   --font-sans: 'Sarabun', system-ui, sans-serif;
@@ -43,45 +43,45 @@
   --color-white: #fff;
   --color-black: #000;
 
-  --color-primary: rgb(var(--color-sf-primary));
-  --color-on-primary: rgb(var(--color-sf-on-primary));
-  --color-primary-container: rgb(var(--color-sf-primary-container));
-  --color-on-primary-container: rgb(var(--color-sf-on-primary-container));
-  --color-secondary: rgb(var(--color-sf-secondary));
-  --color-secondary-container: rgb(var(--color-sf-secondary-container));
-  --color-on-secondary-container: rgb(var(--color-sf-on-secondary-container));
-  --color-tertiary: rgb(var(--color-sf-tertiary));
-  --color-on-tertiary: rgb(var(--color-sf-on-tertiary));
-  --color-tertiary-container: rgb(var(--color-sf-tertiary-container));
-  --color-on-tertiary-container: rgb(var(--color-sf-on-tertiary-container));
+  --color-primary: rgb(var(--app-primary));
+  --color-on-primary: rgb(var(--app-on-primary));
+  --color-primary-container: rgb(var(--app-primary-container));
+  --color-on-primary-container: rgb(var(--app-on-primary-container));
+  --color-secondary: rgb(var(--app-secondary));
+  --color-secondary-container: rgb(var(--app-secondary-container));
+  --color-on-secondary-container: rgb(var(--app-on-secondary-container));
+  --color-tertiary: rgb(var(--app-tertiary));
+  --color-on-tertiary: rgb(var(--app-on-tertiary));
+  --color-tertiary-container: rgb(var(--app-tertiary-container));
+  --color-on-tertiary-container: rgb(var(--app-on-tertiary-container));
 
-  --color-surface: rgb(var(--color-sf-surface));
-  --color-surface-dim: color-mix(in srgb, rgb(var(--color-sf-surface)) 95%, rgb(var(--color-sf-primary)));
-  --color-surface-container: color-mix(in srgb, rgb(var(--color-sf-surface)) 90%, rgb(var(--color-sf-primary)));
-  --color-surface-variant: rgb(var(--color-sf-surface-variant));
-  --color-on-surface: rgb(var(--color-sf-on-surface));
-  --color-on-surface-variant: rgb(var(--color-sf-on-surface-variant));
-  --color-outline: rgb(var(--color-sf-outline));
-  --color-outline-variant: rgb(var(--color-sf-outline-variant));
-  --color-inverse-surface: rgb(var(--color-sf-inverse-surface));
-  --color-inverse-on-surface: rgb(var(--color-sf-inverse-on-surface));
+  --color-surface: rgb(var(--app-surface));
+  --color-surface-dim: color-mix(in srgb, rgb(var(--app-surface)) 95%, rgb(var(--app-primary)));
+  --color-surface-container: color-mix(in srgb, rgb(var(--app-surface)) 90%, rgb(var(--app-primary)));
+  --color-surface-variant: rgb(var(--app-surface-variant));
+  --color-on-surface: rgb(var(--app-on-surface));
+  --color-on-surface-variant: rgb(var(--app-on-surface-variant));
+  --color-outline: rgb(var(--app-outline));
+  --color-outline-variant: rgb(var(--app-outline-variant));
+  --color-inverse-surface: rgb(var(--app-inverse-surface));
+  --color-inverse-on-surface: rgb(var(--app-inverse-on-surface));
 
-  --color-error: rgb(var(--color-sf-error));
-  --color-on-error: rgb(var(--color-sf-on-error));
-  --color-error-container: rgb(var(--color-sf-error-container));
-  --color-on-error-container: rgb(var(--color-sf-on-error-container));
-  --color-success: rgb(var(--color-sf-success));
-  --color-on-success: rgb(var(--color-sf-on-success));
-  --color-success-container: rgb(var(--color-sf-success-container));
-  --color-on-success-container: rgb(var(--color-sf-on-success-container));
-  --color-warning: rgb(var(--color-sf-warning));
-  --color-on-warning: rgb(var(--color-sf-on-warning));
-  --color-warning-container: rgb(var(--color-sf-warning-container));
-  --color-on-warning-container: rgb(var(--color-sf-on-warning-container));
-  --color-info: rgb(var(--color-sf-info));
-  --color-on-info: rgb(var(--color-sf-on-info));
-  --color-info-container: rgb(var(--color-sf-info-container));
-  --color-on-info-container: rgb(var(--color-sf-on-info-container));
+  --color-error: rgb(var(--app-error));
+  --color-on-error: rgb(var(--app-on-error));
+  --color-error-container: rgb(var(--app-error-container));
+  --color-on-error-container: rgb(var(--app-on-error-container));
+  --color-success: rgb(var(--app-success));
+  --color-on-success: rgb(var(--app-on-success));
+  --color-success-container: rgb(var(--app-success-container));
+  --color-on-success-container: rgb(var(--app-on-success-container));
+  --color-warning: rgb(var(--app-warning));
+  --color-on-warning: rgb(var(--app-on-warning));
+  --color-warning-container: rgb(var(--app-warning-container));
+  --color-on-warning-container: rgb(var(--app-on-warning-container));
+  --color-info: rgb(var(--app-info));
+  --color-on-info: rgb(var(--app-on-info));
+  --color-info-container: rgb(var(--app-info-container));
+  --color-on-info-container: rgb(var(--app-on-info-container));
 
   --radius-m3-sm: 8px;
   --radius-m3-md: 12px;

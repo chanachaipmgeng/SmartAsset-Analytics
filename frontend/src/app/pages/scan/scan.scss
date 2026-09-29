@@ -14,9 +14,9 @@
   padding: 24px;
   border-radius: 28px;
   background:
-    radial-gradient(90% 120% at 100% 0%, rgb(var(--color-sf-tertiary-container)), transparent 60%),
-    linear-gradient(135deg, rgb(var(--color-sf-primary-container)), color-mix(in srgb, rgb(var(--color-sf-primary-container)) 60%, rgb(var(--color-sf-surface))));
-  color: rgb(var(--color-sf-on-primary-container));
+    radial-gradient(90% 120% at 100% 0%, rgb(var(--app-tertiary-container)), transparent 60%),
+    linear-gradient(135deg, rgb(var(--app-primary-container)), color-mix(in srgb, rgb(var(--app-primary-container)) 60%, rgb(var(--app-surface))));
+  color: rgb(var(--app-on-primary-container));
   animation: fade-up 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
@@ -28,9 +28,9 @@
   margin-bottom: 16px;
   border-radius: 18px;
   font-size: 26px;
-  background: rgb(var(--color-sf-primary));
-  color: rgb(var(--color-sf-on-primary));
-  box-shadow: 0 0 0 0 rgba(var(--color-sf-primary), 0.5);
+  background: rgb(var(--app-primary));
+  color: rgb(var(--app-on-primary));
+  box-shadow: 0 0 0 0 rgba(var(--app-primary), 0.5);
   animation: scan-pulse 2.2s ease-out infinite;
 }
 
@@ -40,11 +40,11 @@
 
 @keyframes scan-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(var(--color-sf-primary), 0.45);
+    box-shadow: 0 0 0 0 rgba(var(--app-primary), 0.45);
   }
   70%,
   100% {
-    box-shadow: 0 0 0 18px rgba(var(--color-sf-primary), 0);
+    box-shadow: 0 0 0 18px rgba(var(--app-primary), 0);
   }
 }
 
@@ -58,7 +58,7 @@
 .scan-input-group {
   flex: 1 1 260px;
   margin: 0;
-  background: rgb(var(--color-sf-surface));
+  background: rgb(var(--app-surface));
 
   .e-input {
     height: 52px;
@@ -93,7 +93,7 @@
 .camera-error {
   margin: 8px 0 0;
   font-size: 13px;
-  color: rgb(var(--color-sf-error));
+  color: rgb(var(--app-error));
 }
 
 .camera {
@@ -132,7 +132,7 @@
     right: 8px;
     top: 50%;
     height: 2px;
-    background: rgb(var(--color-sf-error));
+    background: rgb(var(--app-error));
     animation: scan-line 1.6s ease-in-out infinite alternate;
   }
 }
@@ -214,7 +214,7 @@
   animation: fade-up 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 
   &:hover {
-    background: color-mix(in srgb, rgb(var(--color-sf-surface)) 90%, rgb(var(--color-sf-primary)));
+    background: color-mix(in srgb, rgb(var(--app-surface)) 90%, rgb(var(--app-primary)));
   }
 }
 
@@ -226,12 +226,12 @@
   height: 28px;
   border-radius: 50%;
   font-size: 12px;
-  background: rgb(var(--color-sf-success-container));
-  color: rgb(var(--color-sf-on-success-container));
+  background: rgb(var(--app-success-container));
+  color: rgb(var(--app-on-success-container));
 
   &.miss {
-    background: rgb(var(--color-sf-error-container));
-    color: rgb(var(--color-sf-on-error-container));
+    background: rgb(var(--app-error-container));
+    color: rgb(var(--app-on-error-container));
   }
 }
 

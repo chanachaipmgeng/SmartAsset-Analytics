@@ -34,7 +34,7 @@
     label {
       display: block;
       font-size: 13px;
-      color: rgb(var(--color-sf-on-surface-variant));
+      color: rgb(var(--app-on-surface-variant));
       margin-bottom: 4px;
     }
   }
@@ -54,8 +54,8 @@
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  background: rgb(var(--color-sf-success-container));
-  color: rgb(var(--color-sf-on-success-container));
+  background: rgb(var(--app-success-container));
+  color: rgb(var(--app-on-success-container));
 
   &::before {
     content: '';
@@ -66,7 +66,7 @@
   }
 
   &.removed {
-    background: rgb(var(--color-sf-surface-variant));
-    color: rgb(var(--color-sf-on-surface-variant));
+    background: rgb(var(--app-surface-variant));
+    color: rgb(var(--app-on-surface-variant));
   }
 }

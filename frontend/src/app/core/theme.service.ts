@@ -16,7 +16,7 @@ function readMode(): ThemeMode {
 }
 
 /**
- * Syncfusion Material 3 ships its dark palette under `.e-dark-mode`, and Tailwind's `dark:`
+ * Syncfusion Tailwind 3 ships its dark palette under `.e-dark-mode`, and Tailwind's `dark:`
  * variant is bound to the same class, so toggling it on <html> switches the whole UI.
  * Charts and maps render SVG with their own palette and need `chartTheme` passed explicitly.
  */
@@ -28,7 +28,7 @@ export class ThemeService {
   private readonly systemDark = signal(this.media?.matches ?? false);
 
   readonly isDark = computed(() => this.mode() === 'dark' || (this.mode() === 'system' && this.systemDark()));
-  readonly chartTheme = computed(() => (this.isDark() ? 'Material3Dark' : 'Material3'));
+  readonly chartTheme = computed(() => (this.isDark() ? 'Tailwind3Dark' : 'Tailwind3'));
 
   constructor() {
     const onChange = (e: MediaQueryListEvent) => this.systemDark.set(e.matches);
@@ -37,7 +37,7 @@ export class ThemeService {
 
     effect(() => {
       document.documentElement.classList.toggle(DARK_CLASS, this.isDark());
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', cssColor('--color-sf-surface'));
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', cssColor('--app-surface'));
     });
   }
 
@@ -56,7 +56,7 @@ export class ThemeService {
   }
 }
 
-/** Resolves a Syncfusion `--color-sf-*` RGB triplet to a concrete colour for SVG renderers. */
+/** Resolves an app `--app-*` RGB triplet to a concrete colour for SVG renderers. */
 export function cssColor(token: string): string {
   const value = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
   return value ? `rgb(${value})` : '#888';

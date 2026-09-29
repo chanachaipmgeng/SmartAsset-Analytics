@@ -32,9 +32,9 @@ const THRESHOLD_PX = 400;
       border-radius: 16px;
       cursor: pointer;
       font-size: 18px;
-      background: rgb(var(--color-sf-primary-container));
-      color: rgb(var(--color-sf-on-primary-container));
-      box-shadow: 0 6px 20px -8px rgba(var(--color-sf-primary), 0.6);
+      background: rgb(var(--app-primary-container));
+      color: rgb(var(--app-on-primary-container));
+      box-shadow: 0 6px 20px -8px rgba(var(--app-primary), 0.6);
       transition: transform 160ms ease;
 
       &:hover {
@@ -42,7 +42,7 @@ const THRESHOLD_PX = 400;
       }
 
       &:focus-visible {
-        outline: 2px solid rgb(var(--color-sf-primary));
+        outline: 2px solid rgb(var(--app-primary));
         outline-offset: 2px;
       }
     }

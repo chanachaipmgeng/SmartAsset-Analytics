@@ -2,39 +2,87 @@
 @use 'tokens' as *;
 @use 'mixins' as *;
 
-// Sarabun is loaded in index.html, so skip Syncfusion's Google Fonts Roboto import.
+// Sarabun is loaded in index.html, so skip Syncfusion's Google Fonts Inter import.
 @layer syncfusion.base {
-  @include meta.load-css('ej2-base/styles/material3', $with: ('is-roboto-loaded': true));
+  @include meta.load-css('ej2-base/styles/tailwind3', $with: ('is-inter-loaded': true));
 }
 
-// Brand: indigo instead of the Material 3 default purple. Every Syncfusion component and every
-// Tailwind colour utility reads these tokens, so this is the single place to re-brand.
+// App palette as `r, g, b` triplets so styles can use rgba(var(--app-x), alpha). Syncfusion Tailwind 3
+// keeps its own `--color-sf-*` hex tokens (already indigo); these follow the same Tailwind scales.
 :root {
-  --color-sf-primary: 79, 70, 229;
-  --color-sf-on-primary: 255, 255, 255;
-  --color-sf-primary-container: 224, 231, 255;
-  --color-sf-on-primary-container: 30, 27, 75;
-  --color-sf-surface-tint-color: 79, 70, 229;
-  --color-sf-inverse-primary: 165, 180, 252;
-  --color-sf-secondary: 91, 93, 114;
-  --color-sf-secondary-container: 224, 225, 249;
-  --color-sf-on-secondary-container: 24, 26, 44;
-  // Violet accent for gradients next to indigo; tertiary containers keep the M3 rose for tonal chips.
-  --color-sf-tertiary: 139, 92, 246;
+  --app-primary: 79, 70, 229;
+  --app-on-primary: 255, 255, 255;
+  --app-primary-container: 224, 231, 255;
+  --app-on-primary-container: 49, 46, 129;
+  --app-secondary: 75, 85, 99;
+  --app-secondary-container: 243, 244, 246;
+  --app-on-secondary-container: 17, 24, 39;
+  --app-tertiary: 139, 92, 246;
+  --app-on-tertiary: 255, 255, 255;
+  --app-tertiary-container: 237, 233, 254;
+  --app-on-tertiary-container: 76, 29, 149;
+  --app-surface: 255, 255, 255;
+  --app-surface-variant: 243, 244, 246;
+  --app-on-surface: 17, 24, 39;
+  --app-on-surface-variant: 75, 85, 99;
+  --app-outline: 156, 163, 175;
+  --app-outline-variant: 229, 231, 235;
+  --app-inverse-surface: 31, 41, 55;
+  --app-inverse-on-surface: 243, 244, 246;
+  --app-error: 220, 38, 38;
+  --app-on-error: 255, 255, 255;
+  --app-error-container: 254, 226, 226;
+  --app-on-error-container: 153, 27, 27;
+  --app-success: 21, 128, 61;
+  --app-on-success: 255, 255, 255;
+  --app-success-container: 220, 252, 231;
+  --app-on-success-container: 22, 101, 52;
+  --app-warning: 194, 65, 12;
+  --app-on-warning: 255, 255, 255;
+  --app-warning-container: 255, 237, 213;
+  --app-on-warning-container: 154, 52, 18;
+  --app-info: 14, 116, 144;
+  --app-on-info: 255, 255, 255;
+  --app-info-container: 207, 250, 254;
+  --app-on-info-container: 21, 94, 117;
 }
 
-// Higher specificity than Syncfusion's own `.e-dark-mode` palette so the brand wins in both themes.
 :root.e-dark-mode {
-  --color-sf-primary: 165, 180, 252;
-  --color-sf-on-primary: 30, 27, 75;
-  --color-sf-primary-container: 55, 48, 163;
-  --color-sf-on-primary-container: 224, 231, 255;
-  --color-sf-surface-tint-color: 165, 180, 252;
-  --color-sf-inverse-primary: 79, 70, 229;
-  --color-sf-secondary: 196, 197, 221;
-  --color-sf-secondary-container: 67, 70, 89;
-  --color-sf-on-secondary-container: 224, 225, 249;
-  --color-sf-tertiary: 196, 181, 253;
+  --app-primary: 129, 140, 248;
+  --app-on-primary: 30, 27, 75;
+  --app-primary-container: 55, 48, 163;
+  --app-on-primary-container: 224, 231, 255;
+  --app-secondary: 156, 163, 175;
+  --app-secondary-container: 55, 65, 81;
+  --app-on-secondary-container: 229, 231, 235;
+  --app-tertiary: 167, 139, 250;
+  --app-on-tertiary: 46, 16, 101;
+  --app-tertiary-container: 76, 29, 149;
+  --app-on-tertiary-container: 237, 233, 254;
+  --app-surface: 17, 24, 39;
+  --app-surface-variant: 31, 41, 55;
+  --app-on-surface: 243, 244, 246;
+  --app-on-surface-variant: 156, 163, 175;
+  --app-outline: 107, 114, 128;
+  --app-outline-variant: 55, 65, 81;
+  --app-inverse-surface: 243, 244, 246;
+  --app-inverse-on-surface: 31, 41, 55;
+  --app-error: 248, 113, 113;
+  --app-on-error: 69, 10, 10;
+  --app-error-container: 127, 29, 29;
+  --app-on-error-container: 254, 226, 226;
+  --app-success: 74, 222, 128;
+  --app-on-success: 5, 46, 22;
+  --app-success-container: 20, 83, 45;
+  --app-on-success-container: 220, 252, 231;
+  --app-warning: 251, 146, 60;
+  --app-on-warning: 67, 20, 7;
+  --app-warning-container: 124, 45, 18;
+  --app-on-warning-container: 255, 237, 213;
+  --app-info: 34, 211, 238;
+  --app-on-info: 8, 51, 68;
+  --app-info-container: 22, 78, 99;
+  --app-on-info-container: 207, 250, 254;
   color-scheme: dark;
 }
 
@@ -56,7 +104,7 @@ body,
   font-family: 'Sarabun', system-ui, sans-serif !important;
 }
 
-// Charts and maps put Roboto on SVG text (as an attribute or inline style), and Roboto is not loaded.
+// Charts and maps put their theme font on SVG text (as an attribute or inline style), and it is not loaded.
 .e-chart text,
 .e-accumulationchart text,
 .e-maps text {
@@ -64,8 +112,8 @@ body,
 }
 
 body {
-  background: color-mix(in srgb, rgb(var(--color-sf-surface)) 95%, rgb(var(--color-sf-primary)));
-  color: rgb(var(--color-sf-on-surface));
+  background: color-mix(in srgb, rgb(var(--app-surface)) 95%, rgb(var(--app-primary)));
+  color: rgb(var(--app-on-surface));
   -webkit-font-smoothing: antialiased;
 }
 
@@ -92,12 +140,12 @@ body {
   @include card($space-md);
   position: relative;
   background:
-    linear-gradient(180deg, rgba(var(--color-sf-primary), 0.035), transparent 120px),
-    rgba(var(--color-sf-surface), 0.9);
-  border-color: rgba(var(--color-sf-outline-variant), 0.7);
+    linear-gradient(180deg, rgba(var(--app-primary), 0.035), transparent 120px),
+    rgba(var(--app-surface), 0.9);
+  border-color: rgba(var(--app-outline-variant), 0.7);
   box-shadow:
     0 1px 2px rgb(0 0 0 / 0.04),
-    0 16px 40px -28px rgba(var(--color-sf-primary), 0.35);
+    0 16px 40px -28px rgba(var(--app-primary), 0.35);
   animation: fade-up 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 
   // Hairline highlight along the top edge.
@@ -109,8 +157,8 @@ body {
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(var(--color-sf-primary), 0.45),
-      rgba(var(--color-sf-tertiary), 0.35),
+      rgba(var(--app-primary), 0.45),
+      rgba(var(--app-tertiary), 0.35),
       transparent
     );
     pointer-events: none;
@@ -125,9 +173,9 @@ body {
 .app-grid .e-toolbar .e-search-wrapper .e-input-group {
   height: 38px;
   padding: 0 6px 0 14px;
-  border: 1px solid rgba(var(--color-sf-outline-variant), 0.9);
+  border: 1px solid rgba(var(--app-outline-variant), 0.9);
   border-radius: 999px;
-  background: rgba(var(--color-sf-surface), 0.7);
+  background: rgba(var(--app-surface), 0.7);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition:
@@ -155,28 +203,28 @@ body {
     margin: 0;
     border: 0;
     border-radius: 999px;
-    color: rgb(var(--color-sf-on-surface-variant));
+    color: rgb(var(--app-on-surface-variant));
     transition:
       background-color 160ms ease,
       color 160ms ease;
 
     &:hover {
-      background: rgba(var(--color-sf-primary), 0.1);
-      color: rgb(var(--color-sf-primary));
+      background: rgba(var(--app-primary), 0.1);
+      color: rgb(var(--app-primary));
     }
   }
 
   &:hover {
-    border-color: rgba(var(--color-sf-primary), 0.45);
+    border-color: rgba(var(--app-primary), 0.45);
   }
 
   &.e-input-focus,
   &:focus-within {
-    border-color: rgb(var(--color-sf-primary));
-    background: rgb(var(--color-sf-surface));
+    border-color: rgb(var(--app-primary));
+    background: rgb(var(--app-surface));
     box-shadow:
-      0 0 0 3px rgba(var(--color-sf-primary), 0.16),
-      0 8px 24px -12px rgba(var(--color-sf-primary), 0.5);
+      0 0 0 3px rgba(var(--app-primary), 0.16),
+      0 8px 24px -12px rgba(var(--app-primary), 0.5);
   }
 }
 
@@ -184,13 +232,13 @@ body {
 .e-btn.e-primary:not(:disabled):not(.e-flat):not(.e-outline) {
   background-image: linear-gradient(
     135deg,
-    rgb(var(--color-sf-primary)),
-    color-mix(in srgb, rgb(var(--color-sf-primary)) 65%, rgb(var(--color-sf-tertiary)))
+    rgb(var(--app-primary)),
+    color-mix(in srgb, rgb(var(--app-primary)) 65%, rgb(var(--app-tertiary)))
   );
   background-size: 160% 100%;
   background-position: 0% 50%;
   border-color: transparent;
-  box-shadow: 0 6px 18px -8px rgba(var(--color-sf-primary), 0.7);
+  box-shadow: 0 6px 18px -8px rgba(var(--app-primary), 0.7);
   transition:
     background-position 400ms ease,
     box-shadow 220ms ease,
@@ -198,7 +246,7 @@ body {
 
   &:hover {
     background-position: 100% 50%;
-    box-shadow: 0 10px 24px -8px rgba(var(--color-sf-primary), 0.75);
+    box-shadow: 0 10px 24px -8px rgba(var(--app-primary), 0.75);
   }
 
   &:active {
@@ -222,8 +270,8 @@ body {
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
-  background: rgb(var(--color-sf-surface-variant));
-  color: rgb(var(--color-sf-on-surface-variant));
+  background: rgb(var(--app-surface-variant));
+  color: rgb(var(--app-on-surface-variant));
 
   &::before {
     content: '';
@@ -244,8 +292,8 @@ body {
 
   @each $tone in success, warning, info, error, primary, tertiary {
     &[data-tone='#{$tone}'] {
-      background: rgb(var(--color-sf-#{$tone}-container));
-      color: rgb(var(--color-sf-on-#{$tone}-container));
+      background: rgb(var(--app-#{$tone}-container));
+      color: rgb(var(--app-on-#{$tone}-container));
     }
   }
 }
@@ -333,10 +381,10 @@ body {
 
 @keyframes glow-pulse {
   0%, 100% {
-    box-shadow: 0 0 20px -6px rgba(var(--color-sf-primary), 0.3);
+    box-shadow: 0 0 20px -6px rgba(var(--app-primary), 0.3);
   }
   50% {
-    box-shadow: 0 0 32px -4px rgba(var(--color-sf-primary), 0.5);
+    box-shadow: 0 0 32px -4px rgba(var(--app-primary), 0.5);
   }
 }
 
@@ -376,9 +424,9 @@ body {
   &:hover {
     transform: translateY(-3px);
     box-shadow:
-      0 12px 32px -12px rgba(var(--color-sf-primary), 0.45),
-      0 0 0 1px rgba(var(--color-sf-primary), 0.1);
-    border-color: rgba(var(--color-sf-primary), 0.4);
+      0 12px 32px -12px rgba(var(--app-primary), 0.45),
+      0 0 0 1px rgba(var(--app-primary), 0.1);
+    border-color: rgba(var(--app-primary), 0.4);
   }
 
   &:active {
@@ -435,25 +483,25 @@ body {
   label {
     display: block;
     font-size: 13px;
-    color: rgb(var(--color-sf-on-surface-variant));
+    color: rgb(var(--app-on-surface-variant));
     margin-bottom: 4px;
   }
 }
 
 .muted {
-  color: rgb(var(--color-sf-on-surface-variant));
+  color: rgb(var(--app-on-surface-variant));
 }
 
 // ---- M3 toasts: tonal surface, coloured accent bar and icon, progress bar in the accent colour ----
 .e-toast-container .e-toast.m3-toast {
-  --toast-accent: var(--color-sf-primary);
+  --toast-accent: var(--app-primary);
   border-radius: 16px;
-  border: 1px solid rgb(var(--color-sf-outline-variant));
+  border: 1px solid rgb(var(--app-outline-variant));
   border-left: 4px solid rgb(var(--toast-accent));
-  background: rgba(var(--color-sf-surface), 0.85);
+  background: rgba(var(--app-surface), 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  color: rgb(var(--color-sf-on-surface));
+  color: rgb(var(--app-on-surface));
   box-shadow:
     0 12px 32px -16px rgb(0 0 0 / 0.45),
     0 0 0 1px rgba(var(--toast-accent), 0.08);
@@ -465,16 +513,16 @@ body {
   }
 
   .e-toast-title {
-    color: rgb(var(--color-sf-on-surface));
+    color: rgb(var(--app-on-surface));
     font-weight: 600;
   }
 
   .e-toast-content {
-    color: rgb(var(--color-sf-on-surface-variant));
+    color: rgb(var(--app-on-surface-variant));
   }
 
   .e-toast-close-icon {
-    color: rgb(var(--color-sf-on-surface-variant));
+    color: rgb(var(--app-on-surface-variant));
   }
 
   .e-toast-progress {
@@ -483,16 +531,16 @@ body {
   }
 
   &.m3-toast-success {
-    --toast-accent: var(--color-sf-success);
+    --toast-accent: var(--app-success);
   }
   &.m3-toast-error {
-    --toast-accent: var(--color-sf-error);
+    --toast-accent: var(--app-error);
   }
   &.m3-toast-warning {
-    --toast-accent: var(--color-sf-warning);
+    --toast-accent: var(--app-warning);
   }
   &.m3-toast-info {
-    --toast-accent: var(--color-sf-info);
+    --toast-accent: var(--app-info);
   }
 }
 
@@ -500,7 +548,7 @@ body {
 .e-dialog.confirm-dialog {
   border-radius: 28px;
   backdrop-filter: blur(16px);
-  background: rgba(var(--color-sf-surface), 0.92);
+  background: rgba(var(--app-surface), 0.92);
 
   .e-dlg-header {
     font-size: 20px;
@@ -508,7 +556,7 @@ body {
   }
 
   .confirm-message {
-    color: rgb(var(--color-sf-on-surface-variant));
+    color: rgb(var(--app-on-surface-variant));
     line-height: 1.6;
   }
 

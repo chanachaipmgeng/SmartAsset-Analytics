@@ -37,14 +37,14 @@
   margin-left: 6px;
   font-size: 12px;
   font-weight: 400;
-  color: rgb(var(--color-sf-on-surface-variant));
+  color: rgb(var(--app-on-surface-variant));
   opacity: 0.75;
 }
 
 .panel-link {
   font-size: 13px;
   font-weight: 600;
-  color: rgb(var(--color-sf-primary));
+  color: rgb(var(--app-primary));
   text-decoration: none;
   padding: 2px 10px;
   border-radius: 999px;
@@ -53,7 +53,7 @@
     color 160ms ease;
 
   &:hover {
-    background: rgba(var(--color-sf-primary), 0.1);
+    background: rgba(var(--app-primary), 0.1);
     text-decoration: none;
   }
 }
@@ -67,8 +67,8 @@
 
 :host ::ng-deep .e-dashboardlayout .e-panel {
   border-radius: 20px;
-  border-color: rgba(var(--color-sf-outline-variant), 0.6);
-  background: rgba(var(--color-sf-surface), 0.8);
+  border-color: rgba(var(--app-outline-variant), 0.6);
+  background: rgba(var(--app-surface), 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   overflow: hidden;
@@ -77,8 +77,8 @@
     border-color 280ms ease;
 
   &:hover {
-    box-shadow: 0 8px 32px -12px rgba(var(--color-sf-primary), 0.2);
-    border-color: rgba(var(--color-sf-primary), 0.25);
+    box-shadow: 0 8px 32px -12px rgba(var(--app-primary), 0.2);
+    border-color: rgba(var(--app-primary), 0.25);
   }
 
   .e-panel-header {
@@ -113,17 +113,17 @@
 }
 
 .backlog-item {
-  --tone: var(--color-sf-warning);
-  --tone-container: var(--color-sf-warning-container);
-  --on-tone-container: var(--color-sf-on-warning-container);
+  --tone: var(--app-warning);
+  --tone-container: var(--app-warning-container);
+  --on-tone-container: var(--app-on-warning-container);
   padding: 12px;
-  border: 1px solid rgb(var(--color-sf-outline-variant));
+  border: 1px solid rgb(var(--app-outline-variant));
   border-radius: 16px;
 
   &.clear {
-    --tone: var(--color-sf-success);
-    --tone-container: var(--color-sf-success-container);
-    --on-tone-container: var(--color-sf-on-success-container);
+    --tone: var(--app-success);
+    --tone-container: var(--app-success-container);
+    --on-tone-container: var(--app-on-success-container);
   }
 }
 
@@ -175,12 +175,12 @@
     justify-content: space-between;
     gap: 8px;
     padding: 4px 0;
-    border-top: 1px dashed rgb(var(--color-sf-outline-variant));
-    color: rgb(var(--color-sf-on-surface-variant));
+    border-top: 1px dashed rgb(var(--app-outline-variant));
+    color: rgb(var(--app-on-surface-variant));
   }
 
   a {
-    color: rgb(var(--color-sf-primary));
+    color: rgb(var(--app-primary));
     text-decoration: none;
 
     &:hover {

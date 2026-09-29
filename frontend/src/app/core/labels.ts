@@ -25,13 +25,13 @@ export const STATUS_TONES: Record<DeviceStatus, StatusTone> = {
 };
 
 const TONE_TOKENS: Record<StatusTone, string> = {
-  success: '--color-sf-success',
-  warning: '--color-sf-warning',
-  info: '--color-sf-info',
-  error: '--color-sf-error',
-  neutral: '--color-sf-outline',
-  primary: '--color-sf-primary',
-  tertiary: '--color-sf-tertiary',
+  success: '--app-success',
+  warning: '--app-warning',
+  info: '--app-info',
+  error: '--app-error',
+  neutral: '--app-outline',
+  primary: '--app-primary',
+  tertiary: '--app-tertiary',
 };
 
 /** Concrete colour for charts; call again after a theme change. */

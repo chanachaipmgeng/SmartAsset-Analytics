@@ -113,7 +113,7 @@ export class InstallationMap {
     }));
     const pin = this.pin();
     const radiusKm = this.radiusKm();
-    const primary = cssColor('--color-sf-primary');
+    const primary = cssColor('--app-primary');
     return [
       {
         urlTemplate: 'https://tile.openstreetmap.org/level/tileX/tileY.png',
@@ -124,14 +124,14 @@ export class InstallationMap {
           fill: primary,
           height: 34,
           width: 34,
-          labelStyle: { color: cssColor('--color-sf-on-primary'), size: '13px' },
+          labelStyle: { color: cssColor('--app-on-primary'), size: '13px' },
         },
         markerSettings: [
           {
             visible: true,
             dataSource: points,
             shape: 'Balloon',
-            fill: cssColor('--color-sf-error'),
+            fill: cssColor('--app-error'),
             height: 28,
             width: 22,
             latitudeValuePath: 'latitude',
@@ -149,7 +149,7 @@ export class InstallationMap {
             fill: primary,
             height: 36,
             width: 28,
-            border: { color: cssColor('--color-sf-on-primary'), width: 2 },
+            border: { color: cssColor('--app-on-primary'), width: 2 },
             latitudeValuePath: 'latitude',
             longitudeValuePath: 'longitude',
             tooltipSettings: { visible: true, valuePath: 'title' },

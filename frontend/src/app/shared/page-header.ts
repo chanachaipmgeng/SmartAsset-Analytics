@@ -27,8 +27,8 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       border-radius: 2px;
       background: linear-gradient(
         180deg,
-        rgb(var(--color-sf-primary)),
-        rgb(var(--color-sf-tertiary))
+        rgb(var(--app-primary)),
+        rgb(var(--app-tertiary))
       );
       flex-shrink: 0;
     }

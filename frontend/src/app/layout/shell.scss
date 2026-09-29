@@ -17,7 +17,7 @@
   backdrop-filter: blur($glass-blur);
   -webkit-backdrop-filter: blur($glass-blur);
   border-bottom: 1px solid $glass-border;
-  box-shadow: 0 1px 0 0 rgba(var(--color-sf-primary), 0.06);
+  box-shadow: 0 1px 0 0 rgba(var(--app-primary), 0.06);
   z-index: 10;
 }
 
@@ -30,7 +30,7 @@
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(var(--color-sf-primary), 0.12) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--app-primary), 0.12) 0%, transparent 70%);
     opacity: 0;
     transition: opacity 200ms ease;
   }
@@ -47,7 +47,7 @@
   min-width: 0;
   align-items: center;
   gap: 8px;
-  color: rgb(var(--color-sf-on-surface));
+  color: rgb(var(--app-on-surface));
   text-decoration: none;
 }
 
@@ -61,10 +61,10 @@
   border-radius: $radius-md;
   background: linear-gradient(
     135deg,
-    rgb(var(--color-sf-primary)),
-    color-mix(in srgb, rgb(var(--color-sf-primary)) 60%, rgb(var(--color-sf-tertiary)))
+    rgb(var(--app-primary)),
+    color-mix(in srgb, rgb(var(--app-primary)) 60%, rgb(var(--app-tertiary)))
   );
-  color: rgb(var(--color-sf-on-primary));
+  color: rgb(var(--app-on-primary));
   font-size: 18px;
 }
 
@@ -72,7 +72,7 @@
   position: absolute;
   inset: -4px;
   border-radius: inherit;
-  background: rgba(var(--color-sf-primary), 0.25);
+  background: rgba(var(--app-primary), 0.25);
   animation: pulse-ring 2.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   pointer-events: none;
 }
@@ -91,8 +91,8 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  background: linear-gradient(135deg, rgb(var(--color-sf-primary)), rgb(var(--color-sf-tertiary)));
-  color: rgb(var(--color-sf-on-primary));
+  background: linear-gradient(135deg, rgb(var(--app-primary)), rgb(var(--app-tertiary)));
+  color: rgb(var(--app-on-primary));
   text-transform: uppercase;
   animation: badge-shimmer 3s linear infinite;
   background-size: 200% 100%;
@@ -124,9 +124,9 @@
   border-radius: 50%;
   background: conic-gradient(
     from 0deg,
-    rgba(var(--color-sf-primary), 0.7),
-    rgba(var(--color-sf-tertiary), 0.5),
-    rgba(var(--color-sf-primary), 0.7)
+    rgba(var(--app-primary), 0.7),
+    rgba(var(--app-tertiary), 0.5),
+    rgba(var(--app-primary), 0.7)
   );
   animation: ring-spin 6s linear infinite;
 }
@@ -142,7 +142,7 @@
   }
   .avatar-ring {
     animation: none;
-    background: linear-gradient(135deg, rgba(var(--color-sf-primary), 0.7), rgba(var(--color-sf-tertiary), 0.5));
+    background: linear-gradient(135deg, rgba(var(--app-primary), 0.7), rgba(var(--app-tertiary), 0.5));
   }
 }
 
@@ -159,7 +159,7 @@
   border-radius: 999px;
   background: $glass-bg;
   backdrop-filter: blur(8px);
-  color: rgb(var(--color-sf-on-surface-variant));
+  color: rgb(var(--app-on-surface-variant));
   font: inherit;
   font-size: 14px;
   cursor: pointer;
@@ -173,19 +173,19 @@
   }
 
   &:hover {
-    border-color: rgba(var(--color-sf-primary), 0.5);
-    box-shadow: 0 0 20px -4px rgba(var(--color-sf-primary), 0.25);
+    border-color: rgba(var(--app-primary), 0.5);
+    box-shadow: 0 0 20px -4px rgba(var(--app-primary), 0.25);
   }
 
   &:focus-visible {
-    outline: 2px solid rgb(var(--color-sf-primary));
+    outline: 2px solid rgb(var(--app-primary));
     outline-offset: 2px;
   }
 
   kbd {
     margin-left: auto;
     padding: 1px 6px;
-    border: 1px solid rgb(var(--color-sf-outline-variant));
+    border: 1px solid rgb(var(--app-outline-variant));
     border-radius: 6px;
     font: inherit;
     font-size: 11px;
@@ -198,7 +198,7 @@
   border-radius: inherit;
   background: radial-gradient(
     circle at 30% 50%,
-    rgba(var(--color-sf-primary), 0.08),
+    rgba(var(--app-primary), 0.08),
     transparent 70%
   );
   opacity: 0;
@@ -238,7 +238,7 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: rgb(var(--color-sf-on-surface-variant));
+    color: rgb(var(--app-on-surface-variant));
     white-space: nowrap;
     opacity: 0.7;
   }
@@ -251,7 +251,7 @@
     height: 44px;
     padding: 0 14px;
     border-radius: 14px;
-    color: rgb(var(--color-sf-on-surface-variant));
+    color: rgb(var(--app-on-surface-variant));
     text-decoration: none;
     font-size: 15px;
     white-space: nowrap;
@@ -266,7 +266,7 @@
     }
 
     &:hover {
-      background: rgba(var(--color-sf-on-surface), 0.08);
+      background: rgba(var(--app-on-surface), 0.08);
 
       .nav-icon {
         transform: scale(1.12);
@@ -274,7 +274,7 @@
     }
 
     &:focus-visible {
-      outline: 2px solid rgb(var(--color-sf-primary));
+      outline: 2px solid rgb(var(--app-primary));
       outline-offset: -2px;
     }
 
@@ -283,12 +283,12 @@
     }
 
     &.active {
-      background: rgba(var(--color-sf-primary), 0.12);
-      color: rgb(var(--color-sf-primary));
+      background: rgba(var(--app-primary), 0.12);
+      color: rgb(var(--app-primary));
       font-weight: 600;
 
       .nav-icon {
-        color: rgb(var(--color-sf-primary));
+        color: rgb(var(--app-primary));
       }
 
       .active-indicator {
@@ -300,8 +300,8 @@
         width: 3px;
         height: 20px;
         border-radius: 0 4px 4px 0;
-        background: rgb(var(--color-sf-primary));
-        box-shadow: 0 0 12px rgba(var(--color-sf-primary), 0.5);
+        background: rgb(var(--app-primary));
+        box-shadow: 0 0 12px rgba(var(--app-primary), 0.5);
         animation: indicator-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
       }
     }
@@ -323,7 +323,7 @@
       margin: 10px 8px;
       overflow: hidden;
       color: transparent;
-      background: rgb(var(--color-sf-outline-variant));
+      background: rgb(var(--app-outline-variant));
     }
 
     a {
@@ -336,7 +336,7 @@
       }
 
       &.active {
-        box-shadow: 0 0 16px -4px rgba(var(--color-sf-primary), 0.4);
+        box-shadow: 0 0 16px -4px rgba(var(--app-primary), 0.4);
       }
     }
 
@@ -366,9 +366,9 @@
     $gradient-mesh,
     linear-gradient(
       160deg,
-      rgba(var(--color-sf-primary), 0.05) 0%,
+      rgba(var(--app-primary), 0.05) 0%,
       transparent 40%,
-      rgba(var(--color-sf-tertiary), 0.05) 100%
+      rgba(var(--app-tertiary), 0.05) 100%
     );
 
   &::before,
@@ -386,14 +386,14 @@
   &::before {
     top: -18vmax;
     right: -10vmax;
-    background: radial-gradient(circle, rgba(var(--color-sf-primary), 0.35), transparent 65%);
+    background: radial-gradient(circle, rgba(var(--app-primary), 0.35), transparent 65%);
     animation: aurora-a 26s ease-in-out infinite alternate;
   }
 
   &::after {
     bottom: -22vmax;
     left: 10vmax;
-    background: radial-gradient(circle, rgba(var(--color-sf-tertiary), 0.3), transparent 65%);
+    background: radial-gradient(circle, rgba(var(--app-tertiary), 0.3), transparent 65%);
     animation: aurora-b 32s ease-in-out infinite alternate;
   }
 }
