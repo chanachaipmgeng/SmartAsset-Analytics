@@ -1,99 +1,128 @@
-<div class="grid min-h-dvh bg-surface-dim lg:grid-cols-[1.1fr_1fr]">
-  <aside
-    class="hidden flex-col justify-between bg-primary-container p-12 text-on-primary-container lg:flex"
-  >
-    <div class="flex items-center gap-3">
-      <span class="grid size-11 place-items-center rounded-m3-md bg-primary text-xl text-on-primary"
-        ><span class="e-icons e-clock"></span
-      ></span>
-      <span class="text-xl font-semibold">SmartAsset Analytics</span>
+<div class="backdrop" aria-hidden="true">
+  <span class="orb orb-a"></span>
+  <span class="orb orb-b"></span>
+  <span class="orb orb-c"></span>
+  <span class="grid-lines"></span>
+</div>
+
+<button
+  ejs-button
+  type="button"
+  cssClass="e-flat e-round theme-btn"
+  iconCss="e-icons e-contrast"
+  (click)="theme.toggle()"
+  [attr.aria-label]="theme.isDark() ? 'เปลี่ยนเป็นธีมสว่าง' : 'เปลี่ยนเป็นธีมมืด'"
+  [attr.title]="theme.isDark() ? 'ธีมสว่าง' : 'ธีมมืด'"
+></button>
+
+<div class="layout">
+  <section class="hero">
+    <div class="brand reveal" style="--d: 0">
+      <span class="brand-icon">
+        <span class="e-icons e-clock"></span>
+        <span class="brand-ring"></span>
+      </span>
+      <span class="brand-name">SmartAsset Analytics</span>
+      <span class="ai-badge">AI</span>
     </div>
 
-    <div class="max-w-lg">
-      <h2 class="m-0 text-4xl font-bold leading-tight">
-        ติดตามเครื่องลงเวลาทุกเครื่อง ตั้งแต่รับเข้าจนติดตั้งที่ลูกค้า
-      </h2>
-      <ul class="m-0 mt-8 flex list-none flex-col gap-5 p-0">
-        @for (f of features; track f.title) {
-          <li class="flex gap-4">
-            <span
-              class="grid size-10 shrink-0 place-items-center rounded-full bg-surface text-primary"
-              ><span [class]="f.icon"></span
-            ></span>
-            <span>
-              <span class="block font-semibold">{{ f.title }}</span>
-              <span class="block text-sm opacity-80">{{ f.detail }}</span>
-            </span>
-          </li>
-        }
-      </ul>
-    </div>
+    <h2 class="headline reveal" style="--d: 1">
+      ติดตามเครื่องลงเวลาทุกเครื่อง
+      <span class="gradient-text">ตั้งแต่รับเข้าจนติดตั้งที่ลูกค้า</span>
+    </h2>
 
-    <p class="m-0 text-sm opacity-70">ระบบสต็อกและติดตามเครื่องลงเวลา</p>
-  </aside>
+    <app-login-showcase class="reveal" style="--d: 2" />
 
-  <main class="flex items-center justify-center p-4 sm:p-8">
-    <form
-      class="flex w-full max-w-sm flex-col gap-4 rounded-m3-xl border border-outline-variant bg-surface p-6 sm:p-8"
-      (submit)="submit($event)"
-    >
-      <div class="flex items-center gap-3 lg:hidden">
-        <span
-          class="grid size-10 place-items-center rounded-m3-md bg-primary text-lg text-on-primary"
-          ><span class="e-icons e-clock"></span
-        ></span>
-        <span class="text-lg font-semibold text-on-surface">SmartAsset Analytics</span>
-      </div>
-
-      <div>
-        <h1 class="m-0 text-2xl font-semibold text-on-surface">เข้าสู่ระบบ</h1>
-        <p class="m-0 mt-1 text-sm text-on-surface-variant">
-          ใช้อีเมลและรหัสผ่านที่ผู้ดูแลระบบสร้างให้
-        </p>
-      </div>
-
-      @if (error(); as message) {
-        <ejs-message severity="Error" [content]="message"></ejs-message>
+    <ul class="features">
+      @for (f of features; track f.title; let i = $index) {
+        <li class="feature reveal" [style.--d]="3 + i">
+          <span class="feature-icon"><span [class]="f.icon"></span></span>
+          <span>
+            <span class="feature-title">{{ f.title }}</span>
+            <span class="feature-detail">{{ f.detail }}</span>
+          </span>
+        </li>
       }
+    </ul>
+  </section>
 
-      <ejs-textbox
-        type="email"
-        placeholder="อีเมล"
-        floatLabelType="Auto"
-        autocomplete="username"
-        [(value)]="email"
-        [liveValue]="email"
-      ></ejs-textbox>
+  <main class="form-side">
+    <div class="card-wrap">
+      <form class="card" [class.shake]="shake()" (submit)="submit($event)">
+        <div class="card-brand reveal" style="--d: 0">
+          <span class="brand-icon small"><span class="e-icons e-clock"></span></span>
+          <span class="brand-name">SmartAsset Analytics</span>
+        </div>
 
-      <div class="relative">
-        <ejs-textbox
-          [type]="showPassword() ? 'text' : 'password'"
-          placeholder="รหัสผ่าน"
-          floatLabelType="Auto"
-          autocomplete="current-password"
-          [(value)]="password"
-          [liveValue]="password"
-        ></ejs-textbox>
-        <button
-          ejs-button
-          type="button"
-          cssClass="e-flat e-round e-small password-toggle"
-          [iconCss]="showPassword() ? 'e-icons e-eye-slash' : 'e-icons e-eye'"
-          [attr.aria-label]="showPassword() ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'"
-          (click)="showPassword.set(!showPassword())"
-        ></button>
-      </div>
+        <div class="reveal" style="--d: 1">
+          <h1 class="title">เข้าสู่ระบบ</h1>
+          <p class="subtitle">
+            @if (returnUrl()) {
+              เข้าสู่ระบบเพื่อไปยังหน้าที่คุณเปิดไว้
+            } @else {
+              ใช้อีเมลและรหัสผ่านที่ผู้ดูแลระบบสร้างให้
+            }
+          </p>
+        </div>
 
-      <ejs-checkbox label="จดจำอีเมลบนเครื่องนี้" [(checked)]="remember"></ejs-checkbox>
-
-      <button ejs-button type="submit" [isPrimary]="true" [disabled]="loading()" cssClass="submit">
-        @if (loading()) {
-          <span class="e-icons e-refresh inline-block animate-spin"></span>
-          กำลังเข้าสู่ระบบ...
-        } @else {
-          เข้าสู่ระบบ
+        @if (error(); as message) {
+          <ejs-message class="pop" severity="Error" [content]="message"></ejs-message>
         }
-      </button>
-    </form>
+
+        <div class="reveal" style="--d: 2">
+          <ejs-textbox
+            type="email"
+            placeholder="อีเมล"
+            floatLabelType="Auto"
+            autocomplete="username"
+            [(value)]="email"
+            [liveValue]="email"
+          ></ejs-textbox>
+        </div>
+
+        <div class="relative reveal" style="--d: 3">
+          <ejs-textbox
+            [type]="showPassword() ? 'text' : 'password'"
+            placeholder="รหัสผ่าน"
+            floatLabelType="Auto"
+            autocomplete="current-password"
+            [(value)]="password"
+            [liveValue]="password"
+          ></ejs-textbox>
+          <button
+            ejs-button
+            type="button"
+            cssClass="e-flat e-round e-small password-toggle"
+            [iconCss]="showPassword() ? 'e-icons e-eye-slash' : 'e-icons e-eye'"
+            [attr.aria-label]="showPassword() ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'"
+            (click)="showPassword.set(!showPassword())"
+          ></button>
+        </div>
+
+        <div class="reveal" style="--d: 4">
+          <ejs-checkbox label="จดจำอีเมลบนเครื่องนี้" [(checked)]="remember"></ejs-checkbox>
+        </div>
+
+        <div class="reveal" style="--d: 5">
+          <button
+            ejs-button
+            type="submit"
+            [isPrimary]="true"
+            [disabled]="loading()"
+            cssClass="submit"
+          >
+            @if (loading()) {
+              <span class="e-icons e-refresh inline-block animate-spin"></span>
+              กำลังเข้าสู่ระบบ...
+            } @else {
+              เข้าสู่ระบบ
+              <span class="e-icons e-arrow-right submit-arrow"></span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <p class="footnote reveal" style="--d: 6">ระบบสต็อกและติดตามเครื่องลงเวลา</p>
   </main>
 </div>

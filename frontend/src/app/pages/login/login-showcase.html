@@ -1,0 +1,50 @@
+<div class="float-card card-total">
+  <div class="card-head">
+    <span>อุปกรณ์ทั้งหมด</span>
+    <span class="live"><i></i>สด</span>
+  </div>
+  <div class="total"><span [countUp]="total"></span></div>
+  <svg class="spark" viewBox="0 0 200 56" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="login-spark-fill" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="currentColor" stop-opacity="0.35" />
+        <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+    <path
+      class="spark-area"
+      d="M0 44 C20 40 30 30 50 32 S80 18 100 22 S130 36 150 20 S185 6 200 8 L200 56 L0 56 Z"
+      fill="url(#login-spark-fill)"
+    />
+    <path
+      class="spark-line"
+      pathLength="1"
+      d="M0 44 C20 40 30 30 50 32 S80 18 100 22 S130 36 150 20 S185 6 200 8"
+    />
+  </svg>
+</div>
+
+<div class="float-card card-status">
+  @for (b of bars; track b.label; let i = $index) {
+    <div class="bar-row">
+      <span>{{ b.label }}</span>
+      <span class="bar-track">
+        <span
+          class="bar-fill"
+          [attr.data-tone]="b.tone"
+          [style.width.%]="b.value"
+          [style.--i]="i"
+        ></span>
+      </span>
+    </div>
+  }
+</div>
+
+<div class="float-card card-map">
+  <span class="pin">
+    <span class="e-icons e-location"></span>
+    <span class="ripple"></span>
+    <span class="ripple r2"></span>
+  </span>
+  <span class="map-caption">ติดตั้งล่าสุด · 2 นาทีที่แล้ว</span>
+</div>

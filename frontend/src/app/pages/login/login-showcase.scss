@@ -1,0 +1,217 @@
+@use '../../../styles/tokens' as *;
+
+$ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+// Three glass cards that float and follow the pointer at different depths.
+:host {
+  position: relative;
+  display: block;
+  height: 250px;
+  max-width: 560px;
+}
+
+.float-card {
+  position: absolute;
+  padding: 16px 18px;
+  border: 1px solid $glass-border;
+  border-radius: $radius-lg;
+  background: rgba(var(--app-surface), 0.62);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 24px 48px -24px sf-a(primary, 0.45);
+  translate: calc(var(--mx) * var(--depth) * 1px) calc(var(--my) * var(--depth) * 1px);
+  transition: translate 400ms $ease-out;
+  animation: bob 6s ease-in-out infinite;
+}
+
+@keyframes bob {
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.card-total {
+  --depth: 14;
+  top: 0;
+  left: 0;
+  width: 270px;
+}
+
+.card-status {
+  --depth: 26;
+  top: 48px;
+  left: 300px;
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation-delay: -2s;
+}
+
+.card-map {
+  --depth: 36;
+  top: 182px;
+  left: 150px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation-delay: -4s;
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: $text-muted;
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: sf(success);
+
+  i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: blink 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.total {
+  margin-top: 2px;
+  font-size: 1.9rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.spark {
+  display: block;
+  width: 100%;
+  height: 48px;
+  margin-top: 6px;
+  color: sf(primary);
+}
+
+.spark-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  vector-effect: non-scaling-stroke;
+  animation: draw 1.8s 0.6s $ease-out forwards;
+}
+
+.spark-area {
+  opacity: 0;
+  animation: fade-in 1s 1.6s ease forwards;
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fade-in {
+  to {
+    opacity: 1;
+  }
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: $text-muted;
+}
+
+.bar-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: sf-a(on-surface, 0.08);
+}
+
+.bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transform-origin: left;
+  animation: grow 1.2s $ease-out both;
+  animation-delay: calc(0.8s + var(--i, 0) * 0.15s);
+
+  &[data-tone='primary'] {
+    background: linear-gradient(90deg, sf(primary), sf(tertiary));
+  }
+  &[data-tone='success'] {
+    background: linear-gradient(90deg, sf(success), sf(info));
+  }
+  &[data-tone='warning'] {
+    background: linear-gradient(90deg, sf(warning), sf(error));
+  }
+}
+
+@keyframes grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.pin {
+  position: relative;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  background: sf(primary);
+  color: sf(on-primary);
+}
+
+.ripple {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid sf(primary);
+  animation: ripple 2.4s ease-out infinite;
+
+  &.r2 {
+    animation-delay: 1.2s;
+  }
+}
+
+@keyframes ripple {
+  from {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+}
+
+.map-caption {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float-card {
+    translate: none;
+  }
+}
