@@ -114,3 +114,30 @@ export function availableActions(device: Device | null | undefined, perms: Permi
 export function actionTitle(id: DeviceActionId): string {
   return RULES.find((r) => r.id === id)!.title;
 }
+
+/** Actions `POST /inventory/bulk` accepts, keyed by the UI action id (see backend/app/application/bulk.py). */
+export const BULK_ACTIONS = {
+  transfer: 'transfer',
+  checkout: 'check_out',
+  loan: 'loan',
+  return: 'return',
+  qc_pass: 'qc_pass',
+  send_repair: 'send_repair',
+  retire: 'retire',
+} as const satisfies Partial<Record<DeviceActionId, string>>;
+
+export type BulkActionId = keyof typeof BULK_ACTIONS;
+
+export function isBulkAction(id: DeviceActionId): id is BulkActionId {
+  return id in BULK_ACTIONS;
+}
+
+type StatusFields = Pick<Device, 'status' | 'tenant_id'>;
+
+/** Bulk actions allowed for every one of `devices` (the intersection of each device's actions). */
+export function commonBulkActions(devices: readonly StatusFields[], perms: Permissions): DeviceAction[] {
+  if (!devices.length) return [];
+  return RULES.filter((r) => isBulkAction(r.id) && devices.every((d) => r.allowed(d as Device, perms))).map(
+    ({ allowed: _, ...action }) => action,
+  );
+}

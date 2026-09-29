@@ -1,15 +1,17 @@
-import { httpResource } from '@angular/common/http';
+import { HttpErrorResponse, httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
 import { ApiService } from '../core/api.service';
-import { DeviceActionId, actionTitle } from '../core/device-actions';
+import { BULK_ACTIONS, BulkActionId, DeviceActionId, actionTitle } from '../core/device-actions';
 import { toIsoDate } from '../core/labels';
-import { Customer, Device, Supplier, Tenant } from '../core/models';
+import { BulkFailure, Customer, Device, Supplier, Tenant } from '../core/models';
 import { NotifyService, errorMessage } from '../core/notify.service';
 import { InstallationMap, LatLng } from './installation-map';
 import { PhotoPicker } from './photo-picker';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from './syncfusion';
 
 type Movement = Exclude<DeviceActionId, 'install'>;
+
+export type BulkDevice = Pick<Device, 'id' | 'serial_number' | 'status' | 'tenant_id'>;
 
 const CENTRAL_STOCK = '__central__';
 /** Movements whose transaction can carry photos (condition on return, repair and QC evidence). */
@@ -97,6 +99,85 @@ const PHOTO_MOVEMENTS: ReadonlySet<Movement> = new Set(['return', 'send_repair',
     </ejs-dialog>
 
     <ejs-dialog
+      [visible]="bulkAction() !== null"
+      (close)="bulkAction.set(null)"
+      [header]="bulkAction() ? title(bulkAction()!) + ' ' + bulkDevices().length + ' เครื่อง' : ''"
+      [isModal]="true"
+      [showCloseIcon]="true"
+      [animationSettings]="animation"
+      width="560px"
+      target="body"
+    >
+      <ng-template #content>
+        <div class="form-grid">
+          <div class="full">
+            <div class="bulk-serials">
+              @for (d of bulkDevices(); track d.id) {
+                <span class="mono">{{ d.serial_number }}</span>
+              }
+            </div>
+            <p class="muted">บันทึกแบบทั้งหมดหรือไม่บันทึกเลย ถ้ามีเครื่องใดทำรายการไม่ได้ จะไม่มีการบันทึกเครื่องใดเลย</p>
+          </div>
+          @if (bulkAction() === 'transfer') {
+            <div class="full">
+              <label>ปลายทาง *</label>
+              <ejs-dropdownlist [dataSource]="transferOptions()" [fields]="{ value: 'value', text: 'text' }" [(value)]="transferTarget" placeholder="เลือกปลายทาง"></ejs-dropdownlist>
+            </div>
+          }
+          @if (bulkAction() === 'loan') {
+            <div class="full">
+              <label>วันครบกำหนดคืน *</label>
+              <ejs-datepicker [(value)]="dueDate" [min]="today" format="dd/MM/yyyy"></ejs-datepicker>
+            </div>
+          }
+          @if (bulkAction() === 'send_repair') {
+            <div class="full">
+              <label>ผู้ซ่อม / ผู้จำหน่าย</label>
+              <ejs-dropdownlist
+                [dataSource]="supplierOptions()"
+                [fields]="{ value: 'value', text: 'text' }"
+                [(value)]="supplier"
+                [allowFiltering]="true"
+                [showClearButton]="true"
+                placeholder="ไม่ระบุ (ซ่อมเอง)"
+              ></ejs-dropdownlist>
+            </div>
+          }
+          <div class="full">
+            <label>หมายเหตุ (ใช้กับทุกเครื่อง)</label>
+            <ejs-textarea [(value)]="note" [liveValue]="note" rows="2"></ejs-textarea>
+          </div>
+          @if (bulkTakesPhotos()) {
+            <div class="full">
+              <label>รูปประกอบ <span class="muted">แนบรูปชุดเดียวกันกับทุกรายการ</span></label>
+              <app-photo-picker [(files)]="photoFiles" />
+            </div>
+          }
+          @if (bulkFailures().length) {
+            <div class="full bulk-failures" role="alert">
+              <b>ทำรายการไม่ได้ {{ bulkFailures().length }} เครื่อง</b>
+              <ul>
+                @for (f of bulkFailures(); track f.device_id) {
+                  <li><span class="mono">{{ f.serial_number }}</span> — {{ f.reason }}</li>
+                }
+              </ul>
+            </div>
+          }
+        </div>
+      </ng-template>
+      <ng-template #footerTemplate>
+        <button ejs-button (click)="bulkAction.set(null)">ยกเลิก</button>
+        <button
+          ejs-button
+          [isPrimary]="bulkAction() !== 'retire'"
+          [cssClass]="bulkAction() === 'retire' ? 'e-danger' : ''"
+          [disabled]="!bulkValid() || busy()"
+          (click)="confirmBulk()"
+        >ยืนยัน {{ bulkDevices().length }} เครื่อง</button>
+      </ng-template>
+    </ejs-dialog>
+
+    <ejs-dialog
       [visible]="installOpen()"
       (close)="installOpen.set(false)"
       header="บันทึกการติดตั้ง"
@@ -164,6 +245,38 @@ const PHOTO_MOVEMENTS: ReadonlySet<Movement> = new Set(['return', 'send_repair',
       </ng-template>
     </ejs-dialog>
   `,
+  styles: `
+    .bulk-serials {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 10px;
+      max-height: 96px;
+      overflow-y: auto;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+    .mono {
+      font-family: ui-monospace, 'Cascadia Mono', monospace;
+    }
+    .muted {
+      font-size: 12px;
+      color: rgb(var(--app-on-surface-variant));
+    }
+    .bulk-failures {
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      background: rgb(var(--app-error-container));
+      color: rgb(var(--app-on-error-container));
+
+      ul {
+        margin: 6px 0 0;
+        padding-left: 18px;
+        max-height: 160px;
+        overflow-y: auto;
+      }
+    }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DeviceActionDialogs {
@@ -172,6 +285,8 @@ export class DeviceActionDialogs {
 
   /** Emits the updated device after a successful action. */
   readonly done = output<Device>();
+  /** Emits every moved device after a successful bulk action. */
+  readonly bulkDone = output<Device[]>();
 
   protected readonly animation = DIALOG_ANIMATION;
   protected readonly title = actionTitle;
@@ -243,13 +358,36 @@ export class DeviceActionDialogs {
     if (kind === 'loan') return !!this.dueDate();
     return kind !== null;
   });
-  protected readonly transferOptions = computed(() => [
-    ...(this.device()?.tenant_id ? [{ value: CENTRAL_STOCK, text: 'คลังกลาง (แพลตฟอร์ม)' }] : []),
-    ...this.tenants
-      .value()
-      .filter((t) => t.id !== this.device()?.tenant_id)
-      .map((t) => ({ value: t.id, text: t.name })),
-  ]);
+  /** Tenants the device(s) being transferred are in now; a destination equal to all of them is pointless. */
+  private readonly sourceTenants = computed(() => {
+    const d = this.device();
+    return new Set(this.bulkAction() ? this.bulkDevices().map((b) => b.tenant_id) : d ? [d.tenant_id] : []);
+  });
+  protected readonly transferOptions = computed(() => {
+    const sources = this.sourceTenants();
+    const only = sources.size === 1 ? [...sources][0] : undefined;
+    return [
+      ...(only !== null ? [{ value: CENTRAL_STOCK, text: 'คลังกลาง (แพลตฟอร์ม)' }] : []),
+      ...this.tenants
+        .value()
+        .filter((t) => t.id !== only)
+        .map((t) => ({ value: t.id, text: t.name })),
+    ];
+  });
+
+  protected readonly bulkAction = signal<BulkActionId | null>(null);
+  protected readonly bulkDevices = signal<BulkDevice[]>([]);
+  protected readonly bulkFailures = signal<BulkFailure[]>([]);
+  protected readonly bulkTakesPhotos = computed(() => {
+    const kind = this.bulkAction();
+    return kind !== null && PHOTO_MOVEMENTS.has(kind);
+  });
+  protected readonly bulkValid = computed(() => {
+    const kind = this.bulkAction();
+    if (kind === 'transfer') return !!this.transferTarget();
+    if (kind === 'loan') return !!this.dueDate();
+    return kind !== null && this.bulkDevices().length > 0;
+  });
 
   protected readonly installOpen = signal(false);
   protected readonly customer = signal<string | null>(null);
@@ -304,6 +442,55 @@ export class DeviceActionDialogs {
     this.transferTarget.set(null);
     this.dueDate.set(new Date(Date.now() + 14 * 86_400_000));
     this.movement.set(action);
+  }
+
+  openBulk(action: BulkActionId, devices: BulkDevice[]): void {
+    this.bulkDevices.set(devices);
+    this.bulkFailures.set([]);
+    this.photoFiles.set([]);
+    if (action === 'transfer') this.needTenants.set(true);
+    if (action === 'send_repair') this.needSuppliers.set(true);
+    this.supplier.set(null);
+    this.note.set('');
+    this.transferTarget.set(null);
+    this.dueDate.set(new Date(Date.now() + 14 * 86_400_000));
+    this.bulkAction.set(action);
+  }
+
+  protected async confirmBulk(): Promise<void> {
+    const kind = this.bulkAction();
+    const devices = this.bulkDevices();
+    if (!kind || !devices.length) return;
+    const target = this.transferTarget();
+    this.busy.set(true);
+    this.bulkFailures.set([]);
+    try {
+      const result = await this.api.bulk({
+        action: BULK_ACTIONS[kind],
+        device_ids: devices.map((d) => d.id),
+        note: this.note().trim() || null,
+        target_tenant_id: kind === 'transfer' && target !== CENTRAL_STOCK ? target : null,
+        supplier_id: kind === 'send_repair' ? this.supplier() : null,
+        due_date: kind === 'loan' ? toIsoDate(this.dueDate()) : null,
+      });
+      this.notify.success(`${actionTitle(kind)} สำเร็จ ${result.count} เครื่อง`);
+      const files = this.photoFiles();
+      if (PHOTO_MOVEMENTS.has(kind) && files.length) {
+        await this.attachPhotos(async () => {
+          let saved = 0;
+          for (const item of result.items) saved += await this.api.uploadPhotos('transaction', item.transaction_id, files);
+          return saved;
+        });
+      }
+      this.bulkAction.set(null);
+      this.bulkDone.emit(result.items.map((i) => i.device));
+    } catch (err) {
+      const failures = err instanceof HttpErrorResponse ? (err.error?.failures as BulkFailure[] | undefined) : undefined;
+      if (failures?.length) this.bulkFailures.set(failures);
+      else this.notify.error(err);
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   protected onPickInstall(point: LatLng): void {

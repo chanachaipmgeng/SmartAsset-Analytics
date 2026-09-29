@@ -153,10 +153,16 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
   readonly exportAll = input<(() => Promise<T[]>) | null>(null);
   /** Icon buttons in a trailing column; clicks are emitted through `rowAction`. */
   readonly rowActions = input<GridRowActionId[]>([]);
+  /**
+   * Checkbox column for picking several rows (current page), emitted through `multiSelectionChange`.
+   * A plain row click still emits `selectionChange` with that row.
+   */
+  readonly multiSelect = input(false);
 
   readonly query = output<GridQuery>();
   readonly rowAction = output<GridRowAction<T>>();
   readonly selectionChange = output<T | null>();
+  readonly multiSelectionChange = output<T[]>();
   readonly rowDoubleClick = output<T>();
   readonly retry = output<void>();
 
@@ -239,7 +245,9 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
   }
 
   protected readonly filterSettings = { type: 'Excel' as const };
-  protected readonly selectionSettings = { type: 'Single' as const };
+  protected readonly selectionSettings = computed(() =>
+    this.multiSelect() ? { type: 'Multiple' as const, checkboxOnly: true } : { type: 'Single' as const },
+  );
   protected readonly toolbar = [
     { text: 'Excel', tooltipText: 'ส่งออกเป็น Excel', prefixIcon: 'e-icons e-export-excel', id: 'excel' },
     { text: 'PDF', tooltipText: 'ส่งออกเป็น PDF', prefixIcon: 'e-icons e-export-pdf', id: 'pdf' },
@@ -250,6 +258,7 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
 
   clearSelection(): void {
     this.grid()?.clearSelection();
+    if (this.multiSelect()) this.multiSelectionChange.emit([]);
   }
 
   protected async onToolbar(args: ClickEventArgs): Promise<void> {
@@ -328,10 +337,30 @@ export class DataGrid<T extends object = Record<string, unknown>> implements OnI
 
   protected onActionComplete(args: { requestType?: string }): void {
     if (args.requestType === 'columnstate' || args.requestType === 'paging') this.savePerspective();
+    // Selection covers the rows on screen; paging, sorting or searching replaces them.
+    if (this.multiSelect() && ['paging', 'sorting', 'searching', 'filtering'].includes(args.requestType ?? '')) {
+      this.multiSelectionChange.emit([]);
+    }
   }
 
   protected onRowSelected(args: { data?: unknown }): void {
-    if (args.data && !Array.isArray(args.data)) this.selectionChange.emit(args.data as T);
+    if (this.multiSelect()) this.emitMultiSelection();
+    else if (args.data && !Array.isArray(args.data)) this.selectionChange.emit(args.data as T);
+  }
+
+  protected onRowDeselected(): void {
+    if (this.multiSelect()) this.emitMultiSelection();
+    else this.selectionChange.emit(null);
+  }
+
+  protected onRecordClick(args: { rowData?: unknown; target?: Element }): void {
+    if (!this.multiSelect() || !args.rowData) return;
+    if (args.target?.closest('.e-checkbox-wrapper, .row-actions')) return;
+    this.selectionChange.emit(args.rowData as T);
+  }
+
+  private emitMultiSelection(): void {
+    this.multiSelectionChange.emit((this.grid()?.getSelectedRecords() ?? []) as T[]);
   }
 
   protected onDoubleClick(args: { rowData?: unknown }): void {

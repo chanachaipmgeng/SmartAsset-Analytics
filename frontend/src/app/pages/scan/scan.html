@@ -33,6 +33,13 @@
           }
         </form>
         <p class="hint">รองรับเครื่องยิงบาร์โค้ดแบบคีย์บอร์ด (ยิงแล้วกด Enter อัตโนมัติ){{ cameraSupported ? ' และกล้องของอุปกรณ์' : '' }}</p>
+        @if (auth.canWrite()) {
+          <ejs-checkbox
+            label="โหมดสแกนต่อเนื่อง (สะสมหลายเครื่องแล้วทำรายการพร้อมกัน)"
+            [checked]="batchMode()"
+            (change)="setBatchMode($event.checked)"
+          />
+        }
         @if (cameraError()) {
           <p class="camera-error">{{ cameraError() }}</p>
         }
@@ -41,6 +48,51 @@
           <div class="reticle" aria-hidden="true"></div>
         </div>
       </section>
+
+      @if (batchMode()) {
+        <section class="panel batch" aria-live="polite">
+          <div class="history-head">
+            <div>
+              <h2>รายการที่สแกนสะสม</h2>
+              <div class="text-xs text-on-surface-variant">{{ batch().length }} เครื่อง</div>
+            </div>
+            @if (batch().length) {
+              <button ejs-button cssClass="e-flat e-small" (click)="clearBatch()">ล้าง</button>
+            }
+          </div>
+          @if (batch().length) {
+            <ul class="batch-list">
+              @for (d of batch(); track d.id) {
+                <li>
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate font-mono text-sm font-semibold">{{ d.serial_number }}</span>
+                    <span class="block truncate text-xs text-on-surface-variant">{{ d.brand }} · {{ d.model_name }}</span>
+                  </span>
+                  <app-status-chip [status]="d.status" />
+                  <button
+                    ejs-button
+                    cssClass="e-flat e-small e-round"
+                    iconCss="e-icons e-close"
+                    [attr.aria-label]="'เอา ' + d.serial_number + ' ออก'"
+                    (click)="removeFromBatch(d.id)"
+                  ></button>
+                </li>
+              }
+            </ul>
+            <div class="actions">
+              @for (a of batchActions(); track a.id) {
+                <button ejs-button [cssClass]="a.danger ? 'e-outline e-danger' : 'e-outline'" [iconCss]="a.iconCss" (click)="runBatch(a.id)">
+                  {{ a.text }} ({{ batch().length }})
+                </button>
+              } @empty {
+                <p class="m-0 text-sm text-on-surface-variant">ไม่มีรายการที่ทำได้กับทุกเครื่องในรายการ</p>
+              }
+            </div>
+          } @else {
+            <p class="m-0 text-sm text-on-surface-variant">สแกนต่อไปเรื่อย ๆ เครื่องที่พบจะถูกเพิ่มในรายการนี้</p>
+          }
+        </section>
+      }
 
       <section class="panel result" aria-live="polite">
         @switch (lookup().kind) {
@@ -142,4 +194,4 @@
   </div>
 </div>
 
-<app-device-action-dialogs (done)="onActionDone()" />
+<app-device-action-dialogs (done)="onActionDone()" (bulkDone)="onBulkDone($event)" />

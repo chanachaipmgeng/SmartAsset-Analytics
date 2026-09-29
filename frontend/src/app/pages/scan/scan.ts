@@ -12,10 +12,10 @@ import {
   viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ButtonModule } from '@syncfusion/ej2-angular-buttons';
+import { ButtonModule, CheckBoxModule } from '@syncfusion/ej2-angular-buttons';
 import { firstValueFrom } from 'rxjs';
 import { AuthStore } from '../../core/auth.store';
-import { DeviceActionId, availableActions } from '../../core/device-actions';
+import { DeviceActionId, availableActions, commonBulkActions, isBulkAction } from '../../core/device-actions';
 import { relativeTime } from '../../core/labels';
 import { Device, DeviceStatus } from '../../core/models';
 import { errorMessage } from '../../core/notify.service';
@@ -73,7 +73,7 @@ function barcodeDetector(): BarcodeDetectorCtor | null {
 
 @Component({
   selector: 'app-scan',
-  imports: [DatePipe, RouterLink, ButtonModule, PageHeader, StatusChip, EmptyState, SkeletonBlock, DeviceActionDialogs],
+  imports: [DatePipe, RouterLink, ButtonModule, CheckBoxModule, PageHeader, StatusChip, EmptyState, SkeletonBlock, DeviceActionDialogs],
   templateUrl: './scan.html',
   styleUrl: './scan.scss',
   host: { '(document:keydown)': 'captureWedge($event)' },
@@ -107,6 +107,13 @@ export class ScanPage {
   });
   protected readonly actions = computed(() =>
     availableActions(this.device(), { canWrite: this.auth.canWrite(), isSuperadmin: this.auth.isSuperadmin() }),
+  );
+
+  /** Continuous mode: every device found is queued for one bulk action. */
+  protected readonly batchMode = signal(false);
+  protected readonly batch = signal<Device[]>([]);
+  protected readonly batchActions = computed(() =>
+    commonBulkActions(this.batch(), { canWrite: this.auth.canWrite(), isSuperadmin: this.auth.isSuperadmin() }),
   );
 
   protected readonly cameraSupported = barcodeDetector() !== null;
@@ -146,8 +153,10 @@ export class ScanPage {
       if (record) {
         scanSuccess();
         this.remember({ serial, at: new Date().toISOString(), deviceId: device.id, status: device.status });
+        if (this.batchMode()) this.addToBatch(device);
       } else {
         this.updateHistoryStatus(device);
+        this.batch.update((list) => list.map((d) => (d.id === device.id ? device : d)));
       }
     } catch (err) {
       if (err instanceof HttpErrorResponse && err.status === 404) {
@@ -169,6 +178,40 @@ export class ScanPage {
 
   protected onActionDone(): void {
     if (this.device()) void this.scan(this.serial(), false);
+  }
+
+  protected setBatchMode(on: boolean): void {
+    this.batchMode.set(on);
+    if (!on) this.batch.set([]);
+    this.focusInput();
+  }
+
+  protected removeFromBatch(id: string): void {
+    this.batch.update((list) => list.filter((d) => d.id !== id));
+    this.focusInput();
+  }
+
+  protected clearBatch(): void {
+    this.batch.set([]);
+    this.focusInput();
+  }
+
+  protected runBatch(action: DeviceActionId): void {
+    if (isBulkAction(action) && this.batch().length) this.dialogs().openBulk(action, this.batch());
+  }
+
+  protected onBulkDone(devices: Device[]): void {
+    this.batch.set([]);
+    devices.forEach((d) => this.updateHistoryStatus(d));
+    const current = this.device();
+    if (current && devices.some((d) => d.id === current.id)) void this.scan(this.serial(), false);
+    this.focusInput();
+  }
+
+  private addToBatch(device: Device): void {
+    this.batch.update((list) =>
+      list.some((d) => d.id === device.id) ? list.map((d) => (d.id === device.id ? device : d)) : [device, ...list],
+    );
   }
 
   protected clearHistory(): void {

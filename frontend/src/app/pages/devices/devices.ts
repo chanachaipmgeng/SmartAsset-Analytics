@@ -17,7 +17,7 @@ import { SidebarModule } from '@syncfusion/ej2-angular-navigations';
 import { DropDownButtonModule, MenuEventArgs } from '@syncfusion/ej2-angular-splitbuttons';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
-import { DeviceActionId, availableActions } from '../../core/device-actions';
+import { DeviceActionId, availableActions, commonBulkActions, isBulkAction } from '../../core/device-actions';
 import { STATUS_LABELS, SERVICE_LEVEL_LABELS, toDate, toIsoDate } from '../../core/labels';
 import {
   CountItem,
@@ -85,6 +85,8 @@ function toRow(d: Device) {
     cost: d.cost === null ? null : Number(d.cost),
   };
 }
+
+type DeviceRow = ReturnType<typeof toRow>;
 
 const WARRANTY_SOON_DAYS = 60;
 const DAY_MS = 86_400_000;
@@ -206,6 +208,15 @@ export class DevicesPage {
     this.actions().map((a) => ({ id: a.id, text: a.text, iconCss: a.iconCss })),
   );
   protected readonly canEdit = computed(() => this.auth.canWrite() && this.selected()?.status !== 'RETIRED');
+
+  // ---- checkbox selection / bulk actions ----
+  protected readonly checked = signal<DeviceRow[]>([]);
+  protected readonly bulkActions = computed(() =>
+    commonBulkActions(this.checked(), {
+      canWrite: this.auth.canWrite(),
+      isSuperadmin: this.auth.isSuperadmin(),
+    }),
+  );
 
   protected readonly history = httpResource<InventoryTransaction[]>(
     () => (this.id() ? `/api/v1/inventory/transactions?device_id=${this.id()}&limit=100` : undefined),
@@ -343,8 +354,21 @@ export class DevicesPage {
   }
 
   protected closeDetail(): void {
-    this.grid()?.clearSelection();
+    if (!this.checked().length) this.grid()?.clearSelection();
     if (this.id()) void this.router.navigate(['/devices']);
+  }
+
+  protected runBulk(action: DeviceActionId): void {
+    if (isBulkAction(action)) this.dialogs().openBulk(action, this.checked());
+  }
+
+  protected clearChecked(): void {
+    this.grid()?.clearSelection();
+  }
+
+  protected onBulkDone(): void {
+    this.clearChecked();
+    this.onActionDone();
   }
 
   protected onActionSelect(args: MenuEventArgs): void {

@@ -5,6 +5,36 @@
   color: rgb(var(--app-primary));
 }
 
+.bulk-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 900;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  padding: 10px 16px;
+  transform: translateX(-50%);
+  border: 1px solid rgb(var(--app-outline-variant));
+  border-radius: 16px;
+  background: rgb(var(--app-surface));
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.2);
+  animation: fade-in 180ms ease-out both;
+}
+
+.bulk-count {
+  margin-right: 4px;
+  font-weight: 600;
+}
+
+.bulk-empty {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
 .detail-scrim {
   position: fixed;
   inset: 0;

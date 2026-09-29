@@ -192,6 +192,36 @@
   }
 }
 
+.batch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 320px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 12px;
+    background: rgb(var(--app-surface-variant));
+    animation: fade-up 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}
+
+.batch .actions {
+  margin-top: 12px;
+}
+
+.scan-box ejs-checkbox {
+  display: block;
+  margin-top: 12px;
+}
+
 .history-list {
   margin: 0;
   padding: 0;

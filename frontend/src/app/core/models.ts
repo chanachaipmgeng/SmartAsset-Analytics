@@ -117,6 +117,17 @@ export interface Device {
   supplier_name: string | null;
 }
 
+export interface BulkResult {
+  count: number;
+  items: { device: Device; transaction_id: string }[];
+}
+
+export interface BulkFailure {
+  device_id: string;
+  serial_number: string;
+  reason: string;
+}
+
 export interface InventoryTransaction {
   id: string;
   device_id: string;

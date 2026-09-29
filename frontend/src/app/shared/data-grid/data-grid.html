@@ -35,16 +35,26 @@
         [groupSettings]="groupSettings()"
         [aggregates]="aggregateRows()"
         [filterSettings]="filterSettings"
-        [selectionSettings]="selectionSettings"
+        [selectionSettings]="selectionSettings()"
         [toolbar]="toolbar"
         (toolbarClick)="onToolbar($event)"
         (actionComplete)="onActionComplete($event)"
         (dataStateChange)="onDataStateChange($event)"
         (rowSelected)="onRowSelected($event)"
-        (rowDeselected)="selectionChange.emit(null)"
+        (rowDeselected)="onRowDeselected()"
+        (recordClick)="onRecordClick($event)"
         (recordDoubleClick)="onDoubleClick($event)"
       >
         <e-columns>
+          @if (multiSelect()) {
+            <e-column
+              type="checkbox"
+              width="44"
+              textAlign="Center"
+              [allowResizing]="false"
+              [showInColumnChooser]="false"
+            ></e-column>
+          }
           @for (col of effectiveColumns(); track col.field) {
             @if (cells().get(col.field); as tpl) {
               <e-column

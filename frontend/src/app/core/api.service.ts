@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import {
+  BulkResult,
   Customer,
   Device,
   DeviceModel,
@@ -66,6 +67,17 @@ export class ApiService {
   }
   qcFail(deviceId: string, note: string) {
     return this.post<Device>('/inventory/qc-fail', { device_id: deviceId, note });
+  }
+  /** All-or-nothing; a 422 carries `failures` (serial + reason) when any device cannot move. */
+  bulk(body: {
+    action: string;
+    device_ids: string[];
+    note?: string | null;
+    target_tenant_id?: string | null;
+    supplier_id?: string | null;
+    due_date?: string | null;
+  }) {
+    return this.post<BulkResult>('/inventory/bulk', body);
   }
   importDevices(file: File, dryRun: boolean) {
     const form = new FormData();

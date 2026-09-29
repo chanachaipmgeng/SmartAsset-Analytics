@@ -31,6 +31,8 @@
       [emptyTitle]="statusFilter() === 'ALL' ? 'ยังไม่มีอุปกรณ์' : 'ไม่มีอุปกรณ์ในสถานะนี้'"
       [emptyMessage]="statusFilter() === 'ALL' ? 'กด “รับเข้าใหม่” เพื่อเพิ่มอุปกรณ์เครื่องแรก' : null"
       (selectionChange)="onRowSelected($event)"
+      [multiSelect]="auth.canWrite()"
+      (multiSelectionChange)="checked.set($event)"
       [rowActions]="rowActions()"
       (rowAction)="onRowAction($event)"
       (retry)="devices.reload()"
@@ -43,6 +45,20 @@
       </ng-template>
     </app-data-grid>
   </div>
+
+  @if (checked().length >= 2) {
+    <div class="bulk-bar" role="toolbar" aria-label="ทำรายการหลายเครื่อง">
+      <span class="bulk-count">เลือก {{ checked().length }} เครื่อง</span>
+      @for (a of bulkActions(); track a.id) {
+        <button ejs-button [iconCss]="a.iconCss" [cssClass]="a.danger ? 'e-danger' : ''" (click)="runBulk(a.id)">
+          {{ a.text }}
+        </button>
+      } @empty {
+        <span class="bulk-empty">ไม่มีรายการที่ทำได้กับทุกเครื่องที่เลือก</span>
+      }
+      <button ejs-button cssClass="e-flat" iconCss="e-icons e-close" (click)="clearChecked()">ล้าง</button>
+    </div>
+  }
 </div>
 
 @if (detailOpen()) {
@@ -189,7 +205,7 @@
   }
 </ejs-sidebar>
 
-<app-device-action-dialogs (done)="onActionDone()" />
+<app-device-action-dialogs (done)="onActionDone()" (bulkDone)="onBulkDone()" />
 <app-device-import [(open)]="importOpen" (imported)="onImported($event)" />
 
 <ejs-dialog
