@@ -312,6 +312,7 @@ migration เดินหน้าอย่างเดียว ถ้าเว
 | --- | --- |
 | build หน้าเว็บหยุดกลางคัน หรือขึ้น `Killed` / `JavaScript heap out of memory` | RAM ไม่พอ ให้เพิ่ม swap แล้ว build ใหม่: `sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile && echo '/swapfile none swap sw 0 0' \| sudo tee -a /etc/fstab` |
 | `sudo: apt-get: command not found` | เครื่องเป็นตระกูล RHEL (Rocky/AlmaLinux/CentOS) ให้ใช้คำสั่ง `dnf` ในหัวข้อ 1-2 และ 5.2 |
+| `Failed to download metadata for repo 'pgdg-…'` / URL มี `rhel-9.-x86_64` | repo PostgreSQL บนโฮสต์พังหรือตั้งผิด (แอปนี้ใช้ DB ใน Docker ไม่ต้องใช้ repo นี้) ปิดแล้วลองใหม่: `dnf config-manager --disable 'pgdg*'` หรือลบไฟล์ใน `/etc/yum.repos.d/pgdg*.repo` แล้ว `dnf clean all` |
 | `nginx` restart วน และ log ขึ้น `open() "/etc/nginx/conf.d/default.conf" failed (13: Permission denied)` | SELinux บล็อกการอ่านไฟล์ตั้งค่า ให้สั่ง `sudo chcon -Rt container_file_t /opt/smartasset/nginx` แล้ว `docker compose up -d` |
 | HTTPS ขึ้น `502` แต่ `curl http://127.0.0.1:8080/health` ได้ปกติ (ตระกูล RHEL) | SELinux บล็อก Caddy ไม่ให้ต่อพอร์ต 8080 ให้สั่ง `sudo setsebool -P httpd_can_network_connect 1` |
 | `docker compose up` แจ้ง `set POSTGRES_PASSWORD in .env` | ยังไม่ได้สร้าง `.env` หรือไม่ได้สั่งคำสั่งในโฟลเดอร์ `/opt/smartasset` |
