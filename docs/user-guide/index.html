@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>คู่มือการใช้งาน SmartAsset Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&display=swap">
+<style>
+:root {
+  --bg: #f7f8fb; --fg: #1d2330; --muted: #5d6679; --card: #fff; --line: #e3e7ef;
+  --primary: #4f46e5; --primary-soft: #eef0ff; --code: #f1f3f8;
+  color-scheme: light;
+}
+:root.dark {
+  --bg: #0f1320; --fg: #e5e8f0; --muted: #9aa3b8; --card: #171c2c; --line: #283048;
+  --primary: #8b85ff; --primary-soft: #232848; --code: #1f2538;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 16px/1.75 'IBM Plex Sans Thai', system-ui, 'Segoe UI', sans-serif;
+}
+.layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); }
+aside {
+  position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 24px 16px;
+  border-right: 1px solid var(--line); background: var(--card);
+}
+.brand { display: flex; align-items: center; gap: 10px; margin: 0 8px 16px; font-weight: 700; }
+.brand span { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px;
+  background: linear-gradient(135deg, #6366f1, #06b6d4); color: #fff; }
+.tools { display: flex; gap: 8px; margin: 0 8px 16px; }
+.tools input { flex: 1; min-width: 0; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); color: var(--fg); font: inherit; font-size: 14px; }
+.tools button { border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg);
+  cursor: pointer; padding: 0 10px; font-size: 16px; }
+nav a { display: block; padding: 5px 8px; border-radius: 6px; color: var(--muted); text-decoration: none;
+  font-size: 14px; line-height: 1.5; }
+nav a.l3 { padding-left: 22px; font-size: 13px; }
+nav a:hover { background: var(--bg); color: var(--fg); }
+nav a.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+main { max-width: 980px; padding: 40px 48px 96px; }
+h1 { font-size: 32px; line-height: 1.3; margin: 0 0 12px; }
+h2 { font-size: 24px; margin: 56px 0 12px; padding-top: 16px; border-top: 1px solid var(--line); }
+h3 { font-size: 19px; margin: 32px 0 8px; }
+a { color: var(--primary); }
+code { background: var(--code); padding: 1px 6px; border-radius: 5px; font-size: .88em;
+  font-family: ui-monospace, Consolas, monospace; }
+pre { background: var(--code); padding: 16px; border-radius: 10px; overflow-x: auto; }
+pre.mermaid { background: var(--card); border: 1px solid var(--line); text-align: center; }
+blockquote { margin: 16px 0; padding: 12px 16px; border-left: 4px solid var(--primary);
+  background: var(--primary-soft); border-radius: 0 10px 10px 0; color: var(--fg); }
+blockquote p { margin: 0; }
+blockquote p + p { margin-top: 8px; }
+figure { margin: 20px 0; }
+figure img { display: block; max-width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line);
+  box-shadow: 0 6px 24px rgb(15 20 40 / .08); cursor: zoom-in; }
+figcaption { margin-top: 6px; color: var(--muted); font-size: 13px; text-align: center; }
+.table { overflow-x: auto; margin: 16px 0; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+th, td { padding: 9px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+th { background: var(--bg); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+td figure { margin: 0; }
+.lightbox { position: fixed; inset: 0; display: none; place-items: center; padding: 24px;
+  background: rgb(8 10 20 / .85); z-index: 10; cursor: zoom-out; }
+.lightbox.open { display: grid; }
+.lightbox img { max-width: 100%; max-height: 100%; border-radius: 8px; }
+.menu-btn { display: none; }
+.hide { display: none !important; }
+@media (max-width: 900px) {
+  html { scroll-padding-top: 64px; }
+  .layout { grid-template-columns: 1fr; }
+  aside { position: fixed; inset: 0 auto 0 0; width: 300px; z-index: 5; transform: translateX(-100%);
+    transition: transform .2s; box-shadow: 0 0 40px rgb(0 0 0 / .2); }
+  aside.open { transform: none; }
+  main { padding: 64px 18px 64px; }
+  .menu-btn { display: block; position: fixed; top: 12px; left: 12px; z-index: 6; width: 40px; height: 40px;
+    border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--fg); font-size: 18px; }
+}
+@media print {
+  aside, .menu-btn { display: none; }
+  .layout { display: block; }
+  main { max-width: none; padding: 0; }
+  h2 { break-before: page; border: 0; }
+  figure, tr { break-inside: avoid; }
+  figure img { box-shadow: none; }
+}
+</style>
+<script>
+  if (localStorage.getItem('guide.theme') === 'dark') document.documentElement.classList.add('dark');
+</script>
+</head>
+<body>
+<button class="menu-btn" aria-label="สารบัญ">☰</button>
+<div class="layout">
+<aside>
+  <div class="brand"><span>SA</span>SmartAsset Analytics</div>
+  <div class="tools">
+    <input type="search" placeholder="ค้นหาหัวข้อ..." aria-label="ค้นหาหัวข้อ">
+    <button class="theme" title="สลับธีมสว่าง/มืด">◐</button>
+  </div>
+  <nav>
+<a class="l2" href="#1-บทบาทผู้ใช้และสถานะอุปกรณ์">1. บทบาทผู้ใช้และสถานะอุปกรณ์</a>
+<a class="l2" href="#2-เข้าสู่ระบบและหน้าจอหลัก">2. เข้าสู่ระบบและหน้าจอหลัก</a>
+<a class="l3" href="#21-เข้าสู่ระบบ">2.1 เข้าสู่ระบบ</a>
+<a class="l3" href="#22-แดชบอร์ด">2.2 แดชบอร์ด</a>
+<a class="l3" href="#23-เมนูและการค้นหา">2.3 เมนูและการค้นหา</a>
+<a class="l2" href="#3-รับอุปกรณ์เข้าคลัง">3. รับอุปกรณ์เข้าคลัง</a>
+<a class="l2" href="#4-วงจรชีวิตอุปกรณ์-โอน--เบิก--ติดตั้ง--ยืม">4. วงจรชีวิตอุปกรณ์: โอน → เบิก → ติดตั้ง / ยืม</a>
+<a class="l3" href="#41-โอนให้กลุ่มลูกค้า-ผู้ดูแลแพลตฟอร์ม">4.1 โอนให้กลุ่มลูกค้า (ผู้ดูแลแพลตฟอร์ม)</a>
+<a class="l3" href="#42-เบิกออก">4.2 เบิกออก</a>
+<a class="l3" href="#43-บันทึกการติดตั้ง">4.3 บันทึกการติดตั้ง</a>
+<a class="l3" href="#44-ให้ยืม">4.4 ให้ยืม</a>
+<a class="l3" href="#45-ทำรายการหลายเครื่องพร้อมกัน">4.5 ทำรายการหลายเครื่องพร้อมกัน</a>
+<a class="l3" href="#46-พิมพ์ฉลาก-qrบาร์โค้ด">4.6 พิมพ์ฉลาก QR/บาร์โค้ด</a>
+<a class="l2" href="#5-ส่งซ่อมและบันทึกผล-qc">5. ส่งซ่อมและบันทึกผล QC</a>
+<a class="l3" href="#51-ส่งซ่อม">5.1 ส่งซ่อม</a>
+<a class="l3" href="#52-ซ่อมเสร็จ--qc">5.2 ซ่อมเสร็จ / QC</a>
+<a class="l2" href="#6-รับคืน-ตรวจสอบ-qc-และปลดระวาง">6. รับคืน ตรวจสอบ (QC) และปลดระวาง</a>
+<a class="l3" href="#61-รับคืน">6.1 รับคืน</a>
+<a class="l3" href="#62-บันทึกผล-qc">6.2 บันทึกผล QC</a>
+<a class="l3" href="#63-ปลดระวาง">6.3 ปลดระวาง</a>
+<a class="l2" href="#7-นำเข้าอุปกรณ์จากไฟล์-excelcsv">7. นำเข้าอุปกรณ์จากไฟล์ Excel/CSV</a>
+<a class="l2" href="#8-สถานีสแกน">8. สถานีสแกน</a>
+<a class="l2" href="#9-ความเคลื่อนไหวสต็อก">9. ความเคลื่อนไหวสต็อก</a>
+<a class="l2" href="#10-ลูกค้าและจุดติดตั้งแผนที่">10. ลูกค้าและจุดติดตั้ง/แผนที่</a>
+<a class="l3" href="#101-ลูกค้า">10.1 ลูกค้า</a>
+<a class="l3" href="#102-จุดติดตั้ง--แผนที่">10.2 จุดติดตั้ง / แผนที่</a>
+<a class="l2" href="#11-ตั้งค่า-รุ่นอุปกรณ์-ผู้จำหน่ายผู้ซ่อม-กลุ่มลูกค้า-ผู้ใช้งาน">11. ตั้งค่า: รุ่นอุปกรณ์ ผู้จำหน่าย/ผู้ซ่อม กลุ่มลูกค้า ผู้ใช้งาน</a>
+<a class="l3" href="#111-รุ่นอุปกรณ์">11.1 รุ่นอุปกรณ์</a>
+<a class="l3" href="#112-ผู้จำหน่าย--ผู้ซ่อม">11.2 ผู้จำหน่าย / ผู้ซ่อม</a>
+<a class="l3" href="#113-กลุ่มลูกค้า-เฉพาะผู้ดูแลแพลตฟอร์ม">11.3 กลุ่มลูกค้า (เฉพาะผู้ดูแลแพลตฟอร์ม)</a>
+<a class="l3" href="#114-ผู้ใช้งาน">11.4 ผู้ใช้งาน</a>
+<a class="l3" href="#115-ประวัติการแก้ไขข้อมูล-ผู้ดูแล">11.5 ประวัติการแก้ไขข้อมูล (ผู้ดูแล)</a>
+<a class="l2" href="#12-รายงาน">12. รายงาน</a>
+<a class="l2" href="#13-โปรไฟล์-ธีม-และการใช้งานบนมือถือ">13. โปรไฟล์ ธีม และการใช้งานบนมือถือ</a>
+<a class="l2" href="#14-ข้อมูลตัวอย่างสำหรับทดลองใช้">14. ข้อมูลตัวอย่างสำหรับทดลองใช้</a>
+<a class="l2" href="#15-ผลตรวจ-uxui-ระหว่างทำคู่มือ">15. ผลตรวจ UX/UI ระหว่างทำคู่มือ</a>
+<a class="l3" href="#แก้ไขแล้ว">แก้ไขแล้ว</a>
+<a class="l3" href="#ข้อเสนอแนะ-ยังไม่แก้">ข้อเสนอแนะ (ยังไม่แก้)</a>
+  </nav>
+</aside>
+<main>
+<h1 id="คู่มือการใช้งาน-smartasset-analytics">คู่มือการใช้งาน SmartAsset Analytics</h1>
+<p>ระบบบริหารคลังอุปกรณ์ (เครื่องสแกนหน้า/ลายนิ้วมือ ฯลฯ) ตั้งแต่รับเข้าคลัง โอนให้กลุ่มลูกค้า เบิกออก ติดตั้งที่หน้างาน ส่งซ่อม จนถึงปลดระวาง พร้อมประวัติทุกการเคลื่อนไหว</p>
+<blockquote><p>ภาพประกอบทั้งหมดถ่ายจากระบบจริงที่ความละเอียด 1440×900 (มือถือ 390×844) ธีมสว่าง ด้วยบัญชี &quot;ผู้ดูแลแพลตฟอร์ม&quot; และข้อมูลตัวอย่าง (ดูหัวข้อ 14) เมนูและปุ่มที่เห็นอาจน้อยกว่านี้ตามบทบาทของผู้ใช้ ถ่ายภาพชุดนี้ใหม่ได้ทั้งหมดด้วย <code>node scripts/guide-screenshots.cjs</code> (วิธีใช้อยู่ที่หัวไฟล์)</p><p>คู่มือฉบับ HTML อยู่ที่ <code>docs/user-guide/index.html</code> (เปิดในเบราว์เซอร์ได้ทันที มีสารบัญด้านข้าง ค้นหาหัวข้อ คลิกภาพเพื่อขยาย และสั่งพิมพ์เป็น PDF ได้) หลังแก้ไฟล์นี้ให้สร้างใหม่ด้วย <code>node scripts/guide-html.cjs</code></p></blockquote>
+<h2 id="1-บทบาทผู้ใช้และสถานะอุปกรณ์">1. บทบาทผู้ใช้และสถานะอุปกรณ์</h2>
+<div class="table"><table><thead><tr><th>บทบาท</th><th>ทำอะไรได้</th></tr></thead><tbody><tr><td>ผู้ดูแลแพลตฟอร์ม</td><td>เห็นทุกกลุ่มลูกค้า โอนอุปกรณ์จากคลังกลาง จัดการกลุ่มลูกค้า รุ่นอุปกรณ์ และผู้ใช้ทั้งหมด</td></tr><tr><td>ผู้ดูแลกลุ่มลูกค้า</td><td>ทำรายการกับอุปกรณ์ในกลุ่มของตน และจัดการผู้ใช้ในกลุ่ม</td></tr><tr><td>เจ้าหน้าที่</td><td>ทำรายการกับอุปกรณ์ในกลุ่มของตน (เบิก ติดตั้ง ส่งซ่อม ฯลฯ)</td></tr><tr><td>ผู้ดูข้อมูล</td><td>ดูข้อมูลได้อย่างเดียว</td></tr></tbody></table></div>
+<p>อุปกรณ์แต่ละเครื่องมี 7 สถานะ และระบบจะแสดงเฉพาะปุ่มที่ทำได้ในสถานะปัจจุบัน เครื่องที่รับคืนทุกกรณีจะเข้าคิว &quot;รอตรวจสอบ (QC)&quot; ก่อนกลับเข้าคลัง</p>
+<pre class="mermaid">stateDiagram-v2
+  [*] --&gt; อยู่ในคลัง: รับเข้า / นำเข้า
+  อยู่ในคลัง --&gt; อยู่ในคลัง: โอน (เฉพาะผู้ดูแลแพลตฟอร์ม)
+  อยู่ในคลัง --&gt; เบิกออก: เบิกออก (ต้องอยู่ในกลุ่มลูกค้าแล้ว)
+  อยู่ในคลัง --&gt; ยืม: ให้ยืม (ต้องอยู่ในกลุ่มลูกค้าแล้ว)
+  เบิกออก --&gt; ติดตั้งแล้ว: ติดตั้ง
+  เบิกออก --&gt; รอตรวจสอบ: รับคืน
+  ติดตั้งแล้ว --&gt; รอตรวจสอบ: รับคืน
+  ยืม --&gt; รอตรวจสอบ: รับคืน
+  รอตรวจสอบ --&gt; อยู่ในคลัง: QC ผ่าน
+  รอตรวจสอบ --&gt; ส่งซ่อม: QC ไม่ผ่าน
+  อยู่ในคลัง --&gt; ส่งซ่อม
+  เบิกออก --&gt; ส่งซ่อม
+  ติดตั้งแล้ว --&gt; ส่งซ่อม
+  ส่งซ่อม --&gt; อยู่ในคลัง: ซ่อมเสร็จ / QC
+  อยู่ในคลัง --&gt; ปลดระวาง
+  รอตรวจสอบ --&gt; ปลดระวาง
+  ส่งซ่อม --&gt; ปลดระวาง</pre>
+<p>การแก้ไขข้อมูลเครื่อง (เช่น MAC ต้นทุน วันหมดประกัน) จะถูกบันทึกในประวัติเป็นรายการ &quot;แก้ไขข้อมูล&quot; พร้อมฟิลด์ที่เปลี่ยน โดยสถานะไม่เปลี่ยน</p>
+<h2 id="2-เข้าสู่ระบบและหน้าจอหลัก">2. เข้าสู่ระบบและหน้าจอหลัก</h2>
+<h3 id="21-เข้าสู่ระบบ">2.1 เข้าสู่ระบบ</h3>
+<p>กรอกอีเมลและรหัสผ่าน แล้วกด <strong>เข้าสู่ระบบ</strong></p>
+<ul><li>กดไอคอน 👁 ท้ายช่องรหัสผ่านเพื่อแสดง/ซ่อนรหัสที่พิมพ์</li><li>ติ๊ก <strong>จดจำอีเมลบนเครื่องนี้</strong> เพื่อให้กรอกอีเมลไว้ให้ในครั้งถัดไป (ไม่จำรหัสผ่าน)</li><li>ปุ่ม ◐ มุมขวาบนสลับธีมสว่าง/มืดได้ตั้งแต่หน้านี้</li><li>ถ้าเปิดลิงก์ของระบบ (เช่น สแกน QR บนฉลากอุปกรณ์) ขณะยังไม่ได้เข้าสู่ระบบ หน้านี้จะขึ้นว่า &quot;เข้าสู่ระบบเพื่อไปยังหน้าที่คุณเปิดไว้&quot; และพากลับไปหน้านั้นหลังเข้าสู่ระบบ</li></ul>
+<p>บนจอกว้าง ด้านซ้ายแสดงภาพตัวอย่างแดชบอร์ดและจุดเด่นของระบบ (ตัวเลขในภาพเป็นตัวอย่าง ไม่ใช่ข้อมูลจริง) บนมือถือจะเห็นเฉพาะฟอร์ม</p>
+<figure><a class="zoom" href="images/01-login.png"><img src="images/01-login.png" alt="หน้าเข้าสู่ระบบ" width="1440" height="900" loading="lazy"></a><figcaption>หน้าเข้าสู่ระบบ</figcaption></figure>
+<p>ถ้ารหัสผ่านผิดหรือบัญชีถูกระงับ ระบบจะแจ้งเตือนด้านบนฟอร์ม</p>
+<figure><a class="zoom" href="images/01b-login-error.png"><img src="images/01b-login-error.png" alt="แจ้งเตือนเข้าสู่ระบบไม่สำเร็จ" width="1440" height="900" loading="lazy"></a><figcaption>แจ้งเตือนเข้าสู่ระบบไม่สำเร็จ</figcaption></figure>
+<h3 id="22-แดชบอร์ด">2.2 แดชบอร์ด</h3>
+<p>หน้าแรกหลังเข้าสู่ระบบ แสดง</p>
+<ul><li>การ์ดจำนวนอุปกรณ์ทั้งหมดและตามสถานะ พร้อมตัวเลขเปลี่ยนแปลงใน 7 วัน คลิกการ์ดเพื่อไปหน้าอุปกรณ์ที่กรองสถานะนั้นไว้แล้ว</li><li>แผง <strong>งานค้าง</strong>: จำนวนเครื่องที่รอตรวจสอบ (QC), ยืมเกินกำหนดคืน และส่งซ่อมเกิน 14 วัน คลิกแต่ละรายการเพื่อดูเครื่องที่เกี่ยวข้อง (ถ้าไม่มีงานค้างจะขึ้น &quot;ไม่มีงานค้าง&quot;)</li><li>กราฟความเคลื่อนไหว 30 วัน สัดส่วนตามสถานะ และจำนวนตามรุ่น</li><li>กิจกรรมล่าสุด คลิกซีเรียลเพื่อเปิดรายละเอียดเครื่อง (กด <strong>ดูทั้งหมด</strong> เพื่อไปหน้าความเคลื่อนไหวสต็อก)</li><li>ปุ่มลัด <strong>รับเข้า</strong>, <strong>นำเข้า</strong>, <strong>สแกน</strong> และปุ่มรีเฟรช</li></ul>
+<figure><a class="zoom" href="images/02-dashboard.png"><img src="images/02-dashboard.png" alt="แดชบอร์ด" width="1440" height="900" loading="lazy"></a><figcaption>แดชบอร์ด</figcaption></figure>
+<h3 id="23-เมนูและการค้นหา">2.3 เมนูและการค้นหา</h3>
+<ul><li>ปุ่ม ☰ มุมซ้ายบนสลับเมนูแบบย่อ (ไอคอน) และแบบเต็ม ระบบจำค่าที่เลือกไว้</li></ul>
+<figure><a class="zoom" href="images/03-menu.png"><img src="images/03-menu.png" alt="เมนูแบบเต็ม" width="1440" height="900" loading="lazy"></a><figcaption>เมนูแบบเต็ม</figcaption></figure>
+<ul><li>ช่อง <strong>ค้นหา...</strong> ด้านบน (หรือกด <code>Ctrl K</code>) ใช้กระโดดไปหน้าต่าง ๆ หรือค้นหาอุปกรณ์ด้วยซีเรียลได้ทันที</li></ul>
+<figure><a class="zoom" href="images/04-command-palette.png"><img src="images/04-command-palette.png" alt="ค้นหาด่วน Ctrl K" width="1440" height="900" loading="lazy"></a><figcaption>ค้นหาด่วน Ctrl K</figcaption></figure>
+<h2 id="3-รับอุปกรณ์เข้าคลัง">3. รับอุปกรณ์เข้าคลัง</h2>
+<p>เมนู <strong>คลังอุปกรณ์ → อุปกรณ์</strong> แสดงรายการทุกเครื่อง ใช้ชิปด้านบน (ทั้งหมด / อยู่ในคลัง / เบิกออก / …) ซึ่งบอกจำนวนเครื่องในแต่ละสถานะ เพื่อกรอง และใช้แถบเครื่องมือของตารางเพื่อส่งออก Excel/PDF เลือกคอลัมน์ หรือค้นหา (ค้นจากซีเรียล ยี่ห้อ รุ่น หรือ MAC)</p>
+<p>ตารางโหลดข้อมูลทีละหน้าจากเซิร์ฟเวอร์ จึงเปิดได้เร็วแม้มีอุปกรณ์หลายหมื่นเครื่อง คลิกหัวคอลัมน์เพื่อเรียงลำดับ และเลือกจำนวนรายการต่อหน้าได้ที่มุมล่างซ้าย ส่วนปุ่ม Excel/PDF จะส่งออกทุกเครื่องตามตัวกรองปัจจุบัน ไม่ใช่เฉพาะหน้าที่เห็น</p>
+<p>คอลัมน์ <strong>จัดการ</strong> ท้ายตารางมีปุ่มไอคอน 👁 <strong>ดูรายละเอียด</strong> และ ✎ <strong>แก้ไข</strong> ของแถวนั้นโดยไม่ต้องเลือกแถวก่อน ตารางอื่น ๆ (ลูกค้า จุดติดตั้ง รุ่นอุปกรณ์ ผู้จำหน่าย กลุ่มลูกค้า ผู้ใช้งาน) มีปุ่มชุดเดียวกัน ปุ่ม &quot;ดู&quot; เปิดหน้าต่างสรุปข้อมูลแบบอ่านอย่างเดียว ซึ่งกด <strong>แก้ไข</strong> ต่อได้ถ้ามีสิทธิ์ ปุ่มแก้ไขจะไม่แสดงสำหรับผู้ใช้ที่ไม่มีสิทธิ์แก้ไขข้อมูลนั้น</p>
+<figure><a class="zoom" href="images/05-devices-list.png"><img src="images/05-devices-list.png" alt="รายการอุปกรณ์" width="1440" height="900" loading="lazy"></a><figcaption>รายการอุปกรณ์</figcaption></figure>
+<figure><a class="zoom" href="images/18-row-actions.png"><img src="images/18-row-actions.png" alt="คอลัมน์จัดการ ปุ่มดูและแก้ไข" width="1440" height="900" loading="lazy"></a><figcaption>คอลัมน์จัดการ ปุ่มดูและแก้ไข</figcaption></figure>
+<p>กด <strong>รับเข้าใหม่</strong> แล้วกรอก</p>
+<ul><li><strong>หมายเลขซีเรียล</strong> และ <strong>รุ่นอุปกรณ์</strong> (จำเป็น)</li><li><strong>กลุ่มลูกค้า</strong> — เว้นว่างไว้ถ้ารับเข้าคลังกลาง</li><li>MAC Address, ต้นทุน, วันที่ซื้อ, วันสิ้นสุดประกัน, หมายเหตุ (ไม่บังคับ)</li><li><strong>รหัสทรัพย์สิน</strong> (ห้ามซ้ำภายในกลุ่มลูกค้าเดียวกัน), <strong>เฟิร์มแวร์</strong> และ <strong>ซื้อจากผู้จำหน่าย</strong> (ไม่บังคับ; ไฟล์นำเข้ามีคอลัมน์รหัสทรัพย์สินด้วย)</li></ul>
+<figure><a class="zoom" href="images/06-device-new.png"><img src="images/06-device-new.png" alt="ฟอร์มรับอุปกรณ์เข้าคลัง" width="1440" height="900" loading="lazy"></a><figcaption>ฟอร์มรับอุปกรณ์เข้าคลัง</figcaption></figure>
+<p>กด <strong>บันทึก</strong> เครื่องจะอยู่ในสถานะ &quot;อยู่ในคลัง&quot; และมีประวัติ &quot;รับเข้า&quot;</p>
+<h2 id="4-วงจรชีวิตอุปกรณ์-โอน--เบิก--ติดตั้ง--ยืม">4. วงจรชีวิตอุปกรณ์: โอน → เบิก → ติดตั้ง / ยืม</h2>
+<p>คลิกซีเรียลในตารางเพื่อเปิดแผงรายละเอียดด้านขวา แผงนี้แสดงข้อมูลเครื่อง สถานะประกัน ปุ่มทำรายการตามสถานะ และประวัติความเคลื่อนไหว ปุ่มที่หัวแผงคือ ✎ แก้ไขข้อมูล, 🖨 พิมพ์ฉลาก (หัวข้อ 4.6), ⧉ คัดลอกลิงก์ของเครื่อง และ ✕ ปิด</p>
+<figure><a class="zoom" href="images/07-device-detail.png"><img src="images/07-device-detail.png" alt="รายละเอียดอุปกรณ์" width="1440" height="900" loading="lazy"></a><figcaption>รายละเอียดอุปกรณ์</figcaption></figure>
+<p><strong>รูปภาพอุปกรณ์:</strong> ส่วน &quot;รูปภาพอุปกรณ์&quot; ในแผงรายละเอียดเก็บรูปของเครื่องได้หลายรูป (สูงสุด 20 รูป) กดช่อง <strong>เพิ่มรูป</strong> หรือลากไฟล์มาวาง (JPG, PNG, WebP ไม่เกิน 8 MB ต่อรูป) ระบบย่อขนาดและทำภาพตัวอย่างให้อัตโนมัติ คลิกรูปเพื่อดูขนาดใหญ่ เลื่อนดูรูปก่อนหน้า/ถัดไป เปิดขนาดเต็ม หรือ <strong>ลบรูปนี้</strong> (ผู้ใช้บทบาทดูอย่างเดียวดูรูปได้แต่เพิ่ม/ลบไม่ได้)</p>
+<h3 id="41-โอนให้กลุ่มลูกค้า-ผู้ดูแลแพลตฟอร์ม">4.1 โอนให้กลุ่มลูกค้า (ผู้ดูแลแพลตฟอร์ม)</h3>
+<p>กด <strong>โอน</strong> เลือก <strong>ปลายทาง</strong> (รายการจะไม่แสดงตำแหน่งที่เครื่องอยู่ตอนนี้) และใส่หมายเหตุ แล้วกด <strong>ยืนยัน</strong></p>
+<figure><a class="zoom" href="images/08-transfer.png"><img src="images/08-transfer.png" alt="โอนอุปกรณ์" width="1440" height="900" loading="lazy"></a><figcaption>โอนอุปกรณ์</figcaption></figure>
+<h3 id="42-เบิกออก">4.2 เบิกออก</h3>
+<p>เมื่อเครื่องอยู่ในคลังของกลุ่มลูกค้าแล้ว กด <strong>เบิกออก</strong> ใส่หมายเหตุ (เช่น เบิกให้ช่างคนไหน) แล้วกด <strong>ยืนยัน</strong></p>
+<figure><a class="zoom" href="images/09-checkout.png"><img src="images/09-checkout.png" alt="เบิกอุปกรณ์ออก" width="1440" height="900" loading="lazy"></a><figcaption>เบิกอุปกรณ์ออก</figcaption></figure>
+<h3 id="43-บันทึกการติดตั้ง">4.3 บันทึกการติดตั้ง</h3>
+<p>กด <strong>ติดตั้ง</strong> แล้วเลือก <strong>ลูกค้า</strong> วันที่ติดตั้ง และตำแหน่ง โดยคลิกบนแผนที่เพื่อปักหมุด (ซูมและลากแผนที่ได้ก่อนคลิก) ระบบจะกรอกละติจูด/ลองจิจูดให้ หรือกด <strong>ใช้ตำแหน่งปัจจุบัน</strong> เมื่ออยู่หน้างานเพื่อดึงพิกัดจาก GPS แล้วใส่ที่อยู่จุดติดตั้ง ผู้ติดต่อและโทรศัพท์หน้างาน และหมายเหตุการติดตั้ง (ไม่บังคับ) แนบ <strong>รูปหน้างาน</strong> ได้สูงสุด 10 รูปในไดอะล็อกเดียวกัน (ถ่ายจากมือถือได้ทันที) และเพิ่ม/ลบภายหลังได้ในส่วน &quot;รูปหน้างาน&quot; ของแผงรายละเอียดหรือหน้าจุดติดตั้ง</p>
+<figure><a class="zoom" href="images/10-install.png"><img src="images/10-install.png" alt="บันทึกการติดตั้ง" width="1440" height="900" loading="lazy"></a><figcaption>บันทึกการติดตั้ง</figcaption></figure>
+<p>หลังบันทึก สถานะเป็น &quot;ติดตั้งแล้ว&quot; และแผงรายละเอียดแสดงลูกค้า จุดติดตั้ง และแผนที่</p>
+<figure><a class="zoom" href="images/11-installed.png"><img src="images/11-installed.png" alt="อุปกรณ์ที่ติดตั้งแล้ว" width="1440" height="900" loading="lazy"></a><figcaption>อุปกรณ์ที่ติดตั้งแล้ว</figcaption></figure>
+<p>เลื่อนลงเพื่อดูประวัติทั้งหมดเรียงจากล่าสุด พร้อมผู้ทำรายการ หมายเหตุ และภาพตัวอย่างของรูปประกอบรายการ (คลิกเพื่อเปิดขนาดเต็ม)</p>
+<figure><a class="zoom" href="images/12-timeline.png"><img src="images/12-timeline.png" alt="ประวัติความเคลื่อนไหว" width="1440" height="900" loading="lazy"></a><figcaption>ประวัติความเคลื่อนไหว</figcaption></figure>
+<h3 id="44-ให้ยืม">4.4 ให้ยืม</h3>
+<p>ใช้กับเครื่องที่อยู่ในคลังของกลุ่มลูกค้า เช่น ให้ลูกค้าทดลองใช้ กด <strong>ให้ยืม</strong> เลือก <strong>วันครบกำหนดคืน</strong> (จำเป็น) และระบุผู้ยืมหรือวัตถุประสงค์ แล้วกด <strong>ยืนยัน</strong></p>
+<figure><a class="zoom" href="images/40-loan.png"><img src="images/40-loan.png" alt="ให้ยืมอุปกรณ์" width="1440" height="900" loading="lazy"></a><figcaption>ให้ยืมอุปกรณ์</figcaption></figure>
+<p>แผงรายละเอียดจะแสดงวันครบกำหนดคืนพร้อมจำนวนวันที่เหลือ (ชิปเปลี่ยนเป็นสีเหลืองเมื่อเหลือไม่เกิน 3 วัน และขึ้น &quot;เกินกำหนด N วัน&quot; เมื่อเลยกำหนด) และเครื่องที่ยืมเกินกำหนดจะขึ้นในแผงงานค้างบนแดชบอร์ด เมื่อได้เครื่องคืนให้กด <strong>รับคืน</strong> (ดูหัวข้อ 6)</p>
+<h3 id="45-ทำรายการหลายเครื่องพร้อมกัน">4.5 ทำรายการหลายเครื่องพร้อมกัน</h3>
+<p>ติ๊กช่องหน้าแถวในตารางอุปกรณ์ (หรือช่องบนหัวตารางเพื่อเลือกทั้งหน้า) เมื่อเลือกตั้งแต่ 2 เครื่องขึ้นไป แถบคำสั่งจะลอยขึ้นที่ด้านล่างของจอ แสดงจำนวนที่เลือกและเฉพาะรายการที่ <strong>ทุกเครื่อง</strong> ทำได้ในสถานะปัจจุบัน เช่น เลือกเครื่องในคลังกลางหลายเครื่องจะเห็น <strong>โอน</strong>, <strong>ส่งซ่อม</strong>, <strong>ปลดระวาง</strong> ส่วนปุ่ม <strong>พิมพ์ฉลาก</strong> มีเสมอ และ <strong>ล้าง</strong> ยกเลิกการเลือก (ช่องติ๊กแสดงเฉพาะผู้ที่มีสิทธิ์ทำรายการ)</p>
+<figure><a class="zoom" href="images/45-bulk-bar.png"><img src="images/45-bulk-bar.png" alt="แถบคำสั่งเมื่อเลือกหลายเครื่อง" width="1440" height="900" loading="lazy"></a><figcaption>แถบคำสั่งเมื่อเลือกหลายเครื่อง</figcaption></figure>
+<p>กดรายการที่ต้องการ ไดอะล็อกจะแสดงซีเรียลทุกเครื่องที่เลือก และช่องที่รายการนั้นต้องใช้ (ปลายทางสำหรับโอน ผู้ซ่อมสำหรับส่งซ่อม วันครบกำหนดสำหรับให้ยืม) หมายเหตุที่กรอกจะใช้กับทุกเครื่อง แล้วกด <strong>ยืนยัน N เครื่อง</strong></p>
+<figure><a class="zoom" href="images/46-bulk-transfer.png"><img src="images/46-bulk-transfer.png" alt="โอนหลายเครื่องพร้อมกัน" width="1440" height="900" loading="lazy"></a><figcaption>โอนหลายเครื่องพร้อมกัน</figcaption></figure>
+<ul><li>ทำได้ครั้งละไม่เกิน 200 เครื่อง รายการที่รองรับคือ โอน เบิกออก ให้ยืม รับคืน QC ผ่าน ส่งซ่อม และปลดระวาง (การติดตั้งต้องทำทีละเครื่องเพราะแต่ละจุดมีพิกัดของตัวเอง)</li><li>บันทึกแบบ <strong>ทั้งหมดหรือไม่บันทึกเลย</strong>: ถ้ามีเครื่องใดทำรายการไม่ได้ (เช่น มีคนเปลี่ยนสถานะไปก่อน) จะไม่มีเครื่องใดถูกบันทึก และไดอะล็อกจะแสดงซีเรียลพร้อมเหตุผลของแต่ละเครื่องให้แก้ไขแล้วลองใหม่</li><li>แต่ละเครื่องยังได้ประวัติของตัวเองหนึ่งรายการเหมือนทำทีละเครื่อง</li></ul>
+<h3 id="46-พิมพ์ฉลาก-qrบาร์โค้ด">4.6 พิมพ์ฉลาก QR/บาร์โค้ด</h3>
+<p>กดไอคอน 🖨 ที่หัวแผงรายละเอียด (เครื่องเดียว) หรือปุ่ม <strong>พิมพ์ฉลาก</strong> ในแถบคำสั่งหลายเครื่องและในโหมดสแกนต่อเนื่อง (หัวข้อ 8) ฉลากแต่ละดวงมี</p>
+<ul><li><strong>QR code</strong> เป็นลิงก์ไปหน้าสถานีสแกนของเครื่องนั้น สแกนด้วยกล้องมือถือแล้วเปิดข้อมูลและปุ่มทำรายการได้ทันที (ถ้ายังไม่ได้เข้าสู่ระบบ จะเข้าสู่ระบบก่อนแล้วกลับมาหน้าเครื่องเอง)</li><li><strong>บาร์โค้ด Code128</strong> ของซีเรียล สำหรับเครื่องยิงบาร์โค้ด</li><li>ซีเรียล ยี่ห้อ/รุ่น และรหัสทรัพย์สิน (ถ้ามี)</li></ul>
+<p>เลือกรูปแบบ <strong>แผ่น A4 (3 × 8 ดวง, 70 × 37 มม.)</strong> สำหรับกระดาษสติกเกอร์แบบแผ่น หรือ <strong>ฉลากม้วน (ดวงละ 50 × 30 มม.)</strong> สำหรับเครื่องพิมพ์ฉลาก ไดอะล็อกแสดงตัวอย่างสูงสุด 6 ดวงและจำนวนแผ่นที่ต้องใช้ แล้วกด <strong>พิมพ์</strong> ในหน้าต่างพิมพ์ของเบราว์เซอร์ให้ตั้งสเกล 100% (ขนาดจริง) และไม่มีขอบกระดาษ เพื่อให้ฉลากตรงช่องสติกเกอร์</p>
+<figure><a class="zoom" href="images/47-labels.png"><img src="images/47-labels.png" alt="พิมพ์ฉลากอุปกรณ์" width="1440" height="900" loading="lazy"></a><figcaption>พิมพ์ฉลากอุปกรณ์</figcaption></figure>
+<h2 id="5-ส่งซ่อมและบันทึกผล-qc">5. ส่งซ่อมและบันทึกผล QC</h2>
+<p>ไดอะล็อก <strong>ส่งซ่อม</strong>, <strong>ซ่อมเสร็จ / QC</strong>, <strong>รับคืน</strong>, <strong>QC ผ่าน</strong> และ <strong>QC ไม่ผ่าน</strong> มีช่อง <strong>รูปประกอบ</strong> แนบรูปอาการเสีย สภาพเครื่องตอนรับคืน หรือผลตรวจได้สูงสุด 10 รูป รูปจะผูกกับรายการนั้นและแสดงในประวัติความเคลื่อนไหว ถ้าอัปโหลดรูปไม่สำเร็จ รายการยังบันทึกตามปกติและระบบจะแจ้งเตือนให้ทราบ</p>
+<h3 id="51-ส่งซ่อม">5.1 ส่งซ่อม</h3>
+<p>กด <strong>ส่งซ่อม</strong> เลือก <strong>ผู้ซ่อม / ผู้จำหน่าย</strong> (เว้นว่างถ้าซ่อมเอง รายชื่อจัดการได้ที่หัวข้อ 11.2) แล้วระบุอาการหรือสาเหตุ</p>
+<figure><a class="zoom" href="images/13-send-repair.png"><img src="images/13-send-repair.png" alt="ส่งอุปกรณ์ซ่อม" width="1440" height="900" loading="lazy"></a><figcaption>ส่งอุปกรณ์ซ่อม</figcaption></figure>
+<h3 id="52-ซ่อมเสร็จ--qc">5.2 ซ่อมเสร็จ / QC</h3>
+<p>เมื่อได้เครื่องคืนจากซ่อม กด <strong>ซ่อมเสร็จ / QC</strong> และกรอก <strong>ผลการซ่อมและ QC</strong> (จำเป็น ปุ่มยืนยันจะกดได้เมื่อกรอกแล้ว)</p>
+<figure><a class="zoom" href="images/14-repair-done-required.png"><img src="images/14-repair-done-required.png" alt="ต้องกรอกผลซ่อมก่อน" width="1440" height="900" loading="lazy"></a><figcaption>ต้องกรอกผลซ่อมก่อน</figcaption></figure>
+<figure><a class="zoom" href="images/15-repair-done.png"><img src="images/15-repair-done.png" alt="บันทึกผลซ่อมและ QC" width="1440" height="900" loading="lazy"></a><figcaption>บันทึกผลซ่อมและ QC</figcaption></figure>
+<p>เครื่องจะกลับเป็น &quot;อยู่ในคลัง&quot; พร้อมเบิกใช้ใหม่ ถ้าส่งซ่อมนานเกิน 14 วันโดยยังไม่บันทึกผล เครื่องจะขึ้นในแผงงานค้างบนแดชบอร์ด</p>
+<h2 id="6-รับคืน-ตรวจสอบ-qc-และปลดระวาง">6. รับคืน ตรวจสอบ (QC) และปลดระวาง</h2>
+<h3 id="61-รับคืน">6.1 รับคืน</h3>
+<p>ใช้กับเครื่องที่เบิกออก ติดตั้งแล้ว หรือให้ยืม กด <strong>รับคืน</strong> ใส่หมายเหตุแล้วกด <strong>ยืนยัน</strong> เครื่องจะเข้าสถานะ &quot;รอตรวจสอบ (QC)&quot; ยังไม่นับเป็นสต็อกพร้อมใช้จนกว่าจะบันทึกผล QC</p>
+<figure><a class="zoom" href="images/16-return.png"><img src="images/16-return.png" alt="รับคืนเพื่อตรวจสอบ" width="1440" height="900" loading="lazy"></a><figcaption>รับคืนเพื่อตรวจสอบ</figcaption></figure>
+<h3 id="62-บันทึกผล-qc">6.2 บันทึกผล QC</h3>
+<p>เครื่องที่รอตรวจสอบจะมีปุ่ม <strong>QC ผ่าน</strong> และ <strong>QC ไม่ผ่าน</strong> (ดูรายการที่รอได้จากชิป &quot;รอตรวจสอบ (QC)&quot; ในหน้าอุปกรณ์ หรือแผงงานค้างบนแดชบอร์ด และทำรายการจากสถานีสแกนได้เช่นกัน)</p>
+<ul><li><strong>QC ผ่าน</strong> — เครื่องกลับเป็น &quot;อยู่ในคลัง&quot; ใส่หมายเหตุได้ถ้าต้องการ</li><li><strong>QC ไม่ผ่าน</strong> — ต้องระบุอาการหรือสาเหตุ เครื่องจะเปลี่ยนเป็น &quot;ส่งซ่อม&quot; ทันที แล้วบันทึกผลซ่อมตามหัวข้อ 5.2</li></ul>
+<figure><a class="zoom" href="images/41-qc-fail.png"><img src="images/41-qc-fail.png" alt="ไม่ผ่านการตรวจสอบ ส่งซ่อม" width="1440" height="900" loading="lazy"></a><figcaption>ไม่ผ่านการตรวจสอบ ส่งซ่อม</figcaption></figure>
+<h3 id="63-ปลดระวาง">6.3 ปลดระวาง</h3>
+<p>ใช้กับเครื่องที่อยู่ในคลัง รอตรวจสอบ หรือส่งซ่อม เมื่อเลิกใช้งานถาวร ใส่เหตุผลแล้วกดปุ่มสีแดง <strong>ยืนยัน</strong> เครื่องจะไม่นับรวมในสต็อก แต่ประวัติยังอยู่</p>
+<figure><a class="zoom" href="images/17-retire.png"><img src="images/17-retire.png" alt="ปลดระวางอุปกรณ์" width="1440" height="900" loading="lazy"></a><figcaption>ปลดระวางอุปกรณ์</figcaption></figure>
+<h2 id="7-นำเข้าอุปกรณ์จากไฟล์-excelcsv">7. นำเข้าอุปกรณ์จากไฟล์ Excel/CSV</h2>
+<p>กด <strong>นำเข้า</strong> ที่หน้าอุปกรณ์หรือแดชบอร์ด</p>
+<p><strong>ขั้นที่ 1 — เลือกไฟล์:</strong> ดาวน์โหลด <strong>ไฟล์แม่แบบ .xlsx</strong> (มีคอลัมน์ ซีเรียล, รุ่น, MAC, วันที่ซื้อ, ต้นทุน, หมดประกัน, หมายเหตุ และแท็บรายชื่อรุ่น) กรอกข้อมูล แล้วลากไฟล์มาวางหรือกด <strong>เลือกไฟล์</strong> (รองรับ .xlsx / .csv ไม่เกิน 2 MB และไม่เกิน 1,000 แถว)</p>
+<figure><a class="zoom" href="images/19-import-step1.png"><img src="images/19-import-step1.png" alt="นำเข้า ขั้นเลือกไฟล์" width="1440" height="900" loading="lazy"></a><figcaption>นำเข้า ขั้นเลือกไฟล์</figcaption></figure>
+<p><strong>ขั้นที่ 2 — ตรวจสอบ:</strong> ระบบตรวจทุกแถวก่อนบันทึก แถวที่ผิดจะแสดงเหตุผล เช่น ซีเรียลซ้ำ ไม่พบรุ่น MAC ผิดรูปแบบ ติ๊ก <strong>แสดงเฉพาะแถวที่ผิด</strong> เพื่อดูเฉพาะแถวที่ต้องแก้ ระบบจะนำเข้าเมื่อทุกแถวถูกต้องเท่านั้น (ระหว่างนั้นปุ่มจะขึ้นว่า <strong>แก้ไขแถวที่ผิดก่อน</strong> และกดไม่ได้) ให้แก้ไฟล์แล้วกด <strong>เลือกไฟล์ใหม่</strong></p>
+<figure><a class="zoom" href="images/20-import-errors.png"><img src="images/20-import-errors.png" alt="นำเข้า พบแถวที่ผิด" width="1440" height="900" loading="lazy"></a><figcaption>นำเข้า พบแถวที่ผิด</figcaption></figure>
+<p>เมื่อทุกแถวผ่าน กด <strong>นำเข้า N เครื่อง</strong></p>
+<figure><a class="zoom" href="images/21-import-valid.png"><img src="images/21-import-valid.png" alt="นำเข้า ทุกแถวถูกต้อง" width="1440" height="900" loading="lazy"></a><figcaption>นำเข้า ทุกแถวถูกต้อง</figcaption></figure>
+<p><strong>ขั้นที่ 3 — เสร็จสิ้น:</strong> ทุกเครื่องอยู่ในสถานะ &quot;อยู่ในคลัง&quot; และมีประวัติรับเข้า</p>
+<figure><a class="zoom" href="images/22-import-done.png"><img src="images/22-import-done.png" alt="นำเข้าสำเร็จ" width="1440" height="900" loading="lazy"></a><figcaption>นำเข้าสำเร็จ</figcaption></figure>
+<h2 id="8-สถานีสแกน">8. สถานีสแกน</h2>
+<p>เมนู <strong>คลังอุปกรณ์ → สถานีสแกน</strong> ออกแบบสำหรับเครื่องยิงบาร์โค้ด (ทำงานแบบคีย์บอร์ด ยิงแล้วกด Enter ให้อัตโนมัติ) หรือพิมพ์ซีเรียลเอง</p>
+<ul><li>พบเครื่อง: แสดงสถานะ ตำแหน่ง และปุ่มทำรายการได้ทันที (รวมถึง <strong>รับคืน</strong>, <strong>QC ผ่าน</strong> / <strong>QC ไม่ผ่าน</strong> จึงใช้ตรวจรับเครื่องคืนทีละหลายเครื่องได้เร็ว) กด <strong>รายละเอียด</strong> เพื่อเปิดหน้าเครื่อง</li><li>ด้านขวาเก็บประวัติการสแกนของรอบนี้ (กด <strong>ล้าง</strong> เพื่อเริ่มใหม่)</li></ul>
+<figure><a class="zoom" href="images/23-scan-found.png"><img src="images/23-scan-found.png" alt="สแกนพบอุปกรณ์" width="1440" height="900" loading="lazy"></a><figcaption>สแกนพบอุปกรณ์</figcaption></figure>
+<ul><li>ไม่พบเครื่อง: แจ้งชัดเจนและมีทางลัดให้รับเข้าเป็นเครื่องใหม่ด้วยซีเรียลนั้น</li></ul>
+<figure><a class="zoom" href="images/24-scan-missing.png"><img src="images/24-scan-missing.png" alt="สแกนไม่พบอุปกรณ์" width="1440" height="900" loading="lazy"></a><figcaption>สแกนไม่พบอุปกรณ์</figcaption></figure>
+<p>ช่องสแกนรับได้ทั้งซีเรียล (ตัวพิมพ์เล็กจะถูกแปลงเป็นตัวใหญ่ให้) และ QR บนฉลากของระบบ (หัวข้อ 4.6) ซึ่งเป็นลิงก์ ระบบจะดึงซีเรียลออกจากลิงก์ให้เอง</p>
+<p><strong>โหมดสแกนต่อเนื่อง:</strong> ติ๊ก <strong>โหมดสแกนต่อเนื่อง</strong> ใต้ช่องสแกน แล้วยิงไปเรื่อย ๆ เครื่องที่พบจะสะสมในกล่อง &quot;รายการที่สแกนสะสม&quot; (สแกนซ้ำไม่เพิ่มซ้ำ กด ✕ เพื่อเอาออกทีละเครื่อง หรือ <strong>ล้าง</strong> ทั้งหมด) ใต้รายการมีปุ่มทำรายการที่ทุกเครื่องในกล่องทำได้ พร้อมจำนวนเครื่อง เช่น <strong>รับคืน (12)</strong> หรือ <strong>QC ผ่าน (12)</strong> และปุ่ม <strong>พิมพ์ฉลาก</strong> กดแล้วใช้ไดอะล็อกและกติกาเดียวกับการทำรายการหลายเครื่องในหัวข้อ 4.5 เหมาะกับการตรวจรับเครื่องคืนหรือจัดส่งทั้งล็อต</p>
+<figure><a class="zoom" href="images/48-scan-batch.png"><img src="images/48-scan-batch.png" alt="โหมดสแกนต่อเนื่อง" width="1440" height="900" loading="lazy"></a><figcaption>โหมดสแกนต่อเนื่อง</figcaption></figure>
+<h2 id="9-ความเคลื่อนไหวสต็อก">9. ความเคลื่อนไหวสต็อก</h2>
+<p>เมนู <strong>คลังอุปกรณ์ → ความเคลื่อนไหวสต็อก</strong> รวมทุกรายการที่เปลี่ยนสถานะ ย้าย หรือแก้ไขข้อมูลอุปกรณ์ พร้อมสถานะก่อนและหลัง กลุ่มลูกค้า ลูกค้า ผู้ซ่อม ผู้ทำรายการ และหมายเหตุ</p>
+<ul><li><strong>ช่วงวันที่:</strong> เลือกจากปฏิทินหรือทางลัด วันนี้ / 7 วันล่าสุด / 30 วันล่าสุด / เดือนนี้</li><li><strong>ประเภทรายการ:</strong> ใช้ชิป (รับเข้า โอนย้าย เบิกออก … แก้ไขข้อมูล) กรองเฉพาะประเภทที่ต้องการ</li><li>กด <strong>ล้างตัวกรอง</strong> เพื่อกลับไปดูทั้งหมด ตัวกรองจะอยู่ในลิงก์ของหน้า จึงคัดลอก URL ส่งให้ผู้อื่นเปิดดูผลเดียวกันได้</li><li>ค้นหาและส่งออก Excel/PDF ได้จากแถบเครื่องมือของตาราง</li></ul>
+<figure><a class="zoom" href="images/25-transactions.png"><img src="images/25-transactions.png" alt="ความเคลื่อนไหวสต็อก" width="1440" height="900" loading="lazy"></a><figcaption>ความเคลื่อนไหวสต็อก</figcaption></figure>
+<h2 id="10-ลูกค้าและจุดติดตั้งแผนที่">10. ลูกค้าและจุดติดตั้ง/แผนที่</h2>
+<h3 id="101-ลูกค้า">10.1 ลูกค้า</h3>
+<p>เมนู <strong>ลูกค้าและจุดติดตั้ง → ลูกค้า</strong> จัดการบริษัทลูกค้าของแต่ละกลุ่ม พร้อมผู้ติดต่อและระดับบริการ ชิปด้านบนสลับดูลูกค้าที่ใช้งาน / ระงับ / ทั้งหมด</p>
+<p>ลูกค้าจะไม่ถูกลบออกจากระบบเพื่อให้ประวัติการติดตั้งยังอ้างอิงได้ ให้เลือกแถวแล้วกด <strong>ระงับ</strong> แทน (ระงับไม่ได้ถ้ายังมีอุปกรณ์ติดตั้งอยู่ที่ลูกค้ารายนั้น) ลูกค้าที่ถูกระงับจะไม่แสดงในรายการตอนบันทึกการติดตั้ง และกด <strong>เปิดใช้</strong> เพื่อกลับมาใช้งานได้</p>
+<figure><a class="zoom" href="images/26-customers.png"><img src="images/26-customers.png" alt="รายชื่อลูกค้า" width="1440" height="900" loading="lazy"></a><figcaption>รายชื่อลูกค้า</figcaption></figure>
+<p>กด <strong>เพิ่มลูกค้า</strong> กรอกชื่อบริษัท กลุ่มลูกค้า ผู้ติดต่อ โทรศัพท์ อีเมล ระดับบริการ (พื้นฐาน / มาตรฐาน / พรีเมียม) และถ้ามี ที่อยู่ เลขประจำตัวผู้เสียภาษี (13 หลัก) และหมายเหตุ</p>
+<figure><a class="zoom" href="images/27-customer-new.png"><img src="images/27-customer-new.png" alt="เพิ่มลูกค้า" width="1440" height="900" loading="lazy"></a><figcaption>เพิ่มลูกค้า</figcaption></figure>
+<p><strong>หน้ารายละเอียดลูกค้า:</strong> กด 👁 ในคอลัมน์จัดการ หรือคลิกชื่อลูกค้าในหน้าจุดติดตั้ง ความเคลื่อนไหวสต็อก และแผงรายละเอียดอุปกรณ์ เพื่อเปิดภาพรวมของลูกค้ารายนั้นในหน้าเดียว</p>
+<ul><li>ข้อมูลติดต่อ ที่อยู่ และเลขผู้เสียภาษี</li><li>การ์ดสรุป: จุดติดตั้งที่ใช้งาน, ติดตั้งทั้งหมด (รวมที่ถอนแล้ว), อยู่ในประกัน และอยู่ระหว่างซ่อม พร้อมชิปสถานะปัจจุบันของทุกเครื่องที่เคยติดตั้งให้ลูกค้ารายนี้</li><li>แผนที่จุดติดตั้งที่ซูมพอดีทุกจุด และประวัติความเคลื่อนไหวของลูกค้า (ติดตั้ง รับคืน ส่งซ่อม พร้อมรูปประกอบ)</li><li>ตารางจุดติดตั้งทั้งหมด (คลิกเพื่อเปิดอุปกรณ์) รูปหน้างานแยกตามจุด และประวัติการแก้ไขข้อมูลลูกค้า</li></ul>
+<figure><a class="zoom" href="images/49-customer-detail.png"><img src="images/49-customer-detail.png" alt="รายละเอียดลูกค้า" width="1440" height="900" loading="lazy"></a><figcaption>รายละเอียดลูกค้า</figcaption></figure>
+<h3 id="102-จุดติดตั้ง--แผนที่">10.2 จุดติดตั้ง / แผนที่</h3>
+<p>แสดงทุกจุดติดตั้งบนแผนที่และในตาราง</p>
+<figure><a class="zoom" href="images/28-installations.png"><img src="images/28-installations.png" alt="จุดติดตั้งบนแผนที่" width="1440" height="900" loading="lazy"></a><figcaption>จุดติดตั้งบนแผนที่</figcaption></figure>
+<p><strong>ค้นหาอุปกรณ์ในรัศมี:</strong> คลิกบนแผนที่เพื่อตั้งจุดกลาง (หรือพิมพ์ละติจูด/ลองจิจูด) เลื่อนแถบ <strong>รัศมี</strong> (1–100 กม.) แล้วกด <strong>ค้นหา</strong> แผนที่จะวาดวงกลมรัศมีและซูมให้พอดี ตารางด้านล่างแสดงเครื่องที่อยู่ในรัศมีพร้อมระยะทาง เมื่อค้นหาแล้ว การคลิกจุดใหม่หรือปรับรัศมีจะค้นหาใหม่ให้อัตโนมัติ กด <strong>แสดงทั้งหมด</strong> เพื่อกลับไปดูทุกจุด เหมาะสำหรับวางแผนงานช่างหน้างาน</p>
+<figure><a class="zoom" href="images/29-installations-nearby.png"><img src="images/29-installations-nearby.png" alt="ค้นหาอุปกรณ์ในรัศมี" width="1440" height="900" loading="lazy"></a><figcaption>ค้นหาอุปกรณ์ในรัศมี</figcaption></figure>
+<p>เลือกแถวแล้วกด <strong>แก้ไขพิกัด</strong> เพื่อย้ายหมุดของจุดติดตั้งด้วยการคลิกบนแผนที่ในไดอะล็อกได้เช่นกัน ปุ่ม 👁 ในคอลัมน์จัดการเปิดรายละเอียดจุดติดตั้งพร้อมแผนที่และ <strong>รูปหน้างาน</strong> ซึ่งเพิ่มหรือลบรูปได้จากตรงนั้น</p>
+<h2 id="11-ตั้งค่า-รุ่นอุปกรณ์-ผู้จำหน่ายผู้ซ่อม-กลุ่มลูกค้า-ผู้ใช้งาน">11. ตั้งค่า: รุ่นอุปกรณ์ ผู้จำหน่าย/ผู้ซ่อม กลุ่มลูกค้า ผู้ใช้งาน</h2>
+<h3 id="111-รุ่นอุปกรณ์">11.1 รุ่นอุปกรณ์</h3>
+<p>รายการยี่ห้อ/รุ่น/ประเภท ที่ใช้ตอนรับเข้าและในไฟล์นำเข้า คอลัมน์แรกแสดงรูปสินค้าของรุ่น ผู้ดูแลแพลตฟอร์มตั้งรูปได้จากปุ่ม 👁 → <strong>รูปสินค้า</strong> (รุ่นละ 1 รูป อัปโหลดใหม่จะแทนรูปเดิม)</p>
+<figure><a class="zoom" href="images/30-device-models.png"><img src="images/30-device-models.png" alt="รุ่นอุปกรณ์" width="1440" height="900" loading="lazy"></a><figcaption>รุ่นอุปกรณ์</figcaption></figure>
+<h3 id="112-ผู้จำหน่าย--ผู้ซ่อม">11.2 ผู้จำหน่าย / ผู้ซ่อม</h3>
+<p>รายชื่อร้านซ่อมและผู้จำหน่ายที่ใช้ร่วมกันทุกกลุ่มลูกค้า ใช้เลือกตอนส่งซ่อม และแสดงในคอลัมน์ &quot;ผู้ซ่อม&quot; ของความเคลื่อนไหวสต็อก กด <strong>เพิ่มผู้จำหน่าย</strong> แล้วกรอกชื่อ (จำเป็น) ผู้ติดต่อ โทรศัพท์ อีเมล และหมายเหตุ ผู้ดูแลแพลตฟอร์มเท่านั้นที่เพิ่ม แก้ไข หรือลบได้ (ลบไม่ได้ถ้าเคยถูกใช้ในรายการส่งซ่อมแล้ว)</p>
+<figure><a class="zoom" href="images/42-suppliers.png"><img src="images/42-suppliers.png" alt="ผู้จำหน่ายและผู้ซ่อม" width="1440" height="900" loading="lazy"></a><figcaption>ผู้จำหน่ายและผู้ซ่อม</figcaption></figure>
+<h3 id="113-กลุ่มลูกค้า-เฉพาะผู้ดูแลแพลตฟอร์ม">11.3 กลุ่มลูกค้า (เฉพาะผู้ดูแลแพลตฟอร์ม)</h3>
+<p>องค์กรที่ใช้ระบบ แต่ละกลุ่มเห็นเฉพาะอุปกรณ์และข้อมูลของตนเอง</p>
+<figure><a class="zoom" href="images/31-tenants.png"><img src="images/31-tenants.png" alt="กลุ่มลูกค้า" width="1440" height="900" loading="lazy"></a><figcaption>กลุ่มลูกค้า</figcaption></figure>
+<h3 id="114-ผู้ใช้งาน">11.4 ผู้ใช้งาน</h3>
+<p>จัดการบัญชี บทบาท และการระงับใช้งาน คอลัมน์ชื่อแสดงรูปโปรไฟล์ของผู้ใช้ (ถ้าไม่มีรูปจะแสดงอักษรแรกของชื่อ)</p>
+<figure><a class="zoom" href="images/32-users.png"><img src="images/32-users.png" alt="ผู้ใช้งาน" width="1440" height="900" loading="lazy"></a><figcaption>ผู้ใช้งาน</figcaption></figure>
+<p>กด <strong>เพิ่มผู้ใช้</strong> กรอกชื่อ อีเมล บทบาท รหัสผ่าน (อย่างน้อย 8 ตัว) และกลุ่มลูกค้า ปุ่ม <strong>บันทึก</strong> จะกดได้เมื่อกรอกช่องจำเป็นครบ</p>
+<figure><a class="zoom" href="images/33-user-new.png"><img src="images/33-user-new.png" alt="เพิ่มผู้ใช้" width="1440" height="900" loading="lazy"></a><figcaption>เพิ่มผู้ใช้</figcaption></figure>
+<h3 id="115-ประวัติการแก้ไขข้อมูล-ผู้ดูแล">11.5 ประวัติการแก้ไขข้อมูล (ผู้ดูแล)</h3>
+<p>เมนู <strong>ตั้งค่า → ประวัติการแก้ไข</strong> รวมทุกการสร้าง แก้ไข ระงับ และลบ ข้อมูลตั้งค่าและข้อมูลหลัก ได้แก่ กลุ่มลูกค้า ผู้ใช้งาน รุ่นอุปกรณ์ ผู้จำหน่าย ลูกค้า จุดติดตั้ง และรูปภาพ พร้อมเวลา ผู้ทำรายการ และจำนวนฟิลด์ที่เปลี่ยน (การเปลี่ยนแปลงของตัวอุปกรณ์อยู่ในความเคลื่อนไหวสต็อกแล้ว)</p>
+<ul><li>กรองด้วยช่วงวันที่และชิปประเภทข้อมูล ตัวกรองอยู่ในลิงก์ของหน้าเหมือนหน้าความเคลื่อนไหวสต็อก</li><li>กด 👁 เพื่อดูค่าก่อนและหลังของแต่ละฟิลด์</li><li>ผู้ดูแลแพลตฟอร์มเห็นทุกรายการ ผู้ดูแลกลุ่มลูกค้าเห็นเฉพาะของกลุ่มตน บันทึกนี้แก้ไขหรือลบไม่ได้</li></ul>
+<figure><a class="zoom" href="images/50-audit.png"><img src="images/50-audit.png" alt="ประวัติการแก้ไขข้อมูล" width="1440" height="900" loading="lazy"></a><figcaption>ประวัติการแก้ไขข้อมูล</figcaption></figure>
+<p>หน้าต่างดูรายละเอียด (ปุ่ม 👁) ของรายการในหน้าตั้งค่า จุดติดตั้ง และหน้ารายละเอียดลูกค้า มีส่วน &quot;ประวัติการแก้ไข&quot; ของรายการนั้นด้วย</p>
+<h2 id="12-รายงาน">12. รายงาน</h2>
+<p>เมนู <strong>ภาพรวม → รายงาน</strong> มี 2 แท็บ ทุกตารางส่งออก Excel/PDF ได้จากแถบเครื่องมือ</p>
+<p><strong>ยอดคงเหลือ</strong> — จำนวนเครื่องและต้นทุนรวม แยกตามรุ่น × กลุ่มลูกค้า × สถานะ จัดกลุ่มตามรุ่นพร้อมยอดรวมท้ายกลุ่มและท้ายตาราง ลากหัวคอลัมน์ไปวางที่แถบจัดกลุ่มเพื่อเปลี่ยนการจัดกลุ่ม (เช่น ตามกลุ่มลูกค้า) หรือกด ✕ ที่ชิปเพื่อยกเลิก ติ๊ก <strong>รวมอุปกรณ์ที่ปลดระวาง</strong> ถ้าต้องการนับเครื่องที่เลิกใช้แล้วด้วย</p>
+<figure><a class="zoom" href="images/43-reports-balance.png"><img src="images/43-reports-balance.png" alt="รายงานยอดคงเหลือ" width="1440" height="900" loading="lazy"></a><figcaption>รายงานยอดคงเหลือ</figcaption></figure>
+<p><strong>อายุในสถานะ</strong> — แต่ละเครื่องอยู่ในสถานะปัจจุบันมาตั้งแต่เมื่อไรและกี่วัน จัดกลุ่มตามสถานะ พร้อมจำนวนเครื่องและค่าสูงสุดของแต่ละกลุ่ม ใช้ชิปด้านบนกรองเฉพาะสถานะ เช่น ดูเครื่องที่ส่งซ่อมนานที่สุด หรือเครื่องที่ค้างอยู่ในคลังนานเกินไป</p>
+<figure><a class="zoom" href="images/44-reports-aging.png"><img src="images/44-reports-aging.png" alt="รายงานอายุในสถานะ" width="1440" height="900" loading="lazy"></a><figcaption>รายงานอายุในสถานะ</figcaption></figure>
+<h2 id="13-โปรไฟล์-ธีม-และการใช้งานบนมือถือ">13. โปรไฟล์ ธีม และการใช้งานบนมือถือ</h2>
+<p>คลิกชื่อผู้ใช้มุมขวาบนเพื่อเปิดเมนู: โปรไฟล์และรหัสผ่าน, เลือกธีม (สว่าง / มืด / ตามระบบ) และออกจากระบบ ปุ่ม ◐ ข้างช่องค้นหาสลับธีมได้เร็ว</p>
+<figure><a class="zoom" href="images/34-user-menu.png"><img src="images/34-user-menu.png" alt="เมนูผู้ใช้" width="1440" height="900" loading="lazy"></a><figcaption>เมนูผู้ใช้</figcaption></figure>
+<p>หน้าโปรไฟล์แสดงข้อมูลบัญชี เปลี่ยนธีม และเปลี่ยนรหัสผ่าน กดปุ่มรูปภาพที่มุมรูปโปรไฟล์เพื่ออัปโหลดรูปของตัวเอง (JPG, PNG, WebP ไม่เกิน 8 MB) รูปจะแสดงที่มุมขวาบนและในรายชื่อผู้ใช้ทันที และกด <strong>ลบรูปโปรไฟล์</strong> เพื่อกลับไปใช้อักษรแรกของชื่อ</p>
+<figure><a class="zoom" href="images/35-profile.png"><img src="images/35-profile.png" alt="โปรไฟล์" width="1440" height="900" loading="lazy"></a><figcaption>โปรไฟล์</figcaption></figure>
+<p>ธีมมืด</p>
+<figure><a class="zoom" href="images/36-dashboard-dark.png"><img src="images/36-dashboard-dark.png" alt="แดชบอร์ดธีมมืด" width="1440" height="900" loading="lazy"></a><figcaption>แดชบอร์ดธีมมืด</figcaption></figure>
+<p>บนมือถือ การ์ดจะเรียงเป็น 2 คอลัมน์ เมนูเปิดจาก ☰ แบบลิ้นชักและปิดเองเมื่อเลือกหน้า ตารางซ่อนคอลัมน์รอง (เช่น ยี่ห้อ MAC วันที่) บนจอแคบเพื่อให้เห็นซีเรียลและสถานะ และเลื่อนซ้าย-ขวาได้</p>
+<div class="table"><table><thead><tr><th>แดชบอร์ด</th><th>เมนู</th><th>รายการอุปกรณ์</th></tr></thead><tbody><tr><td><figure><a class="zoom" href="images/37-mobile-dashboard.png"><img src="images/37-mobile-dashboard.png" alt="มือถือ แดชบอร์ด" width="780" height="1688" loading="lazy"></a><figcaption>มือถือ แดชบอร์ด</figcaption></figure></td><td><figure><a class="zoom" href="images/38-mobile-menu.png"><img src="images/38-mobile-menu.png" alt="มือถือ เมนู" width="780" height="1688" loading="lazy"></a><figcaption>มือถือ เมนู</figcaption></figure></td><td><figure><a class="zoom" href="images/39-mobile-devices.png"><img src="images/39-mobile-devices.png" alt="มือถือ อุปกรณ์" width="780" height="1688" loading="lazy"></a><figcaption>มือถือ อุปกรณ์</figcaption></figure></td></tr></tbody></table></div>
+<h2 id="14-ข้อมูลตัวอย่างสำหรับทดลองใช้">14. ข้อมูลตัวอย่างสำหรับทดลองใช้</h2>
+<p>ผู้ดูแลระบบโหลดข้อมูลสาธิตได้ด้วยคำสั่ง <code>docker compose exec api python -m app.infrastructure.demo_data</code> (รายละเอียดใน README ของโปรเจกต์) เหมาะกับการอบรมหรือทดลองใช้ก่อนใส่ข้อมูลจริง ชุดข้อมูลประกอบด้วย</p>
+<ul><li>กลุ่มลูกค้า 2 กลุ่ม ลูกค้าประมาณ 11 ราย จุดติดตั้งกระจายทั่วประเทศ และผู้ใช้ทุกบทบาท</li><li>รุ่นอุปกรณ์ 6 รุ่นพร้อมรูปสินค้า ผู้จำหน่าย/ผู้ซ่อม 4 ราย และอุปกรณ์ราว 70 เครื่องครบทุกสถานะ</li><li>ประวัติย้อนหลัง 90 วันในเวลาทำการ ทั้งติดตั้ง รับคืน ส่งซ่อม ให้ยืม และ QC พร้อมรูปหน้างานและรูปประกอบรายการ รวมถึงเครื่องที่ยืมเกินกำหนด ส่งซ่อมนาน และประกันใกล้หมด เพื่อให้แผงงานค้างและรายงานมีข้อมูลให้ดู</li></ul>
+<p>รันซ้ำได้โดยไม่สร้างข้อมูลซ้ำ ข้อมูลตัวอย่างใช้ชื่อและเบอร์โทรสมมติทั้งหมด ผู้ใช้ตัวอย่างใช้รหัสผ่านเดียวกับบัญชีผู้ดูแลเริ่มต้น จึงห้ามโหลดบนระบบจริง</p>
+<h2 id="15-ผลตรวจ-uxui-ระหว่างทำคู่มือ">15. ผลตรวจ UX/UI ระหว่างทำคู่มือ</h2>
+<h3 id="แก้ไขแล้ว">แก้ไขแล้ว</h3>
+<div class="table"><table><thead><tr><th>ปัญหา</th><th>การแก้ไข</th></tr></thead><tbody><tr><td>ช่องหมายเหตุ (textarea) ในทุกฟอร์มกว้างแค่ราว 20 ตัวอักษร</td><td>ขยายให้เต็มคอลัมน์ฟอร์ม (<code>styles.scss</code>)</td></tr><tr><td>เมนูย่อแล้วแต่เนื้อหาเลื่อนไปอยู่ใต้เมนู หลังออกจากหน้าอุปกรณ์</td><td>ย้ายระยะขอบเนื้อหามาคุมด้วย CSS ของ shell เอง (<code>shell.scss</code>)</td></tr><tr><td>เมนูเปิดค้างกว้าง 256px ทั้งที่สถานะเป็น &quot;ย่อ&quot; เมื่อหน้าต่างเปลี่ยนขนาด</td><td>เปลี่ยน Sidebar จากแบบ <code>Auto</code> เป็น <code>Push</code>/<code>Over</code> (<code>shell.html</code>) ลิ้นชักบนมือถือจึงไม่เด้งเปิดเองด้วย</td></tr><tr><td>ข้อความอังกฤษหลงเหลือ &quot;Columns&quot;, &quot;(1 item)&quot;</td><td>เพิ่มคำแปลใน <code>locale.ts</code></td></tr><tr><td>หัวข้อเชิงเทคนิค &quot;(PostGIS ST_DWithin)&quot; ในหน้าจุดติดตั้ง</td><td>เปลี่ยนเป็น &quot;ค้นหาอุปกรณ์ในรัศมี&quot;</td></tr><tr><td>คำอธิบายหน้ากลุ่มลูกค้าไม่ชัด</td><td>เขียนใหม่ให้บอกว่าแต่ละกลุ่มเห็นเฉพาะข้อมูลของตน</td></tr><tr><td>โอนอุปกรณ์: รายการปลายทางมี &quot;คลังกลาง&quot; แม้เครื่องอยู่คลังกลางอยู่แล้ว</td><td>ไม่แสดงตำแหน่งปัจจุบันของเครื่องในรายการปลายทาง</td></tr><tr><td>นำเข้า: checkbox &quot;แสดงเฉพาะแถวที่ผิด&quot; เป็นสีม่วงของ Syncfusion ไม่ตรงสีแบรนด์</td><td>ใช้สี primary ของธีม (<code>accent-color</code>)</td></tr><tr><td>นำเข้า: ปุ่มที่ถูกปิดยังเขียน &quot;นำเข้า 2 เครื่อง&quot;</td><td>เปลี่ยนเป็น &quot;แก้ไขแถวที่ผิดก่อน&quot; พร้อม tooltip บอกเหตุผล</td></tr><tr><td>ความเคลื่อนไหวสต็อก: คอลัมน์ &quot;รายการ&quot; เป็นข้อความธรรมดาและถูกตัดคำ</td><td>แสดงเป็นชิปสีพร้อมไอคอนแบบเดียวกับไทม์ไลน์ และขยายความกว้างคอลัมน์</td></tr><tr><td>แดชบอร์ดเมื่อกางเมนูเต็ม: การ์ด &quot;อุปกรณ์ทั้งหมด&quot; ถูกตัดคำ และ legend กราฟโดนัทแบ่งหน้า</td><td>จำนวนคอลัมน์ของการ์ดปรับตามพื้นที่เนื้อหาจริง (container query) และย้าย legend ไปด้านล่างโดยไม่แบ่งหน้า</td></tr><tr><td>แผงรายละเอียดอุปกรณ์: ปุ่ม &quot;แก้ไข&quot; ตกไปบรรทัดใหม่เมื่อมีหลายปุ่ม</td><td>ย้ายเป็นปุ่มไอคอน ✎ ที่หัวแผง ข้างปุ่มคัดลอกลิงก์</td></tr><tr><td>มือถือ: ตารางอุปกรณ์เห็นแค่ ซีเรียล/ยี่ห้อ/รุ่น ต้องเลื่อนขวาเพื่อดูสถานะ</td><td>ซ่อนคอลัมน์รองบนจอแคบกว่า 768px (<code>hideAtMedia</code> ใน <code>app-data-grid</code>)</td></tr><tr><td>แดชบอร์ด: การ์ดสถานะและกิจกรรมล่าสุดคลิกไม่ได้</td><td>คลิกการ์ดไปหน้าอุปกรณ์ที่กรองสถานะนั้น และคลิกซีเรียลเปิดรายละเอียดเครื่อง</td></tr><tr><td>ภาพ <code>14-repair-done-required</code> และ <code>15-repair-done</code> ถ่ายก่อนแก้ความกว้าง textarea</td><td>ถ่ายใหม่พร้อมภาพหน้าจออื่นที่เปลี่ยน</td></tr><tr><td>พิมพ์ฉลาก: ตัวอย่างและหน้าพิมพ์มีแต่ข้อความ ไม่มี QR และบาร์โค้ด</td><td>ตัวสร้าง QR/บาร์โค้ดวัดขนาดจากกล่องที่ถูกซ่อนไว้จึงได้ขนาด 0 ให้แสดงตัวอย่างหลังเปิดไดอะล็อก วางส่วนพิมพ์ไว้นอกจอแทนการซ่อน และแก้ค่าระดับแก้ข้อผิดพลาดของ QR</td></tr><tr><td>หน้ารายละเอียดลูกค้า: แผนที่ซูมออกทั้งประเทศแม้จุดติดตั้งอยู่ใกล้กัน</td><td>ซูมให้พอดีกับทุกจุดติดตั้งของลูกค้า</td></tr><tr><td>ข้อมูลตัวอย่าง: ประวัติการแก้ไขมีเวลาตีสอง-ตีสาม</td><td>จัดเวลาให้อยู่ในเวลาทำการเหมือนความเคลื่อนไหวสต็อก</td></tr><tr><td>ผู้ที่ตั้งค่าเครื่องให้ &quot;ลดการเคลื่อนไหว&quot; เห็นหน้าเข้าสู่ระบบและไอคอนกะพริบรัว</td><td>อนิเมชันที่วนไม่รู้จบเล่นครั้งเดียวแล้วหยุดเมื่อลดการเคลื่อนไหว (<code>styles.scss</code>)</td></tr></tbody></table></div>
+<h3 id="ข้อเสนอแนะ-ยังไม่แก้">ข้อเสนอแนะ (ยังไม่แก้)</h3>
+<div class="table"><table><thead><tr><th>ปัญหา</th><th>ข้อเสนอ</th></tr></thead><tbody><tr><td>หน้าอุปกรณ์: ปุ่ม <strong>ทำรายการ</strong> บนหัวหน้าใช้งานไม่ได้จริง เพราะเลือกแถวแล้วแผงรายละเอียดจะเปิดทับพร้อมพื้นหลังบัง และเมื่อปิดแผงก็ไม่มีแถวที่เลือก</td><td>เอาปุ่มนี้ออก (ปุ่มทำรายการมีครบในแผงรายละเอียด) หรือให้ทำงานกับแถวที่ติ๊กไว้</td></tr><tr><td>อุปกรณ์ทดสอบ (<code>DEMO-0001</code>, <code>DEMO-0101</code>, <code>DEMO-0102</code>, <code>GUIDE-…</code>) ค้างอยู่บนสุดของรายการใน DB สำหรับพัฒนา</td><td>ล้าง DB แล้วโหลดข้อมูลตัวอย่างใหม่ก่อนถ่ายภาพชุดถัดไป</td></tr></tbody></table></div>
+</main>
+</div>
+<div class="lightbox"><img alt=""></div>
+<script>
+  const aside = document.querySelector('aside');
+  document.querySelector('.menu-btn').onclick = () => aside.classList.toggle('open');
+  document.querySelector('.theme').onclick = () => {
+    const dark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('guide.theme', dark ? 'dark' : 'light');
+  };
+
+  const links = [...document.querySelectorAll('nav a')];
+  document.querySelector('.tools input').oninput = (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    links.forEach((a) => a.classList.toggle('hide', !!q && !a.textContent.toLowerCase().includes(q)));
+  };
+  links.forEach((a) => a.addEventListener('click', () => aside.classList.remove('open')));
+
+  const byId = new Map(links.map((a) => [decodeURIComponent(a.hash.slice(1)), a]));
+  const spy = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      links.forEach((a) => a.classList.remove('active'));
+      const a = byId.get(e.target.id);
+      if (!a) continue;
+      a.classList.add('active');
+      // scrollIntoView here would cancel the page's own smooth scroll to the anchor.
+      if (a.offsetTop < aside.scrollTop || a.offsetTop > aside.scrollTop + aside.clientHeight - 40) {
+        aside.scrollTop = a.offsetTop - aside.clientHeight / 3;
+      }
+    }
+  }, { rootMargin: '0px 0px -75% 0px' });
+  document.querySelectorAll('main h2[id], main h3[id]').forEach((h) => spy.observe(h));
+
+  const box = document.querySelector('.lightbox');
+  document.querySelectorAll('a.zoom').forEach((a) => a.addEventListener('click', (e) => {
+    e.preventDefault();
+    box.querySelector('img').src = a.getAttribute('href');
+    box.classList.add('open');
+  }));
+  box.onclick = () => box.classList.remove('open');
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') box.classList.remove('open'); });
+</script>
+<script type="module">
+  try {
+    const { default: mermaid } = await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs');
+    mermaid.initialize({ startOnLoad: false, theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default' });
+    await mermaid.run({ querySelector: 'pre.mermaid' });
+  } catch {
+    // Offline: the diagram stays readable as its source text.
+  }
+</script>
+</body>
+</html>
