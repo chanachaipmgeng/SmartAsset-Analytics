@@ -454,6 +454,41 @@ async def test_import_devices(client: httpx.AsyncClient, world: dict) -> None:
     assert [c.value for c in sheet[1]] == [*header, "รหัสทรัพย์สิน", "เฟิร์มแวร์", "ผู้จำหน่าย"]
 
 
+async def test_bulk_actions(client: httpx.AsyncClient, world: dict) -> None:
+    a, b, tag = world["a"], world["b"], world["tag"]
+    ids = []
+    for n in range(4):
+        body = {"serial_number": f"BLK-{tag}-{n}", "model_id": world["model"]["id"]}
+        ids.append((await client.post("/inventory/check-in", headers=a, json=body)).json()["id"])
+    first3, stock = ids[:3], ids[3]
+
+    res = await client.post("/inventory/bulk", headers=a, json={"action": "check_out", "device_ids": first3, "note": "ล็อตแรก"})
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body["count"] == 3 and {i["device"]["status"] for i in body["items"]} == {"CHECKED_OUT"}
+    history = (await client.get("/inventory/transactions", headers=a, params={"device_id": first3[0]})).json()
+    assert [t["transaction_type"] for t in history] == ["CHECK_OUT", "CHECK_IN"]
+    assert body["items"][0]["transaction_id"] == history[0]["id"]
+
+    # One device in the wrong status rejects the whole batch and reports it by serial.
+    res = await client.post("/inventory/bulk", headers=a, json={"action": "return", "device_ids": [first3[0], stock]})
+    assert res.status_code == 422, res.text
+    failures = res.json()["failures"]
+    assert [f["serial_number"] for f in failures] == [f"BLK-{tag}-3"]
+    assert (await client.get(f"/devices/{first3[0]}", headers=a)).json()["status"] == "CHECKED_OUT"
+
+    # Other tenants cannot see the devices at all (RLS), viewers cannot write, only superadmin transfers.
+    res = await client.post("/inventory/bulk", headers=b, json={"action": "retire", "device_ids": [stock]})
+    assert res.status_code == 422 and res.json()["failures"][0]["reason"] == "ไม่พบอุปกรณ์"
+    assert (await client.get(f"/devices/{stock}", headers=a)).json()["status"] == "IN_STOCK"
+    assert (await client.post("/inventory/bulk", headers=world["viewer"], json={"action": "retire", "device_ids": [stock]})).status_code == 403
+    assert (await client.post("/inventory/bulk", headers=a, json={"action": "transfer", "device_ids": [stock]})).status_code == 403
+    too_many = [stock] * 201
+    assert (await client.post("/inventory/bulk", headers=a, json={"action": "retire", "device_ids": too_many})).status_code == 422
+    res = await client.post("/inventory/bulk", headers=a, json={"action": "loan", "device_ids": [stock]})
+    assert res.status_code == 422 and res.json()["detail"] == "กรุณาระบุวันครบกำหนดคืน"
+
+
 async def test_audit_log(client: httpx.AsyncClient, world: dict) -> None:
     a, b, su, tag = world["a"], world["b"], world["su"], world["tag"]
 

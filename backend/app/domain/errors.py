@@ -28,3 +28,11 @@ class InvalidTransitionError(DomainError):
 
 class ValidationError(DomainError):
     pass
+
+
+class BulkActionError(ValidationError):
+    """A bulk movement was rejected as a whole; `failures` lists each device and why it could not move."""
+
+    def __init__(self, message: str, failures: list[dict[str, str]]) -> None:
+        super().__init__(message)
+        self.failures = failures

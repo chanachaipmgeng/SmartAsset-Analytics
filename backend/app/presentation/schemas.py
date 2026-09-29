@@ -5,6 +5,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
 
+from app.application.bulk import BULK_MAX_DEVICES, BulkAction
 from app.domain.enums import AuditAction, AuditEntity, DeviceStatus, PhotoOwner, Role, ServiceLevel, TransactionType
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
@@ -209,6 +210,25 @@ class LoanIn(MovementIn):
 
 class SendRepairIn(MovementIn):
     supplier_id: UUID | None = None
+
+
+class BulkIn(BaseModel):
+    action: BulkAction
+    device_ids: Annotated[list[UUID], Field(min_length=1, max_length=BULK_MAX_DEVICES)]
+    note: Text | None = None
+    target_tenant_id: UUID | None = None
+    supplier_id: UUID | None = None
+    due_date: date | None = None
+
+
+class BulkMovedOut(Out):
+    device: DeviceOut
+    transaction_id: UUID
+
+
+class BulkOut(BaseModel):
+    count: int
+    items: list[BulkMovedOut]
 
 
 class QcFailIn(BaseModel):

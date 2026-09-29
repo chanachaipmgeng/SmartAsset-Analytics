@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, File, Form, Path, Query, Response, UploadFile, status
 from fastapi.responses import FileResponse
 
-from app.application import admin, audit, auth, customers, dashboard, device_import, inventory, photos, reports
+from app.application import admin, audit, auth, bulk, customers, dashboard, device_import, inventory, photos, reports
 from app.domain.entities import Photo
 from app.domain.enums import AuditEntity, DeviceStatus, PhotoOwner, TransactionType
 from app.domain.errors import NotFoundError, ValidationError
@@ -231,6 +231,13 @@ async def import_template(actor: ActorDep, uow: UowDep):
         media_type=XLSX_TYPE,
         headers={"Content-Disposition": 'attachment; filename="device-import-template.xlsx"'},
     )
+
+
+@router.post("/inventory/bulk", response_model=s.BulkOut, tags=["inventory"])
+async def bulk_movement(body: s.BulkIn, actor: ActorDep, uow: UowDep):
+    """One movement for up to 200 devices; 422 with `failures` (serial + reason) if any device cannot move."""
+    moved = await bulk.bulk_action(uow, actor, **body.model_dump())
+    return s.BulkOut(count=len(moved), items=[s.BulkMovedOut.model_validate(m) for m in moved])
 
 
 @router.post("/inventory/send-repair", response_model=s.DeviceOut, tags=["inventory"])

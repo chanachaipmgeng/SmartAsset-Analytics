@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 
 from app.domain.errors import (
     AuthenticationError,
+    BulkActionError,
     ConflictError,
     DomainError,
     InvalidTransitionError,
@@ -28,7 +29,10 @@ def register_error_handlers(app: FastAPI) -> None:
     async def _domain(_: Request, exc: DomainError) -> JSONResponse:
         status = next((code for cls, code in STATUS_BY_ERROR.items() if isinstance(exc, cls)), 400)
         headers = {"WWW-Authenticate": "Bearer"} if status == 401 else None
-        return JSONResponse({"detail": exc.message}, status_code=status, headers=headers)
+        body: dict[str, object] = {"detail": exc.message}
+        if isinstance(exc, BulkActionError):
+            body["failures"] = exc.failures
+        return JSONResponse(body, status_code=status, headers=headers)
 
     @app.exception_handler(RequestValidationError)
     async def _validation(_: Request, exc: RequestValidationError) -> JSONResponse:
