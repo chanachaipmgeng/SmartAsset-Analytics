@@ -188,26 +188,76 @@ docker compose exec api python -m app.infrastructure.check_integrity   # ตร�
 
 > ห้ามใช้ `docker compose down -v` เพราะ `-v` จะลบ volume `pgdata` (ฐานข้อมูล) และ `media` (รูปภาพ) ทิ้ง
 
-## 5. เปิด HTTPS ด้วยโดเมน
+## 5. เปิดผ่าน reverse proxy / HTTPS
 
-ใช้ [Caddy](https://caddyserver.com) เป็น reverse proxy หน้า Docker ซึ่งขอและต่ออายุใบรับรอง Let's Encrypt ให้อัตโนมัติ ก่อนเริ่มต้องตั้ง DNS ของโดเมนชี้มาที่เซิร์ฟเวอร์แล้ว และเปิดพอร์ต 80/443 ไว้
+แอปใน Docker มี nginx ของตัวเองอยู่แล้ว แต่ถ้าเครื่องมี nginx (หรือ reverse proxy อื่น) ฟังพอร์ต 80 อยู่ก่อน **อย่าให้ Docker แย่งพอร์ต 80** ให้ย้าย Docker ไปฟังเฉพาะในเครื่อง แล้วให้ nginx ของโฮสต์ส่งต่อไป
 
-**5.1 ย้าย nginx ของระบบไปฟังเฉพาะภายในเครื่อง** แก้ `.env`
+**5.1 ย้าย Docker ไปฟังเฉพาะภายในเครื่อง** แก้ `.env`
 
 ```bash
 HTTP_PORT=127.0.0.1:8080
-PUBLIC_URL=https://asset.example.com
+PUBLIC_URL=https://asset.example.com   # หรือ http://IP ถ้ายังไม่มีโดเมน/HTTPS
 ```
-
-แล้วใช้ค่าใหม่
 
 ```bash
 docker compose up -d
+curl -fsS http://127.0.0.1:8080/health; echo
 ```
 
-**5.2 ติดตั้ง Caddy**
+### 5.2 มี nginx ของโฮสต์อยู่แล้ว (แนะนำถ้าเครื่องนี้ใช้ nginx อยู่)
 
-Ubuntu/Debian
+ไฟล์หลักของโฮสต์มักเป็น `/etc/nginx/nginx.conf` และมีบรรทัด `include /etc/nginx/conf.d/*.conf;` อยู่แล้ว **อย่าแทนที่ไฟล์หลัก** ให้เพิ่มไฟล์ไซต์ใหม่
+
+```bash
+# ตรวจว่า nginx ของโฮสต์ครองพอร์ต 80 อยู่จริง
+ss -ltnp | grep -E ':80|:443'
+
+# SELinux (ตระกูล RHEL): อนุญาตให้ nginx ส่งต่อไปยังพอร์ต 8080
+setsebool -P httpd_can_network_connect 1
+```
+
+สร้าง `/etc/nginx/conf.d/smartasset.conf` (แทน `asset.example.com` ด้วยโดเมนหรือ `_` ถ้าเข้าด้วย IP)
+
+```nginx
+# /etc/nginx/conf.d/smartasset.conf
+upstream smartasset {
+    server 127.0.0.1:8080;
+    keepalive 16;
+}
+
+server {
+    listen 80;
+    server_name asset.example.com;   # หรือ _ ถ้ายังไม่มีโดเมน
+
+    client_max_body_size 10m;
+
+    location / {
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+        proxy_pass http://smartasset;
+    }
+}
+```
+
+```bash
+nginx -t && systemctl reload nginx
+curl -fsS -H 'Host: asset.example.com' http://127.0.0.1/health; echo
+```
+
+ถ้าโฮสต์มี HTTPS อยู่แล้ว (ใบรับรองใน `/etc/nginx/ssl/` หรือ Let's Encrypt) ให้ใส่ `listen 443 ssl;` พร้อม `ssl_certificate` / `ssl_certificate_key` ใน `server` เดียวกัน และตั้ง `PUBLIC_URL=https://...` ให้ตรง ฟีเจอร์ GPS และกล้องบนมือถือต้องใช้ HTTPS
+
+> ไฟล์ `nginx.conf` บน Desktop ที่เป็น config หลักของโฮสต์ **ไม่ต้องแก้** และ **ไม่ใช่** ไฟล์เดียวกับ `nginx/nginx.conf` ในโปรเจกต์ (อันนั้นใช้ใน container ของแอปเท่านั้น)
+
+### 5.3 ยังไม่มี reverse proxy — ใช้ Caddy
+
+ใช้ [Caddy](https://caddyserver.com) เป็น reverse proxy หน้า Docker ซึ่งขอและต่ออายุใบรับรอง Let's Encrypt ให้อัตโนมัติ ก่อนเริ่มต้องตั้ง DNS ของโดเมนชี้มาที่เซิร์ฟเวอร์แล้ว และเปิดพอร์ต 80/443 ไว้ (ทำหัวข้อ 5.1 ก่อน)
+
+**Ubuntu/Debian**
 
 ```bash
 sudo apt-get install -y debian-keyring debian-archive-keyring apt-transport-https
@@ -216,18 +266,17 @@ curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo 
 sudo apt-get update && sudo apt-get install -y caddy
 ```
 
-Rocky/AlmaLinux/RHEL/CentOS Stream
+**Rocky/AlmaLinux/RHEL/CentOS Stream**
 
 ```bash
 sudo dnf -y install 'dnf-command(copr)'
 sudo dnf -y copr enable @caddy/caddy
 sudo dnf -y install caddy
 sudo systemctl enable --now caddy
-# SELinux: อนุญาตให้ Caddy ส่งต่อไปยังพอร์ต 8080 ภายในเครื่อง
-sudo setsebool -P httpd_can_network_connect 1
+setsebool -P httpd_can_network_connect 1
 ```
 
-**5.3 ตั้งค่า** แทนที่เนื้อหา `/etc/caddy/Caddyfile` ด้วย
+แทนที่เนื้อหา `/etc/caddy/Caddyfile` ด้วย
 
 ```caddy
 asset.example.com {
@@ -241,12 +290,12 @@ asset.example.com {
 
 ```bash
 sudo systemctl reload caddy
-sudo journalctl -u caddy --since "5 min ago"    # ดูผลการขอใบรับรอง
+sudo journalctl -u caddy --since "5 min ago"
 ```
 
-เปิด `https://asset.example.com` ถ้าขึ้นรูปกุญแจแสดงว่าเรียบร้อย ขนาด `max_size` 10MB ตรงกับขีดจำกัดของ nginx ในระบบ (รูปละไม่เกิน 8 MB)
+เปิด `https://asset.example.com` ถ้าขึ้นรูปกุญแจแสดงว่าเรียบร้อย
 
-ถ้าองค์กรมี reverse proxy หรือ load balancer อยู่แล้ว ให้ส่งต่อทุก path ไปที่ `http://<เซิร์ฟเวอร์>:8080` (หรือพอร์ตที่ตั้งใน `HTTP_PORT`) โดยไม่ต้องติดตั้ง Caddy
+ถ้าองค์กรมี load balancer อยู่แล้ว ให้ส่งต่อทุก path ไปที่ `http://<เซิร์ฟเวอร์>:8080` โดยไม่ต้องติดตั้ง Caddy / แก้ nginx ของโฮสต์
 
 ## 6. สำรองและกู้คืนข้อมูล
 
@@ -316,7 +365,7 @@ migration เดินหน้าอย่างเดียว ถ้าเว
 | `nginx` restart วน และ log ขึ้น `open() "/etc/nginx/conf.d/default.conf" failed (13: Permission denied)` | SELinux บล็อกการอ่านไฟล์ตั้งค่า ให้สั่ง `sudo chcon -Rt container_file_t /opt/smartasset/nginx` แล้ว `docker compose up -d` |
 | HTTPS ขึ้น `502` แต่ `curl http://127.0.0.1:8080/health` ได้ปกติ (ตระกูล RHEL) | SELinux บล็อก Caddy ไม่ให้ต่อพอร์ต 8080 ให้สั่ง `sudo setsebool -P httpd_can_network_connect 1` |
 | `docker compose up` แจ้ง `set POSTGRES_PASSWORD in .env` | ยังไม่ได้สร้าง `.env` หรือไม่ได้สั่งคำสั่งในโฟลเดอร์ `/opt/smartasset` |
-| `Bind for 0.0.0.0:80 failed: port is already allocated` | มีโปรแกรมอื่นใช้พอร์ต 80 อยู่ (เช่น apache2 หรือ nginx ของเครื่อง) ตรวจด้วย `sudo ss -ltnp \| grep :80` แล้วหยุดโปรแกรมนั้น หรือเปลี่ยน `HTTP_PORT` |
+| `Bind for 0.0.0.0:80 failed: port is already allocated` | มี nginx/apache ของโฮสต์ใช้พอร์ต 80 อยู่ ตรวจด้วย `ss -ltnp \| grep :80` แล้วทำหัวข้อ 5.1–5.2 (อย่าหยุด nginx ของโฮสต์ถ้ายังมีเว็บอื่นอยู่) |
 | `api` ขึ้น `password authentication failed` | รหัสผ่านใน `.env` ไม่ตรงกับในฐานข้อมูล (มักเกิดเมื่อแก้ `.env` หลังเริ่มครั้งแรก) ให้ตั้งรหัสในฐานข้อมูลให้ตรง: `docker compose exec db psql -U inventory_owner -d inventory -c "ALTER ROLE inventory_app PASSWORD '<APP_DB_PASSWORD>'"` แล้ว `docker compose restart api` (ถ้าเปลี่ยน `POSTGRES_PASSWORD` ให้ทำแบบเดียวกันกับ role `inventory_owner`) |
 | ขึ้น `502 Bad Gateway` หลังเริ่มระบบ | `api` ยังรัน migration อยู่ รอสักครู่แล้วดู `docker compose logs api` ถ้ายังไม่หายให้ดูข้อความ error ใน log |
 | ปุ่ม **ใช้ตำแหน่งปัจจุบัน** หรือกล้องสแกนบนมือถือไม่ทำงาน | เบราว์เซอร์อนุญาตฟีเจอร์นี้เฉพาะบน HTTPS ให้ตั้งค่าตามหัวข้อ 5 |
