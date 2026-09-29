@@ -182,6 +182,37 @@ def _device_view_stmt() -> Select:
     )
 
 
+DEVICE_SORT_COLUMNS: dict[str, Any] = {
+    "serial_number": DeviceORM.serial_number,
+    "brand": DeviceModelORM.brand,
+    "model_name": DeviceModelORM.name,
+    "status": DeviceORM.status,
+    "tenant_name": TenantORM.name,
+    "mac_address": DeviceORM.mac_address,
+    "purchase_date": DeviceORM.purchase_date,
+    "warranty_end": DeviceORM.warranty_end,
+    "cost": DeviceORM.cost,
+    "created_at": DeviceORM.created_at,
+}
+
+
+def _filter_devices(stmt: Select, search: str | None, status: DeviceStatus | None, model_id: UUID | None) -> Select:
+    if search:
+        pattern = f"%{search}%"
+        stmt = stmt.where(
+            or_(
+                DeviceORM.serial_number.ilike(pattern),
+                DeviceORM.mac_address.ilike(pattern),
+                DeviceModelORM.name.ilike(pattern),
+            )
+        )
+    if status:
+        stmt = stmt.where(DeviceORM.status == status.value)
+    if model_id:
+        stmt = stmt.where(DeviceORM.model_id == model_id)
+    return stmt
+
+
 def _device_view(row: Any) -> DeviceView:
     d, model_name, brand, tenant_name = row
     return DeviceView(
@@ -230,23 +261,31 @@ class SqlDeviceRepository(_Repo):
         search: str | None = None,
         status: DeviceStatus | None = None,
         model_id: UUID | None = None,
+        sort: str | None = None,
+        skip: int = 0,
+        take: int | None = None,
     ) -> list[DeviceView]:
-        stmt = _device_view_stmt()
-        if search:
-            pattern = f"%{search}%"
-            stmt = stmt.where(
-                or_(
-                    DeviceORM.serial_number.ilike(pattern),
-                    DeviceORM.mac_address.ilike(pattern),
-                    DeviceModelORM.name.ilike(pattern),
-                )
-            )
-        if status:
-            stmt = stmt.where(DeviceORM.status == status.value)
-        if model_id:
-            stmt = stmt.where(DeviceORM.model_id == model_id)
-        rows = await self.s.execute(stmt.order_by(DeviceORM.created_at.desc()))
-        return [_device_view(r) for r in rows.all()]
+        stmt = _filter_devices(_device_view_stmt(), search, status, model_id)
+        if sort:
+            column = DEVICE_SORT_COLUMNS[sort.lstrip("-")]
+            order = column.desc().nulls_last() if sort.startswith("-") else column.asc().nulls_last()
+        else:
+            order = DeviceORM.created_at.desc()
+        # The id tie-break keeps pages stable when many rows share the sort value.
+        stmt = stmt.order_by(order, DeviceORM.id).offset(skip)
+        if take is not None:
+            stmt = stmt.limit(take)
+        return [_device_view(r) for r in (await self.s.execute(stmt)).all()]
+
+    async def count_views(
+        self,
+        *,
+        search: str | None = None,
+        status: DeviceStatus | None = None,
+        model_id: UUID | None = None,
+    ) -> int:
+        stmt = select(func.count()).select_from(DeviceORM).join(DeviceModelORM, DeviceModelORM.id == DeviceORM.model_id)
+        return int(await self.s.scalar(_filter_devices(stmt, search, status, model_id)) or 0)
 
     async def count_by_status(self) -> list[CountItem]:
         rows = await self.s.execute(select(DeviceORM.status, func.count()).group_by(DeviceORM.status))

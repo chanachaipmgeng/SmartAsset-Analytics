@@ -5,7 +5,7 @@ import { Customer, Device, DeviceModel, ImportResult, Installation, Supplier, Te
 
 const API = '/api/v1';
 
-/** Mutations only; pages read through `httpResource` so results live in signals. */
+/** Mutations and one-off reads (exports); pages read through `httpResource` so results live in signals. */
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
@@ -24,6 +24,11 @@ export class ApiService {
 
   changePassword(currentPassword: string, newPassword: string) {
     return this.post<void>('/auth/change-password', { current_password: currentPassword, new_password: newPassword });
+  }
+
+  /** Every device matching the filters, e.g. to export all pages of the server-paged list. */
+  listDevices(params: Record<string, string>) {
+    return firstValueFrom(this.http.get<Device[]>(`${API}/devices`, { params }));
   }
 
   checkIn(body: Record<string, unknown>) {

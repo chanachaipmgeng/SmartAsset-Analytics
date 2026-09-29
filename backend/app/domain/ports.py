@@ -68,7 +68,17 @@ class DeviceRepository(Protocol):
         search: str | None = None,
         status: DeviceStatus | None = None,
         model_id: UUID | None = None,
+        sort: str | None = None,
+        skip: int = 0,
+        take: int | None = None,
     ) -> list[DeviceView]: ...
+    async def count_views(
+        self,
+        *,
+        search: str | None = None,
+        status: DeviceStatus | None = None,
+        model_id: UUID | None = None,
+    ) -> int: ...
     async def add(self, device: Device) -> None: ...
     async def update(self, device: Device) -> None: ...
     async def count_by_status(self) -> list[CountItem]: ...

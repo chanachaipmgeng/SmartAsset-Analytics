@@ -368,6 +368,25 @@ async def test_reports(client: httpx.AsyncClient, world: dict) -> None:
     assert all(x["device"]["tenant_id"] != world["tenant_a"]["id"] for x in (await client.get("/reports/aging", headers=b)).json())
 
 
+async def test_device_paging(client: httpx.AsyncClient, world: dict) -> None:
+    a, b, tag, model_id = world["a"], world["b"], world["tag"], world["model"]["id"]
+    for i in range(3):
+        await client.post("/inventory/check-in", headers=a, json={"serial_number": f"PG-{tag}-{i}", "model_id": model_id})
+
+    search = {"search": f"PG-{tag}"}
+    res = await client.get("/devices", headers=a, params={**search, "sort": "-serial_number", "skip": 1, "take": 1})
+    assert res.status_code == 200 and res.headers["X-Total-Count"] == "3"
+    assert [d["serial_number"] for d in res.json()] == [f"PG-{tag}-1"]
+
+    everything = await client.get("/devices", headers=a, params=search)
+    assert len(everything.json()) == 3 and everything.headers["X-Total-Count"] == "3"
+    assert (await client.get("/devices", headers=b, params=search)).headers["X-Total-Count"] == "0"
+    assert (await client.get("/devices", headers=a, params={"sort": "tenant_id"})).status_code == 422
+
+    counts = {c["key"]: c["count"] for c in (await client.get("/devices/status-counts", headers=a)).json()}
+    assert counts["IN_STOCK"] >= 3
+
+
 def _xlsx(rows: list[list[object]]) -> bytes:
     book = Workbook()
     for row in rows:

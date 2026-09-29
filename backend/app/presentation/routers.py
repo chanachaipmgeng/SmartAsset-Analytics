@@ -127,11 +127,25 @@ async def delete_supplier(supplier_id: UUID, actor: ActorDep, uow: UowDep):
 async def list_devices(
     actor: ActorDep,
     uow: UowDep,
+    response: Response,
     search: Annotated[str | None, Query(max_length=100)] = None,
     status_: Annotated[DeviceStatus | None, Query(alias="status")] = None,
     model_id: UUID | None = None,
+    sort: Annotated[str | None, Query(max_length=40, description="Field name; prefix with '-' for descending")] = None,
+    skip: Annotated[int, Query(ge=0)] = 0,
+    take: Annotated[int | None, Query(ge=1, le=500)] = None,
 ):
-    return await inventory.list_devices(uow, actor, search=search, status=status_, model_id=model_id)
+    """Without `take` this returns every matching device; `X-Total-Count` always holds the match count."""
+    items, total = await inventory.list_devices(
+        uow, actor, search=search, status=status_, model_id=model_id, sort=sort, skip=skip, take=take
+    )
+    response.headers["X-Total-Count"] = str(total)
+    return items
+
+
+@router.get("/devices/status-counts", response_model=list[s.CountOut], tags=["devices"])
+async def device_status_counts(actor: ActorDep, uow: UowDep):
+    return await inventory.device_status_counts(uow, actor)
 
 
 @router.post("/devices", response_model=s.DeviceOut, status_code=status.HTTP_201_CREATED, tags=["devices"])

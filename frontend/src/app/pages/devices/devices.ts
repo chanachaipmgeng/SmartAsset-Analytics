@@ -7,6 +7,7 @@ import {
   effect,
   inject,
   input,
+  linkedSignal,
   signal,
   untracked,
   viewChild,
@@ -18,10 +19,18 @@ import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
 import { DeviceActionId, availableActions } from '../../core/device-actions';
 import { STATUS_LABELS, SERVICE_LEVEL_LABELS, toDate, toIsoDate } from '../../core/labels';
-import { Device, DeviceModel, DeviceStatus, Installation, InventoryTransaction, Tenant } from '../../core/models';
+import {
+  CountItem,
+  Device,
+  DeviceModel,
+  DeviceStatus,
+  Installation,
+  InventoryTransaction,
+  Tenant,
+} from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { AssetTimeline } from '../../shared/asset-timeline';
-import { DataGrid, GridCell, GridColumn } from '../../shared/data-grid';
+import { DataGrid, GridCell, GridColumn, GridQuery } from '../../shared/data-grid';
 import { DeviceActionDialogs } from '../../shared/device-action-dialogs';
 import { FilterChips } from '../../shared/filter-chips';
 import { InstallationMap } from '../../shared/installation-map';
@@ -45,6 +54,30 @@ const COLUMNS: GridColumn[] = [
   { field: 'warranty_end', headerText: 'หมดประกัน', type: 'date', format: 'dd/MM/yyyy', width: 120, hideAtMedia: WIDE },
   { field: 'cost', headerText: 'ต้นทุน', type: 'number', format: 'N2', textAlign: 'Right', width: 120, hideAtMedia: WIDE },
 ];
+
+/** Grid column field to the `GET /devices?sort=` key; unlisted columns aren't server-sortable. */
+const SORT_KEYS: Record<string, string> = {
+  serial_number: 'serial_number',
+  brand: 'brand',
+  model_name: 'model_name',
+  status_label: 'status',
+  tenant_label: 'tenant_name',
+  mac_address: 'mac_address',
+  purchase_date: 'purchase_date',
+  warranty_end: 'warranty_end',
+  cost: 'cost',
+};
+
+function toRow(d: Device) {
+  return {
+    ...d,
+    status_label: STATUS_LABELS[d.status],
+    tenant_label: d.tenant_name ?? 'คลังกลาง',
+    warranty_end: toDate(d.warranty_end),
+    purchase_date: toDate(d.purchase_date),
+    cost: d.cost === null ? null : Number(d.cost),
+  };
+}
 
 const WARRANTY_SOON_DAYS = 60;
 const DAY_MS = 86_400_000;
@@ -96,20 +129,49 @@ export class DevicesPage {
   protected readonly levelLabels = SERVICE_LEVEL_LABELS;
   protected readonly detailWidth = 'min(440px, 100vw)';
 
-  protected readonly devices = httpResource<Device[]>(() => '/api/v1/devices', { defaultValue: [] });
+  // ---- server-paged list ----
+  protected readonly statusFilter = signal<StatusFilter>('ALL');
+  private readonly gridQuery = signal<GridQuery | null>(null);
+  /** Filters shared by the current page and "export all". */
+  private readonly listFilters = computed(() => {
+    const q = this.gridQuery();
+    const status = this.statusFilter();
+    const sortKey = q?.sort ? SORT_KEYS[q.sort.field] : undefined;
+    const params: Record<string, string> = {};
+    if (q?.search) params['search'] = q.search;
+    if (status !== 'ALL') params['status'] = status;
+    if (q?.sort && sortKey) params['sort'] = (q.sort.descending ? '-' : '') + sortKey;
+    return params;
+  });
+  protected readonly devices = httpResource<Device[]>(() => {
+    const q = this.gridQuery();
+    if (!q) return undefined;
+    return { url: '/api/v1/devices', params: { ...this.listFilters(), skip: q.skip, take: q.take } };
+  });
+  /** Keeps the previous page on screen while the next one loads. */
+  private readonly page = linkedSignal<Device[] | undefined, Device[]>({
+    source: () => (this.devices.hasValue() ? this.devices.value() : undefined),
+    computation: (value, previous) => value ?? previous?.value ?? [],
+  });
+  protected readonly total = linkedSignal<string | null | undefined, number>({
+    source: () => this.devices.headers()?.get('X-Total-Count'),
+    computation: (value, previous) => (value == null ? (previous?.value ?? 0) : Number(value)),
+  });
+  private readonly statusCounts = httpResource<CountItem[]>(() => '/api/v1/devices/status-counts', {
+    defaultValue: [],
+  });
+
   protected readonly models = httpResource<DeviceModel[]>(() => '/api/v1/device-models', { defaultValue: [] });
   protected readonly tenants = httpResource<Tenant[]>(
     () => (this.auth.isSuperadmin() ? '/api/v1/tenants' : undefined),
     { defaultValue: [] },
   );
 
-  // ---- status filter ----
-  protected readonly statusFilter = signal<StatusFilter>('ALL');
   protected readonly filters = computed(() => {
-    const counts = new Map<DeviceStatus, number>();
-    for (const d of this.devices.value()) counts.set(d.status, (counts.get(d.status) ?? 0) + 1);
+    const counts = new Map(this.statusCounts.value().map((c) => [c.key, c.count]));
+    const all = this.statusCounts.value().reduce((sum, c) => sum + c.count, 0);
     return [
-      { key: 'ALL' as StatusFilter, label: 'ทั้งหมด', count: this.devices.value().length },
+      { key: 'ALL' as StatusFilter, label: 'ทั้งหมด', count: all },
       ...(Object.keys(STATUS_LABELS) as DeviceStatus[]).map((s) => ({
         key: s as StatusFilter,
         label: STATUS_LABELS[s],
@@ -118,25 +180,14 @@ export class DevicesPage {
     ];
   });
 
-  protected readonly rows = computed(() => {
-    const filter = this.statusFilter();
-    return this.devices
-      .value()
-      .filter((d) => filter === 'ALL' || d.status === filter)
-      .map((d) => ({
-        ...d,
-        status_label: STATUS_LABELS[d.status],
-        tenant_label: d.tenant_name ?? 'คลังกลาง',
-        warranty_end: toDate(d.warranty_end),
-        purchase_date: toDate(d.purchase_date),
-        cost: d.cost === null ? null : Number(d.cost),
-      }));
-  });
+  protected readonly rows = computed(() => this.page().map(toRow));
+  protected readonly exportAll = async () => (await this.api.listDevices(this.listFilters())).map(toRow);
 
   // ---- selection / detail panel ----
+  private readonly detail = httpResource<Device>(() => (this.id() ? `/api/v1/devices/${this.id()}` : undefined));
   protected readonly selected = computed(() => {
     const id = this.id();
-    return id ? (this.devices.value().find((d) => d.id === id) ?? null) : null;
+    return id && this.detail.hasValue() && this.detail.value().id === id ? this.detail.value() : null;
   });
   protected readonly detailOpen = computed(() => !!this.selected());
 
@@ -204,7 +255,7 @@ export class DevicesPage {
   constructor() {
     effect(() => {
       const status = this.status();
-      if (status && status in STATUS_LABELS) this.statusFilter.set(status as DeviceStatus);
+      if (status && status in STATUS_LABELS) untracked(() => this.onStatusFilter(status as DeviceStatus));
     });
 
     effect(() => {
@@ -223,15 +274,22 @@ export class DevicesPage {
 
     // A deep link to a device this user cannot see (or that doesn't exist) falls back to the list.
     effect(() => {
-      const id = this.id();
-      if (!id || this.devices.isLoading() || this.devices.error()) return;
-      if (!this.devices.value().some((d) => d.id === id)) {
-        untracked(() => {
-          this.notify.warning('ไม่พบอุปกรณ์ที่ต้องการ');
-          void this.router.navigate(['/devices'], { replaceUrl: true });
-        });
-      }
+      if (!this.id() || !this.detail.error()) return;
+      untracked(() => {
+        this.notify.warning('ไม่พบอุปกรณ์ที่ต้องการ');
+        void this.router.navigate(['/devices'], { replaceUrl: true });
+      });
     });
+  }
+
+  protected onQuery(query: GridQuery): void {
+    this.gridQuery.set(query);
+  }
+
+  protected onStatusFilter(status: StatusFilter): void {
+    this.statusFilter.set(status);
+    this.gridQuery.update((q) => (q ? { ...q, skip: 0 } : q));
+    this.grid()?.firstPage();
   }
 
   protected onRowSelected(row: { id: string } | null): void {
@@ -254,13 +312,16 @@ export class DevicesPage {
 
   protected onActionDone(): void {
     this.devices.reload();
+    this.statusCounts.reload();
+    this.detail.reload();
     this.history.reload();
     this.installations.reload();
   }
 
   protected onImported(count: number): void {
-    this.statusFilter.set('ALL');
+    this.onStatusFilter('ALL');
     this.devices.reload();
+    this.statusCounts.reload();
     this.notify.success(`นำเข้าอุปกรณ์ ${count} เครื่องแล้ว`);
   }
 

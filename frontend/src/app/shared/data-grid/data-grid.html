@@ -1,6 +1,6 @@
 @if (error()) {
   <app-error-state [message]="errorText()" (retry)="retry.emit()" />
-} @else if (loading() && !data().length) {
+} @else if (showSkeleton()) {
   <div class="flex flex-col gap-3 py-1" aria-busy="true" aria-label="กำลังโหลดข้อมูล">
     <div class="flex gap-2">
       <app-skeleton-block width="88px" height="32px" />
@@ -20,10 +20,10 @@
     @for (v of [version()]; track v) {
       <ejs-grid
         class="app-grid"
-        [dataSource]="data()"
+        [dataSource]="source()"
         [allowPaging]="true"
         [allowSorting]="true"
-        [allowFiltering]="true"
+        [allowFiltering]="!serverPaging()"
         [allowResizing]="true"
         [allowExcelExport]="true"
         [allowPdfExport]="true"
@@ -39,6 +39,7 @@
         [toolbar]="toolbar"
         (toolbarClick)="onToolbar($event)"
         (actionComplete)="onActionComplete($event)"
+        (dataStateChange)="onDataStateChange($event)"
         (rowSelected)="onRowSelected($event)"
         (rowDeselected)="selectionChange.emit(null)"
         (recordDoubleClick)="onDoubleClick($event)"

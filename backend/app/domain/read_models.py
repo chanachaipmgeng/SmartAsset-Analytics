@@ -25,6 +25,23 @@ class DeviceView:
     loan_due_date: date | None = None
 
 
+# Keys accepted by `GET /devices?sort=`; prefix with "-" for descending.
+DEVICE_SORT_FIELDS = frozenset(
+    {
+        "serial_number",
+        "brand",
+        "model_name",
+        "status",
+        "tenant_name",
+        "mac_address",
+        "purchase_date",
+        "warranty_end",
+        "cost",
+        "created_at",
+    }
+)
+
+
 @dataclass(frozen=True)
 class AgedDevice:
     """A device with the time it entered its current status (last status-changing movement)."""

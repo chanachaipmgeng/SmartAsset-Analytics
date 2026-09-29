@@ -16,7 +16,7 @@ from app.domain.entities import Device, Installation, InventoryTransaction
 from app.domain.enums import DeviceStatus, TransactionType
 from app.domain.errors import NotFoundError, ValidationError
 from app.domain.ports import UnitOfWork
-from app.domain.read_models import CountItem, DeviceView, InstallationView, TransactionView
+from app.domain.read_models import DEVICE_SORT_FIELDS, CountItem, DeviceView, InstallationView, TransactionView
 from app.domain.rules import (
     next_status,
     require_superadmin,
@@ -74,8 +74,23 @@ async def list_devices(
     search: str | None = None,
     status: DeviceStatus | None = None,
     model_id: UUID | None = None,
-) -> list[DeviceView]:
-    return await uow.devices.list_views(search=search, status=status, model_id=model_id)
+    sort: str | None = None,
+    skip: int = 0,
+    take: int | None = None,
+) -> tuple[list[DeviceView], int]:
+    """One page of devices plus the total matching the filters; without `take` the page is everything."""
+    if sort and sort.lstrip("-") not in DEVICE_SORT_FIELDS:
+        raise ValidationError("ไม่รองรับการเรียงตามคอลัมน์นี้")
+    search = search.strip() if search else None
+    filters = {"search": search or None, "status": status, "model_id": model_id}
+    items = await uow.devices.list_views(**filters, sort=sort, skip=skip, take=take)
+    if take is None and skip == 0:
+        return items, len(items)
+    return items, await uow.devices.count_views(**filters)
+
+
+async def device_status_counts(uow: UnitOfWork, actor: Actor) -> list[CountItem]:
+    return await uow.devices.count_by_status()
 
 
 async def get_device(uow: UnitOfWork, actor: Actor, device_id: UUID) -> DeviceView:

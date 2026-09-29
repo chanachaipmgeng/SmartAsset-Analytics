@@ -14,12 +14,16 @@
     >ทำรายการ</button>
   </app-page-header>
 
-  <app-filter-chips [options]="filters()" [(value)]="statusFilter" label="กรองตามสถานะ" />
+  <app-filter-chips [options]="filters()" [value]="statusFilter()" (valueChange)="onStatusFilter($event)" label="กรองตามสถานะ" />
 
   <div class="panel">
     <app-data-grid
       [data]="rows()"
       [columns]="columns"
+      [serverPaging]="true"
+      [total]="total()"
+      [exportAll]="exportAll"
+      (query)="onQuery($event)"
       perspectiveKey="devices"
       exportName="devices"
       [loading]="devices.isLoading()"

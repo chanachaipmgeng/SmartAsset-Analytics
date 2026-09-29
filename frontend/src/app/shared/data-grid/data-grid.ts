@@ -2,10 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   TemplateRef,
+  OnInit,
   computed,
   contentChildren,
   inject,
   input,
+  linkedSignal,
   output,
   signal,
   viewChild,
@@ -44,6 +46,14 @@ export interface GridColumn {
   /** Media query the column needs to be shown, e.g. `(min-width: 768px)` for secondary columns. */
   hideAtMedia?: string;
   isPrimaryKey?: boolean;
+}
+
+/** Page, sort and search requested by the grid in server paging mode. */
+export interface GridQuery {
+  skip: number;
+  take: number;
+  sort: { field: string; descending: boolean } | null;
+  search: string;
 }
 
 export interface GridAggregate {
@@ -104,7 +114,7 @@ function today(): string {
   styleUrl: './data-grid.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DataGrid<T extends object = Record<string, unknown>> {
+export class DataGrid<T extends object = Record<string, unknown>> implements OnInit {
   private readonly notify = inject(NotifyService);
 
   readonly data = input.required<T[]>();
@@ -119,7 +129,16 @@ export class DataGrid<T extends object = Record<string, unknown>> {
   readonly groupBy = input<string[]>([]);
   /** Footer and group-footer totals; exported with Excel/PDF. */
   readonly aggregates = input<GridAggregate[]>([]);
+  /**
+   * Server paging: `data` is one page, `total` the match count, and paging, sorting and
+   * search are emitted through `query` for the parent to fetch. Column filters are off.
+   */
+  readonly serverPaging = input(false);
+  readonly total = input(0);
+  /** Server paging: loads every matching row so Excel/PDF export isn't limited to one page. */
+  readonly exportAll = input<(() => Promise<T[]>) | null>(null);
 
+  readonly query = output<GridQuery>();
   readonly selectionChange = output<T | null>();
   readonly rowDoubleClick = output<T>();
   readonly retry = output<void>();
@@ -173,6 +192,30 @@ export class DataGrid<T extends object = Record<string, unknown>> {
 
   protected readonly errorText = computed(() => (this.error() ? errorMessage(this.error()) : ''));
 
+  protected readonly source = computed(() =>
+    this.serverPaging() ? { result: this.data(), count: this.total() } : this.data(),
+  );
+  /** Once the first load settles, keep the grid mounted so page, sort and search survive refetches. */
+  private readonly settled = linkedSignal<boolean, boolean>({
+    source: () => !this.loading(),
+    computation: (idle, previous) => idle || (previous?.value ?? false),
+  });
+  protected readonly showSkeleton = computed(
+    () => this.loading() && !this.data().length && !(this.serverPaging() && this.settled()),
+  );
+  private lastQuery: GridQuery | null = null;
+
+  ngOnInit(): void {
+    if (this.serverPaging()) this.emitQuery({ skip: 0, take: this.pageSettings().pageSize, sort: null, search: '' });
+  }
+
+  /** Server paging: jump back to page 1, e.g. after the parent changes an external filter. */
+  firstPage(): void {
+    const q = this.lastQuery;
+    if (!q || q.skip === 0) return;
+    this.grid()?.goToPage(1);
+  }
+
   protected readonly filterSettings = { type: 'Excel' as const };
   protected readonly selectionSettings = { type: 'Single' as const };
   protected readonly toolbar = [
@@ -193,12 +236,22 @@ export class DataGrid<T extends object = Record<string, unknown>> {
     const fileName = `${this.exportName()}-${today()}`;
     switch (args.item.id) {
       case 'excel':
-        await grid.excelExport({ fileName: `${fileName}.xlsx` });
+        try {
+          const dataSource = await this.exportRows();
+          await grid.excelExport({ fileName: `${fileName}.xlsx`, ...(dataSource ? { dataSource } : {}) });
+        } catch (err) {
+          this.notify.error(err);
+        }
         break;
       case 'pdf':
         try {
-          const [font, headerFont] = await Promise.all([thaiPdfFont(9), thaiPdfFont(10)]);
+          const [font, headerFont, dataSource] = await Promise.all([
+            thaiPdfFont(9),
+            thaiPdfFont(10),
+            this.exportRows(),
+          ]);
           await grid.pdfExport({
+            ...(dataSource ? { dataSource } : {}),
             fileName: `${fileName}.pdf`,
             pageOrientation: 'Landscape',
             theme: { header: { font: headerFont }, record: { font }, caption: { font } },
@@ -211,8 +264,39 @@ export class DataGrid<T extends object = Record<string, unknown>> {
         this.clearPerspective();
         this.version.update((v) => v + 1);
         this.selectionChange.emit(null);
+        if (this.serverPaging()) this.emitQuery({ skip: 0, take: PAGE_SIZES[0], sort: null, search: '' });
         break;
     }
+  }
+
+  protected onDataStateChange(args: {
+    skip?: number;
+    take?: number;
+    sorted?: { name?: string; direction?: string }[];
+    search?: { key?: string }[];
+  }): void {
+    const sorted = args.sorted?.[0];
+    const take = args.take ?? this.pageSettings().pageSize;
+    const pageSizeChanged = take !== this.lastQuery?.take;
+    this.emitQuery({
+      skip: args.skip ?? 0,
+      take,
+      sort: sorted?.name ? { field: sorted.name, descending: sorted.direction === 'descending' } : null,
+      search: args.search?.[0]?.key?.trim() ?? '',
+    });
+    if (pageSizeChanged) this.savePerspective();
+  }
+
+  private emitQuery(query: GridQuery): void {
+    this.lastQuery = query;
+    this.query.emit(query);
+  }
+
+  private async exportRows(): Promise<T[] | undefined> {
+    const load = this.exportAll();
+    if (!this.serverPaging() || !load) return undefined;
+    this.notify.info('กำลังเตรียมข้อมูลทั้งหมดสำหรับส่งออก…');
+    return load();
   }
 
   protected onActionComplete(args: { requestType?: string }): void {
