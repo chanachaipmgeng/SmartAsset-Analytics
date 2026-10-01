@@ -105,7 +105,12 @@
         <div class="min-w-0">
           <div class="eyebrow">{{ d.brand }} · {{ d.model_name }}</div>
           <h2 class="serial">{{ d.serial_number }}</h2>
-          <app-status-chip [status]="d.status" />
+          <div class="chip-row">
+            <app-status-chip [status]="d.status" />
+            @if (riskChip(); as rc) {
+              <app-status-chip [tone]="rc.tone" [text]="rc.text" />
+            }
+          </div>
         </div>
         <div class="flex gap-1">
           @if (canEdit()) {
@@ -263,9 +268,27 @@
           </section>
         }
 
+        @if (riskChip(); as rc) {
+          @if (rc.factors.length) {
+            <section class="section">
+              <h3>ปัจจัยความเสี่ยง</h3>
+              <ul class="risk-factors">
+                @for (f of rc.factors; track f) {
+                  <li>{{ f }}</li>
+                }
+              </ul>
+            </section>
+          }
+        }
+
         <section class="section">
           <h3>รูปภาพอุปกรณ์</h3>
           <app-photo-gallery ownerType="device" [ownerId]="d.id" [editable]="canEdit()" />
+        </section>
+
+        <section class="section">
+          <h3>เอกสารแนบ</h3>
+          <app-document-list ownerType="device" [ownerId]="d.id" [editable]="canEdit()" />
         </section>
 
         <section class="section">

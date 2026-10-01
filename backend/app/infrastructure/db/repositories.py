@@ -13,14 +13,26 @@ from app.domain.entities import (
     Customer,
     Device,
     DeviceModel,
+    Document,
     Installation,
     InventoryTransaction,
     Photo,
+    RepairOrder,
     Supplier,
     Tenant,
     User,
 )
-from app.domain.enums import AuditAction, AuditEntity, DeviceStatus, PhotoOwner, Role, ServiceLevel, TransactionType
+from app.domain.enums import (
+    AuditAction,
+    AuditEntity,
+    DeviceStatus,
+    DocumentOwner,
+    PhotoOwner,
+    RepairOrderStatus,
+    Role,
+    ServiceLevel,
+    TransactionType,
+)
 from app.domain.errors import ConflictError, PermissionDeniedError
 from app.domain.read_models import (
     AuditView,
@@ -29,6 +41,7 @@ from app.domain.read_models import (
     DailyCount,
     DeviceView,
     InstallationView,
+    RepairOrderView,
     StockBalanceRow,
     TransactionView,
 )
@@ -38,9 +51,11 @@ from app.infrastructure.db.models import (
     CustomerORM,
     DeviceModelORM,
     DeviceORM,
+    DocumentORM,
     InstallationORM,
     InventoryTransactionORM,
     PhotoORM,
+    RepairOrderORM,
     SupplierORM,
     TenantORM,
     UserORM,
@@ -72,11 +87,12 @@ CONSTRAINT_MESSAGES = {
 }
 
 
-def _to_entity(cls: type[E], row: Any) -> E:
+def _to_entity(cls: type[E], row: Any, enums: dict[str, type] | None = None) -> E:
+    enum_map = {**ENUM_FIELDS, **(enums or {})}
     values = {}
     for f in fields(cls):  # type: ignore[arg-type]
         value = getattr(row, f.name)
-        enum_cls = ENUM_FIELDS.get(f.name)
+        enum_cls = enum_map.get(f.name)
         if enum_cls is not None and value is not None:
             value = enum_cls(value)
         values[f.name] = value
@@ -89,8 +105,10 @@ def _to_columns(entity: Any, orm_cls: type) -> dict[str, Any]:
     for f in fields(entity):
         if f.name in columns:
             value = getattr(entity, f.name)
-            if f.name in ("created_at", "occurred_at") and value is None:
-                continue
+            # Server defaults / onupdate own these timestamps.
+            if f.name in ("created_at", "occurred_at", "updated_at"):
+                if value is None or f.name == "updated_at":
+                    continue
             result[f.name] = value.value if hasattr(value, "value") else value
     return result
 
@@ -98,16 +116,17 @@ def _to_columns(entity: Any, orm_cls: type) -> dict[str, Any]:
 class _Repo:
     orm: type
     entity: type
+    enums: dict[str, type] | None = None
 
     def __init__(self, session: AsyncSession) -> None:
         self.s = session
 
     async def _get(self, id_: UUID) -> Any:
         row = await self.s.get(self.orm, id_)
-        return _to_entity(self.entity, row) if row else None
+        return _to_entity(self.entity, row, self.enums) if row else None
 
     async def _list(self, stmt: Select) -> list[Any]:
-        return [_to_entity(self.entity, r) for r in (await self.s.scalars(stmt)).all()]
+        return [_to_entity(self.entity, r, self.enums) for r in (await self.s.scalars(stmt)).all()]
 
     async def add(self, entity: Any) -> None:
         self.s.add(self.orm(**_to_columns(entity, self.orm)))
@@ -390,11 +409,38 @@ class SqlTransactionRepository(_Repo):
     async def get(self, tx_id: UUID) -> InventoryTransaction | None:
         return await self._get(tx_id)
 
+    def _filter_views(
+        self,
+        stmt: Select[Any],
+        *,
+        device_id: UUID | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
+        tx_types: list[TransactionType] | None = None,
+        user_id: UUID | None = None,
+        customer_id: UUID | None = None,
+    ) -> Select[Any]:
+        tx = InventoryTransactionORM
+        if device_id:
+            stmt = stmt.where(tx.device_id == device_id)
+        if since:
+            stmt = stmt.where(tx.occurred_at >= since)
+        if until:
+            stmt = stmt.where(tx.occurred_at < until)
+        if tx_types:
+            stmt = stmt.where(tx.transaction_type.in_([t.value for t in tx_types]))
+        if user_id:
+            stmt = stmt.where(tx.user_id == user_id)
+        if customer_id:
+            stmt = stmt.where(tx.customer_id == customer_id)
+        return stmt
+
     async def list_views(
         self,
         *,
         device_id: UUID | None = None,
-        limit: int = 500,
+        skip: int = 0,
+        limit: int | None = 500,
         since: datetime | None = None,
         until: datetime | None = None,
         tx_types: list[TransactionType] | None = None,
@@ -417,21 +463,20 @@ class SqlTransactionRepository(_Repo):
             .outerjoin(TenantORM, TenantORM.id == tx.tenant_id)
             .outerjoin(CustomerORM, CustomerORM.id == tx.customer_id)
             .outerjoin(SupplierORM, SupplierORM.id == tx.supplier_id)
-            .order_by(tx.occurred_at.desc())
-            .limit(limit)
+            .order_by(tx.occurred_at.desc(), tx.id)
+            .offset(skip)
         )
-        if device_id:
-            stmt = stmt.where(tx.device_id == device_id)
-        if since:
-            stmt = stmt.where(tx.occurred_at >= since)
-        if until:
-            stmt = stmt.where(tx.occurred_at < until)
-        if tx_types:
-            stmt = stmt.where(tx.transaction_type.in_([t.value for t in tx_types]))
-        if user_id:
-            stmt = stmt.where(tx.user_id == user_id)
-        if customer_id:
-            stmt = stmt.where(tx.customer_id == customer_id)
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        stmt = self._filter_views(
+            stmt,
+            device_id=device_id,
+            since=since,
+            until=until,
+            tx_types=tx_types,
+            user_id=user_id,
+            customer_id=customer_id,
+        )
         result = []
         for t, serial, tenant_name, customer_name, user_name, supplier_name in (await self.s.execute(stmt)).all():
             result.append(
@@ -453,6 +498,27 @@ class SqlTransactionRepository(_Repo):
                 )
             )
         return result
+
+    async def count_views(
+        self,
+        *,
+        device_id: UUID | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
+        tx_types: list[TransactionType] | None = None,
+        user_id: UUID | None = None,
+        customer_id: UUID | None = None,
+    ) -> int:
+        stmt = self._filter_views(
+            select(func.count()).select_from(InventoryTransactionORM),
+            device_id=device_id,
+            since=since,
+            until=until,
+            tx_types=tx_types,
+            user_id=user_id,
+            customer_id=customer_id,
+        )
+        return int(await self.s.scalar(stmt) or 0)
 
     async def daily_counts(self, since: datetime, tz: str) -> list[DailyCount]:
         tx = InventoryTransactionORM
@@ -511,6 +577,42 @@ class SqlCustomerRepository(_Repo):
                 if counts.get(s.value)
             ],
             under_warranty=int(under_warranty or 0),
+        )
+
+    async def retenant_related(self, customer_id: UUID, tenant_id: UUID) -> None:
+        """Move historical installs, movements and attachments with the customer to a new tenant."""
+        install_ids = (
+            await self.s.scalars(select(InstallationORM.id).where(InstallationORM.customer_id == customer_id))
+        ).all()
+        tx_ids = (
+            await self.s.scalars(
+                select(InventoryTransactionORM.id).where(InventoryTransactionORM.customer_id == customer_id)
+            )
+        ).all()
+        await self.s.execute(
+            update(InstallationORM).where(InstallationORM.customer_id == customer_id).values(tenant_id=tenant_id)
+        )
+        await self.s.execute(
+            update(InventoryTransactionORM)
+            .where(InventoryTransactionORM.customer_id == customer_id)
+            .values(tenant_id=tenant_id)
+        )
+        if install_ids:
+            await self.s.execute(
+                update(PhotoORM)
+                .where(PhotoORM.owner_type == PhotoOwner.INSTALLATION.value, PhotoORM.owner_id.in_(install_ids))
+                .values(tenant_id=tenant_id)
+            )
+        if tx_ids:
+            await self.s.execute(
+                update(PhotoORM)
+                .where(PhotoORM.owner_type == PhotoOwner.TRANSACTION.value, PhotoORM.owner_id.in_(tx_ids))
+                .values(tenant_id=tenant_id)
+            )
+        await self.s.execute(
+            update(DocumentORM)
+            .where(DocumentORM.owner_type == DocumentOwner.CUSTOMER.value, DocumentORM.owner_id == customer_id)
+            .values(tenant_id=tenant_id)
         )
 
 
@@ -592,6 +694,7 @@ class SqlInstallationRepository(_Repo):
 
 
 MAX_PHOTOS_LISTED = 1000
+MAX_DOCUMENTS_LISTED = 1000
 
 
 class SqlPhotoRepository(_Repo):
@@ -621,6 +724,126 @@ class SqlPhotoRepository(_Repo):
         )
 
 
+class SqlRepairOrderRepository(_Repo):
+    orm, entity = RepairOrderORM, RepairOrder
+    enums = {"status": RepairOrderStatus}
+
+    def _view_stmt(self) -> Select:
+        return (
+            select(
+                RepairOrderORM,
+                DeviceORM.serial_number,
+                SupplierORM.name,
+                UserORM.full_name,
+            )
+            .join(DeviceORM, DeviceORM.id == RepairOrderORM.device_id)
+            .outerjoin(SupplierORM, SupplierORM.id == RepairOrderORM.supplier_id)
+            .join(UserORM, UserORM.id == RepairOrderORM.opened_by)
+        )
+
+    @staticmethod
+    def _view(row: Any) -> RepairOrderView:
+        o, serial, supplier_name, opened_by_name = row
+        return RepairOrderView(
+            id=o.id,
+            tenant_id=o.tenant_id,
+            device_id=o.device_id,
+            serial_number=serial,
+            supplier_id=o.supplier_id,
+            supplier_name=supplier_name,
+            opened_by=o.opened_by,
+            opened_by_name=opened_by_name,
+            opened_tx_id=o.opened_tx_id,
+            closed_tx_id=o.closed_tx_id,
+            status=RepairOrderStatus(o.status),
+            defect_note=o.defect_note,
+            parts=o.parts,
+            labor_cost=o.labor_cost,
+            parts_cost=o.parts_cost,
+            due_date=o.due_date,
+            assignee_name=o.assignee_name,
+            closed_at=o.closed_at,
+            qc_note=o.qc_note,
+            created_at=o.created_at,
+            updated_at=o.updated_at,
+        )
+
+    def _filter_views(
+        self,
+        stmt: Select[Any],
+        *,
+        status: RepairOrderStatus | None = None,
+        device_id: UUID | None = None,
+    ) -> Select[Any]:
+        if status:
+            stmt = stmt.where(RepairOrderORM.status == status.value)
+        if device_id:
+            stmt = stmt.where(RepairOrderORM.device_id == device_id)
+        return stmt
+
+    async def get(self, order_id: UUID) -> RepairOrder | None:
+        return await self._get(order_id)
+
+    async def get_open_for_device(self, device_id: UUID) -> RepairOrder | None:
+        stmt = select(RepairOrderORM).where(
+            RepairOrderORM.device_id == device_id,
+            RepairOrderORM.status == RepairOrderStatus.OPEN.value,
+        )
+        rows = await self._list(stmt)
+        return rows[0] if rows else None
+
+    async def get_view(self, order_id: UUID) -> RepairOrderView | None:
+        row = (await self.s.execute(self._view_stmt().where(RepairOrderORM.id == order_id))).first()
+        return self._view(row) if row else None
+
+    async def list_views(
+        self,
+        *,
+        status: RepairOrderStatus | None = None,
+        device_id: UUID | None = None,
+        skip: int = 0,
+        take: int | None = None,
+    ) -> list[RepairOrderView]:
+        stmt = self._filter_views(
+            self._view_stmt().order_by(RepairOrderORM.created_at.desc(), RepairOrderORM.id).offset(skip),
+            status=status,
+            device_id=device_id,
+        )
+        if take is not None:
+            stmt = stmt.limit(take)
+        return [self._view(r) for r in (await self.s.execute(stmt)).all()]
+
+    async def count_views(
+        self,
+        *,
+        status: RepairOrderStatus | None = None,
+        device_id: UUID | None = None,
+    ) -> int:
+        stmt = self._filter_views(
+            select(func.count()).select_from(RepairOrderORM),
+            status=status,
+            device_id=device_id,
+        )
+        return int(await self.s.scalar(stmt) or 0)
+
+
+class SqlDocumentRepository(_Repo):
+    orm, entity = DocumentORM, Document
+    enums = {"owner_type": DocumentOwner}
+
+    async def get(self, document_id: UUID) -> Document | None:
+        return await self._get(document_id)
+
+    async def list(self, owner_type: DocumentOwner, owner_ids: list[UUID] | None = None) -> list[Document]:
+        stmt = select(DocumentORM).where(DocumentORM.owner_type == owner_type.value)
+        if owner_ids:
+            stmt = stmt.where(DocumentORM.owner_id.in_(owner_ids))
+        return await self._list(stmt.order_by(DocumentORM.created_at, DocumentORM.id).limit(MAX_DOCUMENTS_LISTED))
+
+    async def delete(self, document_id: UUID) -> None:
+        await self.s.execute(delete(DocumentORM).where(DocumentORM.id == document_id))
+
+
 class SqlAuditRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.s = session
@@ -629,24 +852,17 @@ class SqlAuditRepository:
         # A Core insert without RETURNING: staff may append entries they are not allowed to read back.
         await self.s.execute(insert(AuditLogORM).values(**_to_columns(entry, AuditLogORM)))
 
-    async def list_views(
+    def _filter_views(
         self,
+        stmt: Select[Any],
         *,
         entity_type: AuditEntity | None = None,
         entity_id: UUID | None = None,
         user_id: UUID | None = None,
         since: datetime | None = None,
         until: datetime | None = None,
-        limit: int = 500,
-    ) -> list[AuditView]:
+    ) -> Select[Any]:
         a = AuditLogORM
-        stmt = (
-            select(a, UserORM.full_name, TenantORM.name)
-            .outerjoin(UserORM, UserORM.id == a.user_id)
-            .outerjoin(TenantORM, TenantORM.id == a.tenant_id)
-            .order_by(a.occurred_at.desc())
-            .limit(limit)
-        )
         if entity_type:
             stmt = stmt.where(a.entity_type == entity_type.value)
         if entity_id:
@@ -657,6 +873,37 @@ class SqlAuditRepository:
             stmt = stmt.where(a.occurred_at >= since)
         if until:
             stmt = stmt.where(a.occurred_at < until)
+        return stmt
+
+    async def list_views(
+        self,
+        *,
+        entity_type: AuditEntity | None = None,
+        entity_id: UUID | None = None,
+        user_id: UUID | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
+        skip: int = 0,
+        limit: int | None = 500,
+    ) -> list[AuditView]:
+        a = AuditLogORM
+        stmt = (
+            select(a, UserORM.full_name, TenantORM.name)
+            .outerjoin(UserORM, UserORM.id == a.user_id)
+            .outerjoin(TenantORM, TenantORM.id == a.tenant_id)
+            .order_by(a.occurred_at.desc(), a.id)
+            .offset(skip)
+        )
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        stmt = self._filter_views(
+            stmt,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            user_id=user_id,
+            since=since,
+            until=until,
+        )
         return [
             AuditView(
                 id=row.id,
@@ -674,12 +921,33 @@ class SqlAuditRepository:
             for row, user_name, tenant_name in (await self.s.execute(stmt)).all()
         ]
 
+    async def count_views(
+        self,
+        *,
+        entity_type: AuditEntity | None = None,
+        entity_id: UUID | None = None,
+        user_id: UUID | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
+    ) -> int:
+        stmt = self._filter_views(
+            select(func.count()).select_from(AuditLogORM),
+            entity_type=entity_type,
+            entity_id=entity_id,
+            user_id=user_id,
+            since=since,
+            until=until,
+        )
+        return int(await self.s.scalar(stmt) or 0)
+
 
 class SqlUnitOfWork:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
         self.audit = SqlAuditRepository(session)
         self.photos = SqlPhotoRepository(session)
+        self.repair_orders = SqlRepairOrderRepository(session)
+        self.documents = SqlDocumentRepository(session)
         self.tenants = SqlTenantRepository(session)
         self.users = SqlUserRepository(session)
         self.device_models = SqlDeviceModelRepository(session)

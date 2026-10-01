@@ -85,6 +85,12 @@
     font-weight: 700;
     word-break: break-all;
   }
+
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
 }
 
 .detail-body {
@@ -134,6 +140,17 @@
     margin: 0 0 12px;
     font-size: 15px;
     font-weight: 600;
+  }
+}
+
+.risk-factors {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: rgb(var(--app-on-surface-variant));
+
+  li + li {
+    margin-top: 4px;
   }
 }
 

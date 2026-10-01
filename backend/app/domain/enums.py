@@ -42,6 +42,18 @@ class PhotoOwner(StrEnum):
     DEVICE_MODEL = "device_model"
 
 
+class RepairOrderStatus(StrEnum):
+    OPEN = "OPEN"
+    CLOSED = "CLOSED"
+    CANCELLED = "CANCELLED"
+
+
+class DocumentOwner(StrEnum):
+    DEVICE = "device"
+    CUSTOMER = "customer"
+    REPAIR_ORDER = "repair_order"
+
+
 class AuditEntity(StrEnum):
     TENANT = "tenant"
     USER = "user"
@@ -50,6 +62,7 @@ class AuditEntity(StrEnum):
     CUSTOMER = "customer"
     INSTALLATION = "installation"
     PHOTO = "photo"
+    DOCUMENT = "document"
 
 
 class AuditAction(StrEnum):

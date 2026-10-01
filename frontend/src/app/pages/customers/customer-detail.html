@@ -66,6 +66,11 @@
       </dl>
     </section>
 
+    <section class="panel">
+      <h3>เอกสารแนบ</h3>
+      <app-document-list ownerType="customer" [ownerId]="c.id" [editable]="auth.canWrite()" />
+    </section>
+
     <div class="stats">
       <app-stat-card
         label="จุดติดตั้งที่ใช้งาน"

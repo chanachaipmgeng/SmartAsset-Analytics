@@ -91,3 +91,33 @@ class LocalPhotoStorage:
         if expires < time.time():
             return False
         return hmac.compare_digest(self._signature(photo_id, variant, expires), signature)
+
+
+class LocalDocumentStorage:
+    """Raw document bytes under MEDIA_ROOT/docs/{id[:2]}/{id}, with HMAC-signed download links."""
+
+    def __init__(self, root: str | Path, secret: str) -> None:
+        self.root = Path(root) / "docs"
+        self._key = hashlib.sha256(b"doc-links:" + secret.encode()).digest()
+
+    def path(self, document_id: UUID) -> Path:
+        return self.root / str(document_id)[:2] / str(document_id)
+
+    async def save(self, document_id: UUID, data: bytes) -> None:
+        await asyncio.to_thread(_write, self.path(document_id), data)
+
+    async def delete(self, document_id: UUID) -> None:
+        await asyncio.to_thread(self.path(document_id).unlink, missing_ok=True)
+
+    def _signature(self, document_id: UUID, expires: int) -> str:
+        message = f"{document_id}.{expires}".encode()
+        return hmac.new(self._key, message, hashlib.sha256).hexdigest()[:32]
+
+    def signed_query(self, document_id: UUID) -> str:
+        expires = (int(time.time()) // LINK_DAY_SECONDS + 2) * LINK_DAY_SECONDS
+        return f"exp={expires}&sig={self._signature(document_id, expires)}"
+
+    def verify(self, document_id: UUID, expires: int, signature: str) -> bool:
+        if expires < time.time():
+            return False
+        return hmac.compare_digest(self._signature(document_id, expires), signature)

@@ -7,8 +7,15 @@ disable-model-invocation: true
 # Update the user guide with screenshots
 
 Guide: `docs/user-guide/README.md`. Images: `docs/user-guide/images/NN-name.png` (numbered in flow order).
+Playwright recapture of the whole set: `node scripts/guide-screenshots.cjs` (see header). After README edits: `node scripts/guide-html.cjs`.
+
+New flows to keep in the shot list: bell backlog (`51-alerts`), customer tenant on edit (`52-customer-edit`), customer import (`53-customer-import`), repair orders (`54-repairs`), analytics report tabs (`55-reports-risk`), admin password reset (`56-user-reset-password`), device risk + documents (`57-device-risk`).
 
 ## 1. Run the app
+
+Prefer the Docker stack at `http://localhost:8088` (`docker compose up -d` then `docker compose exec api python -m app.infrastructure.demo_data`). Playwright uses `GUIDE_BASE_URL` (default 8088).
+
+Local split (only if you are iterating on frontend/API outside containers):
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db
@@ -16,7 +23,7 @@ cd backend && uv run uvicorn app.main:app --port 8001
 cd frontend && npx ng serve --port 4210
 ```
 
-If port 5434 is not published (stack started without the dev file), either rerun the first line or point a proxy
+If port 5434 is not published (stack started without the dev file), either rerun the db line or point a proxy
 config at the Docker nginx (`"/api": { "target": "http://127.0.0.1:8088" }`) and `ng serve --proxy-config <file>`.
 
 Log in with a dedicated screenshot account (superadmin shows every menu). Deactivate it afterwards

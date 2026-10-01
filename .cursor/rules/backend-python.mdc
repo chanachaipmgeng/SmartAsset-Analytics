@@ -34,6 +34,9 @@ Raise `DomainError` subclasses with a Thai message; `presentation/errors.py` map
 
 - Use `actor.resolve_tenant(requested)` for writes that need a tenant.
 - New tables with `tenant_id`: `ENABLE ROW LEVEL SECURITY` + policy on `current_setting('app.tenant_id', true)` in the same migration.
+- Spreadsheet import: follow `device_import.py` (dry-run default, max 2 MB / 1,000 rows, all-or-nothing).
+- Non-image files go through `DocumentStorage` (`infrastructure/media.py`), not `PhotoStorage`.
+- Keyword grouping of QC/repair notes is `KeywordIssueSummarizer`; do not call an LLM from the request path.
 
 ## Migrations
 

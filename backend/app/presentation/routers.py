@@ -5,9 +5,24 @@ from uuid import UUID
 from fastapi import APIRouter, File, Form, Path, Query, Response, UploadFile, status
 from fastapi.responses import FileResponse
 
-from app.application import admin, audit, auth, bulk, customers, dashboard, device_import, inventory, photos, reports
-from app.domain.entities import Photo
-from app.domain.enums import AuditEntity, DeviceStatus, PhotoOwner, TransactionType
+from app.application import (
+    admin,
+    audit,
+    auth,
+    bulk,
+    customer_import,
+    customers,
+    dashboard,
+    device_import,
+    documents,
+    installation_import,
+    inventory,
+    photos,
+    repairs,
+    reports,
+)
+from app.domain.entities import Document, Photo
+from app.domain.enums import AuditEntity, DeviceStatus, DocumentOwner, PhotoOwner, RepairOrderStatus, TransactionType
 from app.domain.errors import NotFoundError, ValidationError
 from app.infrastructure import spreadsheet
 from app.presentation import schemas as s
@@ -167,6 +182,12 @@ async def get_device(device_id: UUID, actor: ActorDep, uow: UowDep):
     return await inventory.get_device(uow, actor, device_id)
 
 
+@router.get("/devices/{device_id}/risk", response_model=s.DeviceRiskOut, tags=["devices", "reports"])
+async def device_risk_one(device_id: UUID, actor: ActorDep, uow: UowDep):
+    rows = await reports.device_risk(uow, actor, device_id=device_id)
+    return rows[0]
+
+
 @router.patch("/devices/{device_id}", response_model=s.DeviceOut, tags=["devices"])
 async def update_device(device_id: UUID, body: s.DevicePatch, actor: ActorDep, uow: UowDep):
     return await inventory.update_device(uow, actor, device_id, body.model_dump(exclude_unset=True))
@@ -269,7 +290,9 @@ async def qc_fail(body: s.QcFailIn, actor: ActorDep, uow: UowDep):
 async def list_transactions(
     actor: ActorDep,
     uow: UowDep,
+    response: Response,
     device_id: UUID | None = None,
+    skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=5000)] = 500,
     date_from: date | None = None,
     date_to: date | None = None,
@@ -277,10 +300,12 @@ async def list_transactions(
     user_id: UUID | None = None,
     customer_id: UUID | None = None,
 ):
-    return await inventory.list_transactions(
+    """`limit` caps the page size (default 500); `skip` offsets. `X-Total-Count` is the full match count."""
+    items, total = await inventory.list_transactions(
         uow,
         actor,
         device_id=device_id,
+        skip=skip,
         limit=limit,
         date_from=date_from,
         date_to=date_to,
@@ -288,6 +313,8 @@ async def list_transactions(
         user_id=user_id,
         customer_id=customer_id,
     )
+    response.headers["X-Total-Count"] = str(total)
+    return items
 
 
 @router.get("/inventory/summary", response_model=s.StockSummaryOut, tags=["inventory"])
@@ -304,6 +331,45 @@ async def list_customers(actor: ActorDep, uow: UowDep):
 @router.post("/customers", response_model=s.CustomerOut, status_code=status.HTTP_201_CREATED, tags=["customers"])
 async def create_customer(body: s.CustomerIn, actor: ActorDep, uow: UowDep):
     return await customers.create_customer(uow, actor, **body.model_dump())
+
+
+@router.post("/customers/import", response_model=s.CustomerImportResultOut, tags=["customers"])
+async def import_customers(
+    actor: ActorDep,
+    uow: UowDep,
+    file: Annotated[UploadFile, File(description=".xlsx หรือ .csv ตามไฟล์แม่แบบ")],
+    dry_run: bool = True,
+):
+    content = await file.read(MAX_IMPORT_BYTES + 1)
+    if len(content) > MAX_IMPORT_BYTES:
+        raise ValidationError("ไฟล์ต้องมีขนาดไม่เกิน 2 MB")
+    table = spreadsheet.read_table(content, file.filename or "")
+    return await customer_import.import_customers(uow, actor, table, dry_run=dry_run)
+
+
+@router.get("/customers/import/template", tags=["customers"])
+async def customer_import_template(actor: ActorDep, uow: UowDep):
+    headers = customer_import.template_headers(include_tenant=actor.is_superadmin)
+    example = [
+        "บริษัท ตัวอย่าง จำกัด",
+        "คุณสมชาย",
+        "02-000-0001",
+        "contact@example.com",
+        "มาตรฐาน",
+        "ถนนตัวอย่าง กรุงเทพมหานคร",
+        "0105555555555",
+        "ตัวอย่าง",
+    ]
+    if actor.is_superadmin:
+        tenants = await uow.tenants.list()
+        example.append(tenants[0].code if tenants else "")
+    levels = ["พื้นฐาน", "มาตรฐาน", "พรีเมียม"]
+    content = spreadsheet.build_template(headers, example[: len(headers)], levels)
+    return Response(
+        content,
+        media_type=XLSX_TYPE,
+        headers={"Content-Disposition": 'attachment; filename="customer-import-template.xlsx"'},
+    )
 
 
 @router.get("/customers/{customer_id}", response_model=s.CustomerDetailOut, tags=["customers"])
@@ -349,6 +415,44 @@ async def create_installation(body: s.InstallationIn, actor: ActorDep, uow: UowD
     return await inventory.install(uow, actor, **body.model_dump())
 
 
+@router.post("/installations/import", response_model=s.InstallationImportResultOut, tags=["installations"])
+async def import_installations(
+    actor: ActorDep,
+    uow: UowDep,
+    file: Annotated[UploadFile, File(description=".xlsx หรือ .csv ตามไฟล์แม่แบบ")],
+    dry_run: bool = True,
+):
+    content = await file.read(MAX_IMPORT_BYTES + 1)
+    if len(content) > MAX_IMPORT_BYTES:
+        raise ValidationError("ไฟล์ต้องมีขนาดไม่เกิน 2 MB")
+    table = spreadsheet.read_table(content, file.filename or "")
+    return await installation_import.import_installations(uow, actor, table, dry_run=dry_run)
+
+
+@router.get("/installations/import/template", tags=["installations"])
+async def installation_import_template(actor: ActorDep, uow: UowDep):
+    headers = installation_import.template_headers()
+    customers_list = await customers.list_customers(uow, actor)
+    names = [c.company_name for c in customers_list if c.is_active]
+    example = [
+        "SN-0001",
+        names[0] if names else "บริษัท ตัวอย่าง จำกัด",
+        "2026-09-29",
+        13.7563,
+        100.5018,
+        "ถนนตัวอย่าง กรุงเทพมหานคร",
+        "คุณสมชาย",
+        "02-000-0001",
+        "ตัวอย่าง",
+    ]
+    content = spreadsheet.build_template(headers, example[: len(headers)], names)
+    return Response(
+        content,
+        media_type=XLSX_TYPE,
+        headers={"Content-Disposition": 'attachment; filename="installation-import-template.xlsx"'},
+    )
+
+
 @router.patch("/installations/{installation_id}", response_model=s.InstallationOut, tags=["installations"])
 async def update_installation(installation_id: UUID, body: s.InstallationPatch, actor: ActorDep, uow: UowDep):
     return await inventory.update_installation(uow, actor, installation_id, body.model_dump(exclude_unset=True))
@@ -359,14 +463,17 @@ async def update_installation(installation_id: UUID, body: s.InstallationPatch, 
 async def list_audit(
     actor: ActorDep,
     uow: UowDep,
+    response: Response,
     entity_type: AuditEntity | None = None,
     entity_id: UUID | None = None,
     user_id: UUID | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
+    skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=5000)] = 500,
 ):
-    return await audit.list_audit(
+    """`limit` caps the page size (default 500); `skip` offsets. `X-Total-Count` is the full match count."""
+    items, total = await audit.list_audit(
         uow,
         actor,
         entity_type=entity_type,
@@ -374,8 +481,11 @@ async def list_audit(
         user_id=user_id,
         date_from=date_from,
         date_to=date_to,
+        skip=skip,
         limit=limit,
     )
+    response.headers["X-Total-Count"] = str(total)
+    return items
 
 
 # ---- dashboard ----
@@ -396,6 +506,67 @@ async def aging_report(
 ):
     return await reports.aging(uow, actor, status=status_)
 
+
+@router.get("/reports/device-risk", response_model=list[s.DeviceRiskOut], tags=["reports"])
+async def device_risk_report(actor: ActorDep, uow: UowDep, device_id: UUID | None = None):
+    return await reports.device_risk(uow, actor, device_id=device_id)
+
+
+@router.get("/reports/repair-rate", response_model=list[s.RepairRateOut], tags=["reports"])
+async def repair_rate_report(
+    actor: ActorDep, uow: UowDep, days: Annotated[int, Query(ge=1, le=3650)] = 90
+):
+    return await reports.repair_rate_by_model(uow, actor, days=days)
+
+
+@router.get("/reports/stock-forecast", response_model=list[s.StockForecastOut], tags=["reports"])
+async def stock_forecast_report(
+    actor: ActorDep, uow: UowDep, days: Annotated[int, Query(ge=1, le=3650)] = 90
+):
+    return await reports.stock_forecast(uow, actor, days=days)
+
+
+@router.get("/reports/issue-summary", response_model=list[s.IssueGroupOut], tags=["reports"])
+async def issue_summary_report(
+    actor: ActorDep, uow: UowDep, days: Annotated[int, Query(ge=1, le=3650)] = 90
+):
+    return await reports.issue_summary(uow, actor, days=days)
+
+
+@router.get("/reports/warranty", response_model=list[s.WarrantyRowOut], tags=["reports"])
+async def warranty_report(
+    actor: ActorDep, uow: UowDep, within_days: Annotated[int, Query(ge=0, le=3650)] = 90
+):
+    return await reports.warranty_report(uow, actor, within_days=within_days)
+
+
+@router.get("/reports/repair-tat", response_model=list[s.RepairTatOut], tags=["reports"])
+async def repair_tat_report(
+    actor: ActorDep, uow: UowDep, days: Annotated[int, Query(ge=1, le=3650)] = 180
+):
+    return await reports.repair_tat(uow, actor, days=days)
+
+
+@router.get("/reports/monthly-movement", response_model=list[s.MonthlyMovementOut], tags=["reports"])
+async def monthly_movement_report(
+    actor: ActorDep, uow: UowDep, months: Annotated[int, Query(ge=1, le=120)] = 12
+):
+    return await reports.monthly_movement(uow, actor, months=months)
+
+
+@router.get("/reports/firmware-drift", response_model=list[s.FirmwareDriftOut], tags=["reports"])
+async def firmware_drift_report(actor: ActorDep, uow: UowDep):
+    return await reports.firmware_drift(uow, actor)
+
+
+@router.get("/reports/depreciation", response_model=list[s.DepreciationOut], tags=["reports"])
+async def depreciation_report(
+    actor: ActorDep,
+    uow: UowDep,
+    useful_years: Annotated[int, Query(ge=1, le=50)] = 5,
+    include_retired: bool = False,
+):
+    return await reports.depreciation(uow, actor, useful_years=useful_years, include_retired=include_retired)
 
 # ---- photos ----
 MAX_PHOTO_BYTES = 8 * 1024 * 1024
@@ -471,3 +642,121 @@ async def photo_file(
     if not c.media.verify(photo_id, variant, exp, sig) or not path.is_file():
         raise NotFoundError("ไม่พบรูปภาพหรือลิงก์หมดอายุ")
     return FileResponse(path, media_type="image/webp", headers={"Cache-Control": "private, max-age=86400"})
+
+
+# ---- repair orders ----
+@router.get("/repair-orders", response_model=list[s.RepairOrderOut], tags=["repair-orders"])
+async def list_repair_orders(
+    actor: ActorDep,
+    uow: UowDep,
+    response: Response,
+    status_: Annotated[RepairOrderStatus | None, Query(alias="status")] = None,
+    device_id: UUID | None = None,
+    skip: Annotated[int, Query(ge=0)] = 0,
+    take: Annotated[int | None, Query(ge=1, le=500)] = None,
+):
+    items, total = await repairs.list_orders(
+        uow, actor, status=status_, device_id=device_id, skip=skip, take=take
+    )
+    response.headers["X-Total-Count"] = str(total)
+    return items
+
+
+@router.get("/repair-orders/{order_id}", response_model=s.RepairOrderOut, tags=["repair-orders"])
+async def get_repair_order(order_id: UUID, actor: ActorDep, uow: UowDep):
+    return await repairs.get_order(uow, actor, order_id)
+
+
+@router.patch("/repair-orders/{order_id}", response_model=s.RepairOrderOut, tags=["repair-orders"])
+async def update_repair_order(order_id: UUID, body: s.RepairOrderUpdateIn, actor: ActorDep, uow: UowDep):
+    return await repairs.update_order(uow, actor, order_id, body.model_dump(exclude_unset=True))
+
+
+@router.post("/repair-orders/{order_id}/cancel", response_model=s.RepairOrderOut, tags=["repair-orders"])
+async def cancel_repair_order(order_id: UUID, actor: ActorDep, uow: UowDep):
+    return await repairs.cancel_order(uow, actor, order_id)
+
+
+# ---- documents ----
+MAX_DOCUMENT_BYTES = 10 * 1024 * 1024
+
+
+def _document_out(doc: Document, c: ContainerDep) -> s.DocumentOut:
+    return s.DocumentOut(
+        id=doc.id,
+        owner_type=doc.owner_type,
+        owner_id=doc.owner_id,
+        file_name=doc.file_name,
+        content_type=doc.content_type,
+        size_bytes=doc.size_bytes,
+        caption=doc.caption,
+        uploaded_by=doc.uploaded_by,
+        created_at=doc.created_at,
+        url=f"/api/v1/documents/{doc.id}/file?" + c.documents.signed_query(doc.id),
+    )
+
+
+@router.get("/documents", response_model=list[s.DocumentOut], tags=["documents"])
+async def list_documents(
+    actor: ActorDep,
+    uow: UowDep,
+    c: ContainerDep,
+    owner_type: DocumentOwner,
+    owner_id: Annotated[list[UUID] | None, Query(max_length=500)] = None,
+):
+    return [_document_out(d, c) for d in await documents.list_documents(uow, actor, owner_type, owner_id)]
+
+
+@router.post("/documents", response_model=s.DocumentOut, status_code=status.HTTP_201_CREATED, tags=["documents"])
+async def upload_document(
+    actor: ActorDep,
+    uow: UowDep,
+    c: ContainerDep,
+    owner_type: Annotated[DocumentOwner, Form()],
+    owner_id: Annotated[UUID, Form()],
+    file: Annotated[UploadFile, File(description="PDF, DOCX หรือ XLSX ไม่เกิน 10 MB")],
+    caption: Annotated[str | None, Form(max_length=200)] = None,
+):
+    content = await file.read(MAX_DOCUMENT_BYTES + 1)
+    if len(content) > MAX_DOCUMENT_BYTES:
+        raise ValidationError("ไฟล์เอกสารต้องมีขนาดไม่เกิน 10 MB")
+    doc = await documents.upload_document(
+        uow,
+        c.documents,
+        actor,
+        owner_type=owner_type,
+        owner_id=owner_id,
+        file_name=file.filename or "document",
+        content_type=file.content_type,
+        data=content,
+        caption=caption,
+    )
+    return _document_out(doc, c)
+
+
+@router.delete("/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["documents"])
+async def delete_document(document_id: UUID, actor: ActorDep, uow: UowDep, c: ContainerDep):
+    await documents.delete_document(uow, c.documents, actor, document_id)
+
+
+@router.get("/documents/{document_id}/file", tags=["documents"], response_class=FileResponse)
+async def document_file(
+    document_id: UUID,
+    c: ContainerDep,
+    uow: SystemUowDep,
+    exp: int,
+    sig: Annotated[str, Query(max_length=64)],
+):
+    """Signed link from `DocumentOut.url`, so downloads work without a bearer token."""
+    path = c.documents.path(document_id)
+    if not c.documents.verify(document_id, exp, sig) or not path.is_file():
+        raise NotFoundError("ไม่พบเอกสารหรือลิงก์หมดอายุ")
+    doc = await uow.documents.get(document_id)
+    if doc is None:
+        raise NotFoundError("ไม่พบเอกสารหรือลิงก์หมดอายุ")
+    return FileResponse(
+        path,
+        media_type=doc.content_type,
+        filename=doc.file_name,
+        headers={"Cache-Control": "private, max-age=86400"},
+    )

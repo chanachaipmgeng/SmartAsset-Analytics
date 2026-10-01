@@ -11,7 +11,17 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.application.bulk import BulkAction
 from app.core.config import get_settings
-from app.domain.enums import AuditAction, AuditEntity, DeviceStatus, PhotoOwner, Role, ServiceLevel, TransactionType
+from app.domain.enums import (
+    AuditAction,
+    AuditEntity,
+    DeviceStatus,
+    DocumentOwner,
+    PhotoOwner,
+    RepairOrderStatus,
+    Role,
+    ServiceLevel,
+    TransactionType,
+)
 from app.domain.rules import ALLOWED_TRANSITIONS
 
 REPO = Path(__file__).resolve().parents[2]
@@ -62,6 +72,8 @@ CHECKS: dict[str, type[StrEnum]] = {
     "inventory_transactions_transaction_type_check": TransactionType,
     "customers_service_level_check": ServiceLevel,
     "photos_owner_type_check": PhotoOwner,
+    "repair_orders_status_check": RepairOrderStatus,
+    "documents_owner_type_check": DocumentOwner,
     "audit_logs_entity_type_check": AuditEntity,
     "audit_logs_action_check": AuditAction,
 }

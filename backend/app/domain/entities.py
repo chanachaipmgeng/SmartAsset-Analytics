@@ -4,7 +4,17 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
 
-from app.domain.enums import AuditAction, AuditEntity, DeviceStatus, PhotoOwner, Role, ServiceLevel, TransactionType
+from app.domain.enums import (
+    AuditAction,
+    AuditEntity,
+    DeviceStatus,
+    DocumentOwner,
+    PhotoOwner,
+    RepairOrderStatus,
+    Role,
+    ServiceLevel,
+    TransactionType,
+)
 
 
 @dataclass
@@ -135,6 +145,46 @@ class Photo:
     size_bytes: int
     width: int
     height: int
+    uploaded_by: UUID
+    tenant_id: UUID | None = None
+    caption: str | None = None
+    id: UUID = field(default_factory=uuid4)
+    created_at: datetime | None = None
+
+
+@dataclass
+class RepairOrder:
+    """Work order opened by SEND_REPAIR or QC_FAIL and closed by REPAIR_DONE."""
+
+    device_id: UUID
+    opened_by: UUID
+    defect_note: str
+    tenant_id: UUID | None = None
+    supplier_id: UUID | None = None
+    opened_tx_id: UUID | None = None
+    closed_tx_id: UUID | None = None
+    status: RepairOrderStatus = RepairOrderStatus.OPEN
+    parts: str | None = None
+    labor_cost: Decimal | None = None
+    parts_cost: Decimal | None = None
+    due_date: date | None = None
+    assignee_name: str | None = None
+    closed_at: datetime | None = None
+    qc_note: str | None = None
+    id: UUID = field(default_factory=uuid4)
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+@dataclass
+class Document:
+    """Non-photo file (PDF/DOCX/XLSX) attached to a device, customer or repair order."""
+
+    owner_type: DocumentOwner
+    owner_id: UUID
+    file_name: str
+    content_type: str
+    size_bytes: int
     uploaded_by: UUID
     tenant_id: UUID | None = None
     caption: str | None = None

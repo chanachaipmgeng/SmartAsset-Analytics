@@ -4,6 +4,7 @@
       <button ejs-button [isPrimary]="true" iconCss="e-icons e-plus" (click)="openCreate()">
         เพิ่มลูกค้า
       </button>
+      <button ejs-button iconCss="e-icons e-upload-1" (click)="importOpen.set(true)">นำเข้า</button>
       <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">
         แก้ไข
       </button>
@@ -81,7 +82,7 @@
         <label>ชื่อบริษัท *</label>
         <ejs-textbox [(value)]="companyName" [liveValue]="companyName"></ejs-textbox>
       </div>
-      @if (auth.isSuperadmin() && !editingId()) {
+      @if (auth.isSuperadmin()) {
         <div class="full">
           <label>กลุ่มลูกค้า *</label>
           <ejs-dropdownlist
@@ -141,3 +142,5 @@
     </button>
   </ng-template>
 </ejs-dialog>
+
+<app-customer-import [(open)]="importOpen" (imported)="onImported($event)" />

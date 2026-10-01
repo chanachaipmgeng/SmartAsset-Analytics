@@ -25,7 +25,7 @@ flowchart LR
 backend/
   app/
     domain/          entities, enums, errors, ports (Protocol), rules.py (state machine + สิทธิ์)
-    application/     use case ต่อโดเมน: inventory, device_import, customers, admin (รวม suppliers), auth, dashboard, reports, photos
+    application/     use case ต่อโดเมน: inventory, device_import, customer_import, installation_import, customers, repairs, documents, admin, auth, dashboard, reports, photos
     infrastructure/  db (models, repositories, session), security (JWT/argon2), spreadsheet, media (ไฟล์รูป), seed
     presentation/    routers.py (/api/v1), schemas.py (Pydantic), deps.py, errors.py
   alembic/versions/  migration ตั้งชื่อ 000N_คำอธิบาย.py
@@ -33,7 +33,7 @@ backend/
 frontend/src/
   app/core/          api.service (mutation), auth, guards, models, labels, device-actions, locale, theme, photos
   app/layout/        shell (app bar + sidebar)
-  app/pages/         หน้าตาม route (dashboard, reports, devices, scan, transactions, customers, installations, admin/*, profile, login)
+  app/pages/         หน้าตาม route (dashboard, reports, devices, scan, transactions, customers, installations, repairs, admin/*, profile, login)
   app/shared/        data-grid, record-view, photo-gallery, photo-picker, avatar, dialogs, installation-map, page-header, empty/error state, stat-card, filter-chips, command-palette ...
   styles/            _tokens.scss, _mixins.scss (ใช้ด้วย @use 'tokens')
   tailwind.css       Tailwind + import CSS ของ Syncfusion เข้า cascade layer
@@ -103,18 +103,20 @@ docs/                เอกสารนี้ + คู่มือผู้�
 | --- | --- |
 | auth | `POST /auth/login`, `/auth/refresh`, `/auth/change-password`, `GET /auth/me` |
 | tenants, users, device-models, suppliers | CRUD (tenants, device-models, suppliers เขียนได้เฉพาะ superadmin) |
-| devices | `GET /devices?search=&status=&model_id=&sort=&skip=&take=`, `GET /devices/status-counts`, `GET /devices/by-serial/{serial}`, `GET/PATCH/DELETE /devices/{id}` (DELETE = ปลดระวาง) |
+| devices | `GET /devices?search=&status=&model_id=&sort=&skip=&take=`, `GET /devices/status-counts`, `GET /devices/by-serial/{serial}`, `GET/PATCH/DELETE /devices/{id}` (DELETE = ปลดระวาง), `GET /devices/{id}/risk` |
 | inventory | `POST /inventory/check-in`, `check-out`, `transfer`, `loan`, `return`, `qc-pass`, `qc-fail`, `send-repair`, `repair-done`, `import?dry_run=`, `GET import/template`, `transactions`, `summary`, `bulk` |
-| customers | `GET`, `GET /customers/{id}` (พร้อม `summary` นับจุดติดตั้ง/อุปกรณ์), `POST`, `PATCH`, `DELETE` (= ระงับ) |
-| installations | `GET /installations?active_only=&customer_id=`, `GET /installations/nearby?lat=&lng=&radius_m=` (PostGIS `ST_DWithin`, สูงสุด 500 กม.), `POST`, `PATCH` |
-| dashboard | `GET /dashboard/summary` (การ์ดสถานะ, แนวโน้ม 7/30 วัน, งานค้าง) |
-| reports | `GET /reports/stock-balance?include_retired=` (รุ่น × กลุ่มลูกค้า × สถานะ พร้อมรวมต้นทุน), `GET /reports/aging?status=` (วันในสถานะปัจจุบันนับจาก transaction ล่าสุด) |
-| photos | `GET /photos?owner_type=&owner_id=` (ส่ง `owner_id` ซ้ำได้ ไม่ส่งคือทุกรูปที่เห็นได้ของประเภทนั้น), `POST /photos` (multipart: `owner_type`, `owner_id`, `file` JPG/PNG/WebP ≤ 8 MB, `caption`), `DELETE /photos/{id}`, `GET /photos/{id}/file` (ลิงก์ลงลายเซ็น ไม่ต้อง auth) |
-| audit | `GET /audit?entity_type=&entity_id=&user_id=&date_from=&date_to=&limit=` (superadmin และ tenant_admin เท่านั้น) |
+| customers | `GET`, `GET /customers/{id}` (พร้อม `summary`), `POST`, `PATCH` (superadmin ย้าย `tenant_id` ได้ถ้าไม่มีจุดติดตั้งที่ active), `DELETE` (= ระงับ), `POST /customers/import`, `GET /customers/import/template` |
+| installations | `GET /installations?active_only=&customer_id=`, `GET /installations/nearby?lat=&lng=&radius_m=` (PostGIS `ST_DWithin`, สูงสุด 500 กม.), `POST`, `PATCH`, `POST /installations/import`, `GET /installations/import/template` |
+| repair-orders | `GET /repair-orders?status=&device_id=&skip=&take=`, `GET/PATCH /repair-orders/{id}`, `POST /repair-orders/{id}/cancel` — สร้างอัตโนมัติตอน `SEND_REPAIR`/`QC_FAIL` ปิดตอน `REPAIR_DONE` |
+| documents | `GET/POST /documents`, `DELETE /documents/{id}`, `GET /documents/{id}/file` (HMAC เหมือนรูป; PDF/DOCX/XLSX ≤ 10 MB; เจ้าของ `device`/`customer`/`repair_order`) |
+| dashboard | `GET /dashboard/summary` (การ์ดสถานะ, แนวโน้ม 7/30 วัน, งานค้าง: QC / ยืมเกินกำหนด / ซ่อมนาน / ประกันใกล้หมด) |
+| reports | `stock-balance`, `aging`, `device-risk`, `repair-rate`, `stock-forecast`, `issue-summary`, `warranty`, `repair-tat`, `monthly-movement`, `firmware-drift`, `depreciation` |
+| photos | `GET /photos?owner_type=&owner_id=`, `POST /photos`, `DELETE /photos/{id}`, `GET /photos/{id}/file` |
+| audit | `GET /audit?entity_type=&entity_id=&user_id=&date_from=&date_to=&skip=&limit=` (`X-Total-Count`; superadmin และ tenant_admin) |
 
 Paging ของ `GET /devices`: ไม่ส่ง `take` จะคืนทุกแถว (ใช้ตอน export), ส่ง `take` (สูงสุด 500) กับ `skip` เพื่อแบ่งหน้า `sort` เป็นชื่อฟิลด์ใน `DEVICE_SORT_FIELDS` ใส่ `-` นำหน้าเพื่อเรียงมากไปน้อย (ค่าเริ่มต้น `-created_at`) และ header `X-Total-Count` บอกจำนวนแถวที่ตรงเงื่อนไขทุกครั้ง
 
-`GET /inventory/transactions` กรองด้วย `device_id`, `date_from`, `date_to`, `transaction_type` (ส่งซ้ำได้หลายค่า), `user_id`, `customer_id` และ `limit` (ค่าเริ่มต้น 500 สูงสุด 5,000)
+`GET /inventory/transactions` และ `GET /audit` กรองตามเดิม และรับ `skip` + `limit` (ค่าเริ่มต้น 500 สูงสุด 5,000) พร้อม `X-Total-Count` เพื่อแบ่งหน้าและส่งออกจากตาราง
 
 `POST /inventory/bulk` รับ `{action, device_ids (ไม่เกิน 200), ...ฟิลด์ของ action}` โดย `action` เป็น `transfer`, `check_out`, `loan`, `return`, `qc_pass`, `send_repair` หรือ `retire` ทำทุกเครื่องใน DB transaction เดียว ถ้ามีเครื่องใดทำไม่ได้จะคืน 422 พร้อม `failures` (serial และเหตุผล) และไม่บันทึกอะไรเลย
 
@@ -126,13 +128,13 @@ Paging ของ `GET /devices`: ไม่ส่ง `take` จะคืนทุ
 
 - สร้างไฟล์ `alembic/versions/000N_<ชื่อ>.py` โดย `down_revision` ชี้ไฟล์ก่อนหน้า
 - เปลี่ยน enum ของสถานะหรือประเภทรายการ: แก้ CHECK constraint (ดู `0003_repair_status.py`, `0005_loan_qc.py`) และ enum ใน `domain/enums.py` และ `frontend/src/app/core/models.ts`
-- ประวัติ: `0004_edit_audit` (ประเภท EDIT, `customers.is_active`), `0005_loan_qc` (ON_LOAN/UNDER_QC, LOAN/QC_PASS/QC_FAIL, `devices.loan_due_date`), `0006_suppliers` (ตาราง `suppliers`, `inventory_transactions.supplier_id`), `0007_photos` (ตาราง `photos` + policy RLS), `0008_more_fields` (`devices.asset_tag` unique ต่อ tenant, `firmware_version`, `supplier_id`; `customers.address/tax_id` (13 หลัก)/`notes`; `installations.site_contact/site_phone/notes/removal_reason`), `0009_audit_log` (ตาราง `audit_logs` append-only, อ่านได้เฉพาะ superadmin หรือ tenant_admin ของ tenant นั้น)
+- ประวัติ: `0004_edit_audit` … `0009_audit_log` ตามเดิม แล้ว `0010_repair_orders` (ใบงานซ่อม + RLS), `0011_documents` (เอกสารแนบ + ขยาย CHECK ของ `audit_logs.entity_type` ให้มี `document`)
 - container `api` รัน `alembic upgrade head` ทุกครั้งที่เริ่ม
 
 ### ข้อมูลตัวอย่าง (demo data)
 
 - `python -m app.infrastructure.demo_data` (ใน container `api`) เรียก `seed()` ก่อน แล้วสร้างข้อมูลสาธิตผ่าน use case ใน `application/` เหมือนผู้ใช้จริง state machine และแถว `inventory_transactions` จึงถูกต้องเสมอ ใช้การเชื่อมต่อ owner (`MIGRATION_DATABASE_URL`) แบบเดียวกับ seed
-- `random.Random(20260929)` ทำให้ DB ใหม่ได้ข้อมูลชุดเดิมทุกครั้ง; รันซ้ำจะเจอผู้ใช้ `warehouse@example.com` แล้วข้าม
+- `random.Random(20260929)` ทำให้ DB ใหม่ได้ข้อมูลชุดเดิมทุกครั้ง; รันซ้ำจะเจอผู้ใช้ `warehouse@example.com` แล้วข้ามการสร้างเครื่อง แต่ยังเปิด `repair_orders` ให้เครื่องที่สถานะ IN_REPAIR ยังไม่มีใบงานเปิด (กรณีโหลด demo ก่อนมีตารางใบงาน)
 - ประวัติย้อนหลัง 90 วัน: หลังรัน use case ของแต่ละเครื่องจะ `UPDATE` เวลาใน `inventory_transactions.occurred_at`, `devices.created_at`, `installations.created_at/removed_at`, `photos.created_at` ตามแผนเวลา (ช่วง 08:30-17:30 น.) และกระจาย `audit_logs` ของรอบนี้ไปตลอดช่วงโดยคงลำดับและอยู่ในเวลาทำงานเช่นกัน ส่วนวันครบกำหนดยืมในอดีต (use case ไม่ยอมรับ) ตั้งตรงใน `devices.loan_due_date` และ note ของรายการ LOAN
 - รูปทั้งหมดวาดด้วย Pillow ใน `infrastructure/demo_images.py` (รูปรุ่น, avatar, รูปเครื่องบนโต๊ะ/ชำรุด, รูปหน้างาน) แล้วอัปโหลดผ่าน `photos.upload_photo` จึงผ่านการย่อ/แปลง WebP เหมือนรูปจริง
 
@@ -186,7 +188,7 @@ Paging ของ `GET /devices`: ไม่ส่ง `take` จะคืนทุ
 ./scripts/verify.ps1          # ruff + pytest (ใน container api) + prettier + ng build + ng test
 ```
 
-- `test_api_flow.py` สร้าง tenant/ผู้ใช้/รุ่นชั่วคราวแล้วลบเองเมื่อจบ ครอบคลุมสิทธิ์, RLS ข้ามกลุ่ม, วงจรชีวิต (รวมยืม/QC), ซ่อม, ผู้จำหน่าย, การระงับลูกค้า, ตัวกรองประวัติ, รายงาน, paging, นำเข้าไฟล์, รูปภาพ (ย่อขนาด, ลายเซ็นลิงก์, RLS, สิทธิ์, การโอน), ทำรายการหลายเครื่อง, audit log และหน้าลูกค้า
+- `test_api_flow.py` สร้าง tenant/ผู้ใช้/รุ่นชั่วคราวแล้วลบเองเมื่อจบ ครอบคลุมสิทธิ์, RLS ข้ามกลุ่ม, วงจรชีวิต (รวมยืม/QC), ซ่อม, ผู้จำหน่าย, การระงับลูกค้า, การย้ายกลุ่มลูกค้าของลูกค้า (superadmin; 409 ถ้ายังติดตั้งอยู่), ตัวกรองประวัติ, รายงาน, paging, นำเข้าไฟล์, รูปภาพ (ย่อขนาด, ลายเซ็นลิงก์, RLS, สิทธิ์, การโอน), ทำรายการหลายเครื่อง, audit log และหน้าลูกค้า
 - `test_consistency.py` ตรวจสิ่งที่ต้องตรงกันข้ามชั้น: `device-actions.ts` (RULES และ `BULK_ACTIONS`) กับ `ALLOWED_TRANSITIONS`/`BulkAction`, union ใน `models.ts` และ key ใน `labels.ts` กับ enum, CHECK constraint ใน DB กับ enum และทุกตารางของแอปเปิด RLS พร้อม policy (อ่านไฟล์ frontend จาก `../frontend/src/app/core`; verify.ps1 mount ให้ใน container)
 - `test_integrity.py` เรียก `app.infrastructure.check_integrity.find_problems()` กับ DB จริง: สถานะเครื่องตรงกับ transaction ล่าสุด, transaction แรกเป็น CHECK_IN, INSTALLED ↔ มี installation active หนึ่งรายการ, `loan_due_date` มีเฉพาะ ON_LOAN, tenant ของ installation/transaction/รูปตรงกับเจ้าของ, รูปไม่มีเจ้าของ และไฟล์รูปมีอยู่จริง (เมื่อมีโฟลเดอร์ media) ใช้เป็นคำสั่งได้ด้วย `python -m app.infrastructure.check_integrity` (exit 1 เมื่อพบปัญหา)
 - Frontend (Vitest ผ่าน `ng test`): `device-actions.spec.ts` (availableActions, ส่วนร่วมของ bulk), `scan-code.spec.ts` (แปลงค่าสแกน/URL ฉลาก, `safeReturnUrl`), `photos.spec.ts` (`checkPhotoFiles`), `labels.spec.ts` (ป้ายครบทุก enum)

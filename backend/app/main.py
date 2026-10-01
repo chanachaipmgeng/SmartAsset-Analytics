@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.infrastructure.db.session import Database
-from app.infrastructure.media import LocalPhotoStorage
+from app.infrastructure.media import LocalDocumentStorage, LocalPhotoStorage
 from app.infrastructure.security import Argon2PasswordHasher, JwtTokenService
 from app.presentation.deps import Container
 from app.presentation.errors import register_error_handlers
@@ -24,6 +24,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             settings.jwt_secret, settings.jwt_algorithm, settings.access_token_minutes, settings.refresh_token_days
         ),
         media=LocalPhotoStorage(settings.media_root, settings.jwt_secret),
+        documents=LocalDocumentStorage(settings.media_root, settings.jwt_secret),
     )
     try:
         yield

@@ -17,10 +17,13 @@ Details: `docs/architecture.md`. User guide: `docs/user-guide/README.md`.
 - User-facing text (UI labels, API error messages) is Thai. Code, comments and commit messages are English.
 - The device state machine exists twice and must stay in sync:
   `backend/app/domain/rules.py` (`ALLOWED_TRANSITIONS`) and `frontend/src/app/core/device-actions.ts`.
-- Enums (status, transaction type, role) exist in `backend/app/domain/enums.py`, a CHECK constraint in migrations,
-  `frontend/src/app/core/models.ts` and Thai labels in `frontend/src/app/core/labels.ts`.
+- Enums (status, transaction type, role, repair order, document owner, audit entity) exist in
+  `backend/app/domain/enums.py`, a CHECK constraint in migrations, `frontend/src/app/core/models.ts`
+  and Thai labels in `frontend/src/app/core/labels.ts`.
 - Every status change writes one `inventory_transactions` row in the same DB transaction.
+  `SEND_REPAIR` / `QC_FAIL` also open (or refresh) a `repair_orders` row; `REPAIR_DONE` closes it.
 - Never bypass tenant isolation: the app DB role is subject to RLS; do not query with the owner role outside migrations/tests.
+  Moving a customer's `tenant_id` is superadmin-only and blocked while they have an active installation.
 
 ## Verification before commit
 

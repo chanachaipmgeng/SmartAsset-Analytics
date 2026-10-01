@@ -1,8 +1,18 @@
-import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { HttpClient, httpResource } from '@angular/common/http';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { ButtonModule } from '@syncfusion/ej2-angular-buttons';
 import { DateRangePickerModule, RangeEventArgs } from '@syncfusion/ej2-angular-calendars';
+import { firstValueFrom } from 'rxjs';
 import {
   AUDIT_ACTION_LABELS,
   AUDIT_ACTION_TONES,
@@ -12,7 +22,13 @@ import {
 } from '../../core/labels';
 import { AuditEntity, AuditEntry } from '../../core/models';
 import { AuditDiff } from '../../shared/audit-diff';
-import { DataGrid, GridCell, GridColumn, GridRowAction } from '../../shared/data-grid';
+import {
+  DataGrid,
+  GridCell,
+  GridColumn,
+  GridQuery,
+  GridRowAction,
+} from '../../shared/data-grid';
 import { FilterChip, FilterChips } from '../../shared/filter-chips';
 import { PageHeader } from '../../shared/page-header';
 import { RecordField, RecordView } from '../../shared/record-view';
@@ -29,7 +45,8 @@ type AuditRow = Omit<AuditEntry, 'occurred_at'> & {
 };
 
 const WIDE = '(min-width: 768px)';
-const LIMIT = 2000;
+const PAGE_SIZE = 50;
+const EXPORT_PAGE = 5000;
 
 const COLUMNS: GridColumn[] = [
   {
@@ -52,6 +69,22 @@ function daysAgo(n: number): Date {
   d.setHours(0, 0, 0, 0);
   d.setDate(d.getDate() - n);
   return d;
+}
+
+function toRow(e: AuditEntry): AuditRow {
+  return {
+    ...e,
+    occurred_at: toDate(e.occurred_at),
+    entity_label_text: e.entity_label ?? e.entity_id.slice(0, 8),
+    entity_type_label: AUDIT_ENTITY_LABELS[e.entity_type],
+    action_label: AUDIT_ACTION_LABELS[e.action],
+    action_tone: AUDIT_ACTION_TONES[e.action],
+    tenant_label: e.tenant_name ?? 'แพลตฟอร์ม',
+    summary:
+      e.action === 'update' || e.action === 'deactivate'
+        ? Object.keys(e.changes).length + ' ฟิลด์'
+        : '',
+  };
 }
 
 /** Who changed which settings record and how; tenant admins see only their own tenant (enforced by RLS). */
@@ -101,9 +134,9 @@ function daysAgo(n: number): Date {
             ล้างตัวกรอง
           </button>
         }
-        <span class="ml-auto text-sm text-on-surface-variant"
-          >{{ rows().length.toLocaleString('th-TH') }} รายการ</span
-        >
+        <span class="ml-auto text-sm text-on-surface-variant">
+          {{ total().toLocaleString('th-TH') }} รายการ
+        </span>
       </div>
       <app-filter-chips
         [options]="entityOptions"
@@ -114,10 +147,14 @@ function daysAgo(n: number): Date {
 
       <div class="panel">
         <app-data-grid
+          #grid
           [data]="rows()"
           [columns]="columns"
           perspectiveKey="audit"
           exportName="audit-log"
+          [serverPaging]="true"
+          [total]="total()"
+          [exportAll]="exportAll"
           [loading]="entries.isLoading()"
           [error]="entries.error()"
           [emptyTitle]="
@@ -125,6 +162,7 @@ function daysAgo(n: number): Date {
           "
           [rowActions]="['view']"
           (rowAction)="onRowAction($event)"
+          (query)="onQuery($event)"
           (retry)="entries.reload()"
         >
           <ng-template gridCell="action_label" let-row>
@@ -145,6 +183,8 @@ function daysAgo(n: number): Date {
 })
 export class AuditPage {
   private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
+  private readonly grid = viewChild<DataGrid<AuditRow>>('grid');
 
   /** Filters live in the query string (`?from=&to=&entity=user`) so links can be shared. */
   readonly from = input<string>();
@@ -173,32 +213,48 @@ export class AuditPage {
     return e && e in AUDIT_ENTITY_LABELS ? (e as AuditEntity) : 'ALL';
   });
 
-  protected readonly entries = httpResource<AuditEntry[]>(
-    () => {
-      const params: Record<string, string> = { limit: String(LIMIT) };
-      if (this.from()) params['date_from'] = this.from()!;
-      if (this.to()) params['date_to'] = this.to()!;
-      if (this.entityFilter() !== 'ALL') params['entity_type'] = this.entityFilter();
-      return { url: '/api/v1/audit', params };
-    },
-    { defaultValue: [] },
-  );
+  private readonly gridQuery = signal<GridQuery | null>(null);
 
-  protected readonly rows = computed<AuditRow[]>(() =>
-    this.entries.value().map((e) => ({
-      ...e,
-      occurred_at: toDate(e.occurred_at),
-      entity_label_text: e.entity_label ?? e.entity_id.slice(0, 8),
-      entity_type_label: AUDIT_ENTITY_LABELS[e.entity_type],
-      action_label: AUDIT_ACTION_LABELS[e.action],
-      action_tone: AUDIT_ACTION_TONES[e.action],
-      tenant_label: e.tenant_name ?? 'แพลตฟอร์ม',
-      summary:
-        e.action === 'update' || e.action === 'deactivate'
-          ? Object.keys(e.changes).length + ' ฟิลด์'
-          : '',
-    })),
-  );
+  private readonly listFilters = computed(() => {
+    const params: Record<string, string> = {};
+    if (this.from()) params['date_from'] = this.from()!;
+    if (this.to()) params['date_to'] = this.to()!;
+    if (this.entityFilter() !== 'ALL') params['entity_type'] = this.entityFilter();
+    return params;
+  });
+
+  protected readonly entries = httpResource<AuditEntry[]>(() => {
+    const q = this.gridQuery();
+    if (!q) return undefined;
+    return {
+      url: '/api/v1/audit',
+      params: {
+        ...this.listFilters(),
+        skip: String(q.skip),
+        limit: String(q.take || PAGE_SIZE),
+      },
+    };
+  });
+
+  private readonly page = linkedSignal<AuditEntry[] | undefined, AuditEntry[]>({
+    source: () => (this.entries.hasValue() ? this.entries.value() : undefined),
+    computation: (value, previous) => value ?? previous?.value ?? [],
+  });
+
+  protected readonly total = linkedSignal<string | null | undefined, number>({
+    source: () => this.entries.headers()?.get('X-Total-Count'),
+    computation: (value, previous) => (value == null ? (previous?.value ?? 0) : Number(value)),
+  });
+
+  protected readonly rows = computed(() => this.page().map(toRow));
+
+  protected readonly exportAll = async () => {
+    const params = { ...this.listFilters(), skip: '0', limit: String(EXPORT_PAGE) };
+    const items = await firstValueFrom(
+      this.http.get<AuditEntry[]>('/api/v1/audit', { params }),
+    );
+    return items.map(toRow);
+  };
 
   protected readonly selected = signal<AuditRow | null>(null);
   protected readonly viewOpen = signal(false);
@@ -219,6 +275,10 @@ export class AuditPage {
     ];
   });
 
+  protected onQuery(query: GridQuery): void {
+    this.gridQuery.set(query);
+  }
+
   protected onRowAction({ row }: GridRowAction<AuditRow>): void {
     this.selected.set(row);
     this.viewOpen.set(true);
@@ -226,14 +286,17 @@ export class AuditPage {
 
   protected onRange(args: RangeEventArgs): void {
     this.navigate({ from: toIsoDate(args.startDate ?? null), to: toIsoDate(args.endDate ?? null) });
+    this.grid()?.firstPage();
   }
 
   protected setEntity(entity: EntityFilter): void {
     this.navigate({ entity: entity === 'ALL' ? null : entity });
+    this.grid()?.firstPage();
   }
 
   protected clear(): void {
     this.navigate({ from: null, to: null, entity: null });
+    this.grid()?.firstPage();
   }
 
   private navigate(queryParams: Record<string, string | null>): void {

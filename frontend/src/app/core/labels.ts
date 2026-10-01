@@ -3,6 +3,9 @@ import {
   AuditAction,
   AuditEntity,
   DeviceStatus,
+  DocumentOwner,
+  RepairOrderStatus,
+  RiskLevel,
   Role,
   ServiceLevel,
   TransactionType,
@@ -125,6 +128,36 @@ export const SERVICE_LEVEL_LABELS: Record<ServiceLevel, string> = {
   PREMIUM: 'พรีเมียม',
 };
 
+export const REPAIR_ORDER_STATUS_LABELS: Record<RepairOrderStatus, string> = {
+  OPEN: 'เปิด',
+  CLOSED: 'ปิดแล้ว',
+  CANCELLED: 'ยกเลิก',
+};
+
+export const REPAIR_ORDER_STATUS_TONES: Record<RepairOrderStatus, StatusTone> = {
+  OPEN: 'warning',
+  CLOSED: 'success',
+  CANCELLED: 'neutral',
+};
+
+export const DOCUMENT_OWNER_LABELS: Record<DocumentOwner, string> = {
+  device: 'อุปกรณ์',
+  customer: 'ลูกค้า',
+  repair_order: 'ใบงานซ่อม',
+};
+
+export const RISK_LEVEL_LABELS: Record<RiskLevel, string> = {
+  low: 'เสี่ยงต่ำ',
+  medium: 'เสี่ยงปานกลาง',
+  high: 'เสี่ยงสูง',
+};
+
+export const RISK_LEVEL_TONES: Record<RiskLevel, StatusTone> = {
+  low: 'success',
+  medium: 'warning',
+  high: 'error',
+};
+
 export const AUDIT_ENTITY_LABELS: Record<AuditEntity, string> = {
   tenant: 'กลุ่มลูกค้า',
   user: 'ผู้ใช้งาน',
@@ -133,6 +166,7 @@ export const AUDIT_ENTITY_LABELS: Record<AuditEntity, string> = {
   customer: 'ลูกค้า',
   installation: 'จุดติดตั้ง',
   photo: 'รูปภาพ',
+  document: 'เอกสาร',
 };
 
 export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
@@ -179,16 +213,24 @@ export const FIELD_LABELS: Record<string, string> = {
   removed_at: 'วันที่ถอน',
   device_id: 'อุปกรณ์',
   customer_id: 'ลูกค้า',
-  owner_type: 'ประเภทเจ้าของรูป',
-  owner_id: 'เจ้าของรูป',
+  owner_type: 'ประเภทเจ้าของ',
+  owner_id: 'เจ้าของ',
   caption: 'คำอธิบาย',
   content_type: 'ชนิดไฟล์',
   size_bytes: 'ขนาดไฟล์',
   width: 'กว้าง',
   height: 'สูง',
   uploaded_by: 'ผู้อัปโหลด',
+  file_name: 'ชื่อไฟล์',
+  parts: 'อะไหล่',
+  labor_cost: 'ค่าแรง',
+  parts_cost: 'ค่าอะไหล่',
+  due_date: 'ครบกำหนด',
+  assignee_name: 'ผู้รับผิดชอบ',
+  supplier_id: 'ผู้ซ่อม',
+  defect_note: 'อาการเสีย',
+  qc_note: 'บันทึก QC',
 };
-
 export function toOptions<K extends string>(
   labels: Record<K, string>,
 ): { value: K; text: string }[] {

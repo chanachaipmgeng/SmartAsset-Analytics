@@ -1,0 +1,188 @@
+<ejs-dialog
+  [visible]="open()"
+  (open)="onOpen()"
+  (close)="close()"
+  header="นำเข้าจุดติดตั้งจากไฟล์"
+  [isModal]="true"
+  [showCloseIcon]="true"
+  [animationSettings]="animation"
+  width="min(920px, 96vw)"
+  target="body"
+  cssClass="import-dialog"
+>
+  <ng-template #content>
+    <ejs-stepper
+      class="import-stepper"
+      [steps]="steps"
+      [activeStep]="step()"
+      [linear]="true"
+      labelPosition="Bottom"
+    ></ejs-stepper>
+
+    @switch (step()) {
+      @case (0) {
+        <div class="step-body">
+          <div class="template-row">
+            <div>
+              <div class="font-semibold">1. ดาวน์โหลดไฟล์แม่แบบ</div>
+              <div class="text-sm text-on-surface-variant">
+                มีคอลัมน์ ซีเรียล, ลูกค้า, วันที่ติดตั้ง, ละติจูด, ลองจิจูด, ที่อยู่,
+                ผู้ติดต่อหน้างาน, โทรศัพท์หน้างาน, หมายเหตุ
+              </div>
+            </div>
+            <button
+              ejs-button
+              cssClass="e-outline"
+              iconCss="e-icons e-download"
+              (click)="downloadTemplate()"
+            >
+              ไฟล์แม่แบบ .xlsx
+            </button>
+          </div>
+
+          <div class="font-semibold">2. อัปโหลดไฟล์ที่กรอกแล้ว</div>
+          <div #dropZone class="drop-zone" [class.busy]="busy()">
+            @if (busy()) {
+              <div class="spinner" aria-hidden="true"></div>
+              <div class="font-semibold">กำลังตรวจสอบ {{ file()?.name }}…</div>
+            } @else {
+              <span class="e-icons e-upload-1 drop-icon"></span>
+              <div class="font-semibold">ลากไฟล์มาวางที่นี่</div>
+              <div class="text-sm text-on-surface-variant">
+                .xlsx หรือ .csv ไม่เกิน 2 MB, สูงสุด 1,000 แถว
+              </div>
+            }
+            <ejs-uploader
+              [autoUpload]="false"
+              [multiple]="false"
+              [showFileList]="false"
+              [dropArea]="dropZone"
+              [maxFileSize]="maxBytes"
+              [enabled]="!busy()"
+              allowedExtensions=".xlsx,.csv"
+              [buttons]="{ browse: 'เลือกไฟล์' }"
+              (selected)="onSelected($event)"
+            ></ejs-uploader>
+          </div>
+          @if (uploadError()) {
+            <div class="upload-error">
+              <span class="e-icons e-warning"></span>{{ uploadError() }}
+            </div>
+          }
+        </div>
+      }
+      @case (1) {
+        @if (result(); as r) {
+          <div class="step-body">
+            <div class="summary stagger">
+              <span class="tone-chip">ทั้งหมด {{ r.total | number }} แถว</span>
+              <span class="tone-chip" data-tone="success">ถูกต้อง {{ r.valid | number }}</span>
+              @if (r.invalid) {
+                <span class="tone-chip" data-tone="error">ต้องแก้ไข {{ r.invalid | number }}</span>
+              }
+              <span class="grow"></span>
+              @if (r.invalid) {
+                <label class="errors-toggle">
+                  <input
+                    type="checkbox"
+                    [checked]="errorsOnly()"
+                    (change)="errorsOnly.set($any($event.target).checked)"
+                  />
+                  แสดงเฉพาะแถวที่ผิด
+                </label>
+              }
+            </div>
+            <div class="preview">
+              <table>
+                <thead>
+                  <tr>
+                    <th>แถว</th>
+                    <th>ซีเรียล</th>
+                    <th>ลูกค้า</th>
+                    <th>วันที่ติดตั้ง</th>
+                    <th>ละติจูด</th>
+                    <th>ลองจิจูด</th>
+                    <th>ที่อยู่</th>
+                    <th>ผลตรวจ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of visibleRows(); track row.row) {
+                    <tr [class.bad]="row.errors.length">
+                      <td class="muted">{{ row.row }}</td>
+                      <td class="mono">{{ row.serial_number || '-' }}</td>
+                      <td>{{ row.customer || '-' }}</td>
+                      <td>{{ row.install_date || '' }}</td>
+                      <td class="num">{{ row.latitude ?? '' }}</td>
+                      <td class="num">{{ row.longitude ?? '' }}</td>
+                      <td>{{ row.address || '' }}</td>
+                      <td>
+                        @if (row.errors.length) {
+                          <ul class="errors">
+                            @for (e of row.errors; track e) {
+                              <li>{{ e }}</li>
+                            }
+                          </ul>
+                        } @else {
+                          <span class="ok"><span class="e-icons e-check"></span> พร้อมนำเข้า</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            @if (r.invalid) {
+              <p class="m-0 text-sm text-on-surface-variant">
+                แก้ไขแถวที่ผิดในไฟล์ แล้วเลือกไฟล์ใหม่อีกครั้ง
+                ระบบจะนำเข้าเมื่อทุกแถวถูกต้องเท่านั้น
+              </p>
+            }
+          </div>
+        }
+      }
+      @case (2) {
+        <div class="done">
+          <div class="done-mark"><span class="e-icons e-check"></span></div>
+          <div class="text-xl font-bold">นำเข้าสำเร็จ {{ result()?.valid | number }} จุด</div>
+          <div class="text-sm text-on-surface-variant">
+            อุปกรณ์ที่นำเข้าถูกตั้งสถานะเป็น "ติดตั้งแล้ว"
+          </div>
+        </div>
+      }
+    }
+  </ng-template>
+
+  <ng-template #footerTemplate>
+    @switch (step()) {
+      @case (0) {
+        <button ejs-button (click)="close()">ยกเลิก</button>
+      }
+      @case (1) {
+        <button ejs-button iconCss="e-icons e-chevron-left" (click)="reset()" [disabled]="busy()">
+          เลือกไฟล์ใหม่
+        </button>
+        <button
+          ejs-button
+          [isPrimary]="true"
+          iconCss="e-icons e-import"
+          [disabled]="!canCommit()"
+          [attr.title]="result()?.invalid ? 'ระบบนำเข้าเมื่อทุกแถวถูกต้องเท่านั้น' : null"
+          (click)="commit()"
+        >
+          {{
+            busy()
+              ? 'กำลังนำเข้า…'
+              : result()?.invalid
+                ? 'แก้ไขแถวที่ผิดก่อน'
+                : 'นำเข้า ' + (result()?.valid ?? 0) + ' จุด'
+          }}
+        </button>
+      }
+      @case (2) {
+        <button ejs-button (click)="reset()">นำเข้าไฟล์อื่น</button>
+        <button ejs-button [isPrimary]="true" (click)="close()">เสร็จสิ้น</button>
+      }
+    }
+  </ng-template>
+</ejs-dialog>

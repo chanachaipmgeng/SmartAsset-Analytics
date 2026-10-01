@@ -31,7 +31,10 @@ this.models.reload();
   (Syncfusion only emits on blur).
 - Dialogs: `<ejs-dialog [visible]="open()" target="body" [isModal]="true">` with `.form-grid` content; `.full` spans both columns.
 - Tables: `<app-data-grid [data] [columns] perspectiveKey exportName [loading] [error] (selectionChange) (retry)>`.
+  Long lists (devices, transactions, audit, repair orders) use `[serverPaging]="true"` + `X-Total-Count` + `[exportAll]`.
 - Device actions come from `availableActions()` (`core/device-actions.ts`) and `shared/device-action-dialogs.ts`.
+- Attachments: `<app-photo-gallery>` for images, `<app-document-list>` for PDF/DOCX/XLSX.
+- Backlog bell: `<app-alert-panel>` in the shell; it reads `/dashboard/summary`, do not duplicate the query.
 
 ## Text
 

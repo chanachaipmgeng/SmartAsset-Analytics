@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from app.domain.enums import AuditAction, AuditEntity, DeviceStatus, ServiceLevel, TransactionType
+from app.domain.enums import AuditAction, AuditEntity, DeviceStatus, RepairOrderStatus, ServiceLevel, TransactionType
 
 
 @dataclass(frozen=True)
@@ -105,6 +105,31 @@ class CustomerSummary:
     devices_by_status: list["CountItem"]
     # Devices installed now whose warranty has not ended.
     under_warranty: int
+
+
+@dataclass(frozen=True)
+class RepairOrderView:
+    id: UUID
+    tenant_id: UUID | None
+    device_id: UUID
+    serial_number: str
+    supplier_id: UUID | None
+    supplier_name: str | None
+    opened_by: UUID
+    opened_by_name: str
+    opened_tx_id: UUID | None
+    closed_tx_id: UUID | None
+    status: RepairOrderStatus
+    defect_note: str
+    parts: str | None
+    labor_cost: Decimal | None
+    parts_cost: Decimal | None
+    due_date: date | None
+    assignee_name: str | None
+    closed_at: datetime | None
+    qc_note: str | None
+    created_at: datetime
+    updated_at: datetime
 
 
 @dataclass(frozen=True)

@@ -37,6 +37,15 @@ import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
         <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">
           แก้ไข
         </button>
+        <button
+          ejs-button
+          cssClass="e-outline"
+          iconCss="e-icons e-lock"
+          [disabled]="!selected()"
+          (click)="openResetPassword()"
+        >
+          ตั้งรหัสผ่านใหม่
+        </button>
       </app-page-header>
       <div class="panel">
         <app-data-grid
@@ -118,9 +127,19 @@ import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
           </div>
           <div>
             <label>{{
-              editingId() ? 'รหัสผ่านใหม่ (เว้นว่างถ้าไม่เปลี่ยน)' : 'รหัสผ่าน (อย่างน้อย 8 ตัว) *'
+              editingId()
+                ? 'ตั้งรหัสผ่านใหม่ (เว้นว่างถ้าไม่เปลี่ยน)'
+                : 'รหัสผ่าน (อย่างน้อย 8 ตัว) *'
             }}</label>
-            <ejs-textbox type="password" [(value)]="password" [liveValue]="password"></ejs-textbox>
+            <ejs-textbox
+              type="password"
+              [(value)]="password"
+              [liveValue]="password"
+              [placeholder]="editingId() ? 'กรอกเมื่อต้องการรีเซ็ตรหัสผ่านให้ผู้ใช้' : ''"
+            ></ejs-textbox>
+            @if (editingId() && password().length > 0 && password().length < 8) {
+              <div class="mt-1 text-xs text-error">รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร</div>
+            }
           </div>
           @if (auth.isSuperadmin() && role() !== 'superadmin') {
             <div class="full">
@@ -144,6 +163,44 @@ import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
         <button ejs-button (click)="formOpen.set(false)">ยกเลิก</button>
         <button ejs-button [isPrimary]="true" [disabled]="!formValid() || busy()" (click)="save()">
           บันทึก
+        </button>
+      </ng-template>
+    </ejs-dialog>
+
+    <ejs-dialog
+      [visible]="resetOpen()"
+      (close)="resetOpen.set(false)"
+      header="ตั้งรหัสผ่านใหม่"
+      [isModal]="true"
+      [showCloseIcon]="true"
+      [animationSettings]="animation"
+      width="440px"
+      target="body"
+    >
+      <ng-template #content>
+        <p class="mb-3 text-sm text-on-surface-variant">
+          ตั้งรหัสผ่านใหม่ให้
+          <strong>{{ selected()?.full_name }}</strong> ({{ selected()?.email }})
+          แล้วแจ้งรหัสนี้ให้ผู้ใช้ด้วยตนเอง
+        </p>
+        <div>
+          <label>รหัสผ่านใหม่ (อย่างน้อย 8 ตัว) *</label>
+          <ejs-textbox
+            type="password"
+            [(value)]="resetPassword"
+            [liveValue]="resetPassword"
+          ></ejs-textbox>
+        </div>
+      </ng-template>
+      <ng-template #footerTemplate>
+        <button ejs-button (click)="resetOpen.set(false)">ยกเลิก</button>
+        <button
+          ejs-button
+          [isPrimary]="true"
+          [disabled]="resetPassword().length < 8 || busy()"
+          (click)="saveResetPassword()"
+        >
+          ตั้งรหัสผ่าน
         </button>
       </ng-template>
     </ejs-dialog>
@@ -205,6 +262,8 @@ export class UsersPage {
   protected readonly selected = signal<User | null>(null);
   protected readonly busy = signal(false);
   protected readonly formOpen = signal(false);
+  protected readonly resetOpen = signal(false);
+  protected readonly resetPassword = signal('');
   protected readonly editingId = signal<string | null>(null);
   protected readonly fullName = signal('');
   protected readonly email = signal('');
@@ -274,6 +333,29 @@ export class UsersPage {
     this.tenantId.set(u.tenant_id);
     this.isActive.set(u.is_active);
     this.formOpen.set(true);
+  }
+
+  protected openResetPassword(): void {
+    if (!this.selected()) return;
+    this.resetPassword.set('');
+    this.resetOpen.set(true);
+  }
+
+  protected async saveResetPassword(): Promise<void> {
+    const u = this.selected();
+    const pw = this.resetPassword();
+    if (!u || pw.length < 8) return;
+    this.busy.set(true);
+    try {
+      await this.api.updateUser(u.id, { password: pw });
+      this.notify.success('ตั้งรหัสผ่านใหม่แล้ว');
+      this.resetOpen.set(false);
+      this.resetPassword.set('');
+    } catch (err) {
+      this.notify.error(err);
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   protected async save(): Promise<void> {

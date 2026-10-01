@@ -10,7 +10,7 @@ from app.application.context import Actor
 from app.domain.errors import AuthenticationError
 from app.infrastructure.db.repositories import SqlUnitOfWork
 from app.infrastructure.db.session import Database
-from app.infrastructure.media import LocalPhotoStorage
+from app.infrastructure.media import LocalDocumentStorage, LocalPhotoStorage
 from app.infrastructure.security import Argon2PasswordHasher, JwtTokenService
 
 
@@ -20,6 +20,7 @@ class Container:
     hasher: Argon2PasswordHasher
     tokens: JwtTokenService
     media: LocalPhotoStorage
+    documents: LocalDocumentStorage
 
 
 def get_container(request: Request) -> Container:

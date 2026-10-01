@@ -6,7 +6,17 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
 
 from app.application.bulk import BULK_MAX_DEVICES, BulkAction
-from app.domain.enums import AuditAction, AuditEntity, DeviceStatus, PhotoOwner, Role, ServiceLevel, TransactionType
+from app.domain.enums import (
+    AuditAction,
+    AuditEntity,
+    DeviceStatus,
+    DocumentOwner,
+    PhotoOwner,
+    RepairOrderStatus,
+    Role,
+    ServiceLevel,
+    TransactionType,
+)
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 Text = Annotated[str, StringConstraints(max_length=2000)]
@@ -260,6 +270,50 @@ class ImportResultOut(Out):
     rows: list[ImportRowOut]
 
 
+class CustomerImportRowOut(Out):
+    row: int
+    company_name: str | None
+    contact_person: str | None
+    phone: str | None
+    email: str | None
+    service_level: ServiceLevel | None
+    address: str | None
+    tax_id: str | None
+    notes: str | None
+    tenant_code: str | None
+    errors: list[str]
+
+
+class CustomerImportResultOut(Out):
+    total: int
+    valid: int
+    invalid: int
+    committed: bool
+    rows: list[CustomerImportRowOut]
+
+
+class InstallationImportRowOut(Out):
+    row: int
+    serial_number: str | None
+    customer: str | None
+    install_date: date | None
+    latitude: float | None
+    longitude: float | None
+    address: str | None
+    site_contact: str | None
+    site_phone: str | None
+    notes: str | None
+    errors: list[str]
+
+
+class InstallationImportResultOut(Out):
+    total: int
+    valid: int
+    invalid: int
+    committed: bool
+    rows: list[InstallationImportRowOut]
+
+
 class RepairDoneIn(BaseModel):
     device_id: UUID
     qc_note: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
@@ -316,6 +370,7 @@ class CustomerPatch(BaseModel):
     address: Text | None = None
     tax_id: TaxId | None = None
     notes: Text | None = None
+    tenant_id: UUID | None = None
 
 
 class CustomerOut(Out):
@@ -450,3 +505,118 @@ class AuditOut(Out):
     action: AuditAction
     changes: dict[str, Any]
     occurred_at: datetime
+
+
+# ---- analytics reports ----
+class DeviceRiskOut(Out):
+    device: DeviceOut
+    score: int
+    level: str
+    factors: list[str]
+
+
+class RepairRateOut(Out):
+    model_id: UUID
+    brand: str
+    model_name: str
+    device_count: int
+    repair_events: int
+    rate: float
+
+
+class StockForecastOut(Out):
+    model_id: UUID
+    brand: str
+    model_name: str
+    in_stock: int
+    outflow_events: int
+    avg_per_month: float
+    months_of_stock: float | None
+
+
+class IssueGroupOut(Out):
+    category: str
+    count: int
+    sample_notes: list[str]
+
+
+class WarrantyRowOut(Out):
+    device: DeviceOut
+    days_remaining: int
+
+
+class RepairTatOut(Out):
+    supplier_name: str
+    count: int
+    avg_days: float
+    min_days: float
+    max_days: float
+
+
+class MonthlyMovementOut(Out):
+    month: str
+    counts: dict[TransactionType, int]
+    total: int
+
+
+class FirmwareDriftOut(Out):
+    device: DeviceOut
+    model_firmware: str
+    device_firmware: str
+
+
+class DepreciationOut(Out):
+    device: DeviceOut
+    cost: Decimal
+    purchase_date: date
+    age_years: float
+    book_value: Decimal
+    useful_years: int
+
+
+# ---- repair orders ----
+class RepairOrderOut(Out):
+    id: UUID
+    tenant_id: UUID | None
+    device_id: UUID
+    serial_number: str
+    supplier_id: UUID | None
+    supplier_name: str | None
+    opened_by: UUID
+    opened_by_name: str
+    opened_tx_id: UUID | None
+    closed_tx_id: UUID | None
+    status: RepairOrderStatus
+    defect_note: str
+    parts: str | None
+    labor_cost: Decimal | None
+    parts_cost: Decimal | None
+    due_date: date | None
+    assignee_name: str | None
+    closed_at: datetime | None
+    qc_note: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class RepairOrderUpdateIn(BaseModel):
+    parts: Text | None = None
+    labor_cost: Decimal | None = Field(default=None, ge=0)
+    parts_cost: Decimal | None = Field(default=None, ge=0)
+    due_date: date | None = None
+    assignee_name: Short | None = None
+    supplier_id: UUID | None = None
+
+
+# ---- documents ----
+class DocumentOut(BaseModel):
+    id: UUID
+    owner_type: DocumentOwner
+    owner_id: UUID
+    file_name: str
+    content_type: str
+    size_bytes: int
+    caption: str | None
+    uploaded_by: UUID
+    created_at: datetime | None
+    url: str

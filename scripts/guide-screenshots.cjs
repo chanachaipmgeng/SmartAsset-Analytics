@@ -172,6 +172,13 @@ async function main() {
     await go(page, '/dashboard', 2500);
     await shot(page, '02-dashboard');
   });
+  await step('51-alerts', async () => {
+    await go(page, '/dashboard', 1500);
+    await page.getByRole('button', { name: 'งานค้างและการแจ้งเตือน' }).click();
+    await page.locator('.alert-wrap .panel').waitFor();
+    await shot(page, '51-alerts', { wait: 800 });
+    await page.keyboard.press('Escape');
+  });
   await step('03-menu', async () => {
     await go(page, '/dashboard', 1500);
     await page.locator('.nav-btn').first().click();
@@ -212,6 +219,12 @@ async function main() {
   await step('07-device-detail', async () => {
     await openDevice(page, showcase.id);
     await shot(page, '07-device-detail', { wait: 1500 });
+  });
+  await step('57-device-risk', async () => {
+    await openDevice(page, (inRepair[0] ?? showcase).id);
+    const risk = page.locator('.device-detail .risk-chip, .device-detail [class*=risk]').first();
+    if (await risk.count()) await risk.scrollIntoViewIfNeeded();
+    await shot(page, '57-device-risk', { wait: 1200 });
   });
   await step('18-row-actions', async () => {
     await go(page, '/devices', 2000);
@@ -371,6 +384,21 @@ async function main() {
     await shot(page, '27-customer-new');
     await closeDialog(page);
   });
+  await step('52-customer-edit', async () => {
+    await go(page, '/customers', 1500);
+    await page.locator('.e-gridcontent .row-action[data-action=edit]').first().click();
+    const d = dialog(page);
+    await d.waitFor();
+    await shot(page, '52-customer-edit', { wait: 600 });
+    await closeDialog(page);
+  });
+  await step('53-customer-import', async () => {
+    await go(page, '/customers', 1200);
+    await page.getByRole('button', { name: 'นำเข้า' }).click();
+    await dialog(page).waitFor();
+    await shot(page, '53-customer-import', { wait: 800 });
+    await page.locator('.e-dialog.e-popup-open .e-dlg-closeicon-btn').last().click();
+  });
   await step('49-customer-detail', async () => {
     const summaries = await Promise.all(customers.slice(0, 12).map((c) => api(page, `/customers/${c.id}`)));
     const best = summaries.sort((a, b) => (b.summary?.active_installations ?? 0) - (a.summary?.active_installations ?? 0))[0];
@@ -426,6 +454,14 @@ async function main() {
     await shot(page, '33-user-new');
     await closeDialog(page);
   });
+  await step('56-user-reset-password', async () => {
+    await go(page, '/admin/users', 1500);
+    await page.locator('.e-gridcontent tr.e-row').first().click();
+    await page.getByRole('button', { name: 'ตั้งรหัสผ่านใหม่' }).click();
+    await dialog(page).waitFor();
+    await shot(page, '56-user-reset-password', { wait: 500 });
+    await closeDialog(page);
+  });
   await step('50-audit', async () => {
     await go(page, '/admin/audit', 1800);
     await shot(page, '50-audit');
@@ -436,6 +472,16 @@ async function main() {
     await page.getByText('อายุในสถานะ', { exact: true }).first().click();
     await settle(page, 1800);
     await shot(page, '44-reports-aging');
+  });
+  await step('55-reports-risk', async () => {
+    await go(page, '/reports', 2500);
+    await page.getByText('ความเสี่ยง', { exact: true }).first().click();
+    await settle(page, 1800);
+    await shot(page, '55-reports-risk');
+  });
+  await step('54-repairs', async () => {
+    await go(page, '/repairs', 2000);
+    await shot(page, '54-repairs');
   });
 
   console.log('Profile and theme');

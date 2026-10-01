@@ -14,6 +14,7 @@ The state machine is duplicated across backend and frontend. Missing one place g
 - [ ] 2. Rules: ALLOWED_TRANSITIONS (+ STATUS_LABELS_TH for a new status) in backend/app/domain/rules.py
 - [ ] 3. Migration: alembic/versions/000N_<name>.py rewriting CHECK constraints (template: 0003_repair_status.py)
 - [ ] 4. Use case in backend/app/application/inventory.py
+- [ ] 4b. If the action is SEND_REPAIR / QC_FAIL / REPAIR_DONE: keep `application/repairs.py` in sync (open/close work orders)
 - [ ] 5. Schema (backend/app/presentation/schemas.py) + route (routers.py, POST /inventory/<action>)
 - [ ] 6. Tests: tests/test_rules.py + a flow in tests/test_api_flow.py
 - [ ] 7. Frontend types/labels: core/models.ts, core/labels.ts (STATUS_*/TX_LABELS, TX_ICONS, TX_TONES)

@@ -100,14 +100,23 @@ async def list_audit(
     user_id: UUID | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
+    skip: int = 0,
     limit: int = 500,
-) -> list[AuditView]:
+) -> tuple[list[AuditView], int]:
     """Admins only; RLS narrows tenant admins to their own tenant's entries."""
     require_admin(actor.role)
     if date_from and date_to and date_to < date_from:
         raise ValidationError("วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มต้น")
     since = datetime.combine(date_from, time.min, tzinfo=BUSINESS_OFFSET) if date_from else None
     until = datetime.combine(date_to + timedelta(days=1), time.min, tzinfo=BUSINESS_OFFSET) if date_to else None
-    return await uow.audit.list_views(
-        entity_type=entity_type, entity_id=entity_id, user_id=user_id, since=since, until=until, limit=limit
-    )
+    filters = {
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "user_id": user_id,
+        "since": since,
+        "until": until,
+    }
+    items = await uow.audit.list_views(**filters, skip=skip, limit=limit)
+    if skip == 0 and len(items) < limit:
+        return items, len(items)
+    return items, await uow.audit.count_views(**filters)

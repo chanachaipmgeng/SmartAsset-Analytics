@@ -1,18 +1,43 @@
-import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { HttpClient, httpResource } from '@angular/common/http';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from '@syncfusion/ej2-angular-buttons';
 import { DateRangePickerModule, RangeEventArgs } from '@syncfusion/ej2-angular-calendars';
+import { firstValueFrom } from 'rxjs';
 import { STATUS_LABELS, TX_ICONS, TX_LABELS, TX_TONES, toDate, toIsoDate } from '../../core/labels';
 import { InventoryTransaction, TransactionType } from '../../core/models';
-import { DataGrid, GridCell, GridColumn } from '../../shared/data-grid';
+import {
+  DataGrid,
+  GridCell,
+  GridColumn,
+  GridQuery,
+} from '../../shared/data-grid';
 import { FilterChip, FilterChips } from '../../shared/filter-chips';
 import { PageHeader } from '../../shared/page-header';
 
 type TypeFilter = TransactionType | 'ALL';
+type TxRow = Omit<InventoryTransaction, 'occurred_at'> & {
+  occurred_at: Date | null;
+  type_label: string;
+  type_icon: string;
+  type_tone: string;
+  from_label: string;
+  to_label: string;
+  tenant_label: string;
+};
 
 const WIDE = '(min-width: 768px)';
-const LIMIT = 2000;
+const PAGE_SIZE = 50;
+const EXPORT_PAGE = 5000;
 
 const COLUMNS: GridColumn[] = [
   {
@@ -38,6 +63,19 @@ function daysAgo(n: number): Date {
   d.setHours(0, 0, 0, 0);
   d.setDate(d.getDate() - n);
   return d;
+}
+
+function toRow(t: InventoryTransaction): TxRow {
+  return {
+    ...t,
+    occurred_at: toDate(t.occurred_at),
+    type_label: TX_LABELS[t.transaction_type],
+    type_icon: TX_ICONS[t.transaction_type],
+    type_tone: TX_TONES[t.transaction_type],
+    from_label: t.from_status ? STATUS_LABELS[t.from_status] : '-',
+    to_label: STATUS_LABELS[t.to_status],
+    tenant_label: t.tenant_name ?? 'คลังกลาง',
+  };
 }
 
 @Component({
@@ -86,13 +124,7 @@ function daysAgo(n: number): Date {
           </button>
         }
         <span class="ml-auto text-sm text-on-surface-variant">
-          {{ rows().length.toLocaleString('th-TH') }} รายการ{{
-            rows().length >= limit
-              ? ' (แสดงล่าสุด ' +
-                limit.toLocaleString('th-TH') +
-                ' รายการ ปรับช่วงวันที่เพื่อดูเพิ่ม)'
-              : ''
-          }}
+          {{ total().toLocaleString('th-TH') }} รายการ
         </span>
       </div>
       <app-filter-chips
@@ -104,15 +136,20 @@ function daysAgo(n: number): Date {
 
       <div class="panel">
         <app-data-grid
+          #grid
           [data]="rows()"
           [columns]="columns"
           perspectiveKey="transactions"
           exportName="stock-transactions"
+          [serverPaging]="true"
+          [total]="total()"
+          [exportAll]="exportAll"
           [loading]="transactions.isLoading()"
           [error]="transactions.error()"
           [emptyTitle]="
             from() || to() || type() ? 'ไม่พบรายการตามตัวกรอง' : 'ยังไม่มีความเคลื่อนไหว'
           "
+          (query)="onQuery($event)"
           (retry)="transactions.reload()"
         >
           <ng-template gridCell="type_label" let-row>
@@ -139,6 +176,8 @@ function daysAgo(n: number): Date {
 })
 export class TransactionsPage {
   private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
+  private readonly grid = viewChild<DataGrid<TxRow>>('grid');
 
   /** Filters live in the query string (`?from=2026-09-01&to=2026-09-29&type=RETURN`) so links can be shared. */
   readonly from = input<string>();
@@ -146,7 +185,6 @@ export class TransactionsPage {
   readonly type = input<string>();
 
   protected readonly columns = COLUMNS;
-  protected readonly limit = LIMIT;
   protected readonly today = new Date();
   protected readonly presets = [
     { label: 'วันนี้', start: daysAgo(0), end: new Date() },
@@ -170,40 +208,66 @@ export class TransactionsPage {
     return t && t in TX_LABELS ? (t as TransactionType) : 'ALL';
   });
 
-  protected readonly transactions = httpResource<InventoryTransaction[]>(
-    () => {
-      const params: Record<string, string> = { limit: String(LIMIT) };
-      if (this.from()) params['date_from'] = this.from()!;
-      if (this.to()) params['date_to'] = this.to()!;
-      if (this.typeFilter() !== 'ALL') params['transaction_type'] = this.typeFilter();
-      return { url: '/api/v1/inventory/transactions', params };
-    },
-    { defaultValue: [] },
-  );
+  private readonly gridQuery = signal<GridQuery | null>(null);
 
-  protected readonly rows = computed(() =>
-    this.transactions.value().map((t) => ({
-      ...t,
-      occurred_at: toDate(t.occurred_at),
-      type_label: TX_LABELS[t.transaction_type],
-      type_icon: TX_ICONS[t.transaction_type],
-      type_tone: TX_TONES[t.transaction_type],
-      from_label: t.from_status ? STATUS_LABELS[t.from_status] : '-',
-      to_label: STATUS_LABELS[t.to_status],
-      tenant_label: t.tenant_name ?? 'คลังกลาง',
-    })),
-  );
+  private readonly listFilters = computed(() => {
+    const params: Record<string, string> = {};
+    if (this.from()) params['date_from'] = this.from()!;
+    if (this.to()) params['date_to'] = this.to()!;
+    if (this.typeFilter() !== 'ALL') params['transaction_type'] = this.typeFilter();
+    return params;
+  });
+
+  protected readonly transactions = httpResource<InventoryTransaction[]>(() => {
+    const q = this.gridQuery();
+    if (!q) return undefined;
+    return {
+      url: '/api/v1/inventory/transactions',
+      params: {
+        ...this.listFilters(),
+        skip: String(q.skip),
+        limit: String(q.take || PAGE_SIZE),
+      },
+    };
+  });
+
+  private readonly page = linkedSignal<InventoryTransaction[] | undefined, InventoryTransaction[]>({
+    source: () => (this.transactions.hasValue() ? this.transactions.value() : undefined),
+    computation: (value, previous) => value ?? previous?.value ?? [],
+  });
+
+  protected readonly total = linkedSignal<string | null | undefined, number>({
+    source: () => this.transactions.headers()?.get('X-Total-Count'),
+    computation: (value, previous) => (value == null ? (previous?.value ?? 0) : Number(value)),
+  });
+
+  protected readonly rows = computed(() => this.page().map(toRow));
+
+  protected readonly exportAll = async () => {
+    const params = { ...this.listFilters(), skip: '0', limit: String(EXPORT_PAGE) };
+    const items = await firstValueFrom(
+      this.http.get<InventoryTransaction[]>('/api/v1/inventory/transactions', { params }),
+    );
+    return items.map(toRow);
+  };
+
+  protected onQuery(query: GridQuery): void {
+    this.gridQuery.set(query);
+  }
 
   protected onRange(args: RangeEventArgs): void {
     this.navigate({ from: toIsoDate(args.startDate ?? null), to: toIsoDate(args.endDate ?? null) });
+    this.grid()?.firstPage();
   }
 
   protected setType(type: TypeFilter): void {
     this.navigate({ type: type === 'ALL' ? null : type });
+    this.grid()?.firstPage();
   }
 
   protected clear(): void {
     this.navigate({ from: null, to: null, type: null });
+    this.grid()?.firstPage();
   }
 
   private navigate(queryParams: Record<string, string | null>): void {

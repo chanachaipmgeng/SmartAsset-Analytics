@@ -34,6 +34,7 @@ import { ROLE_LABELS } from '../core/labels';
 import { NotifyService } from '../core/notify.service';
 import { AvatarStore } from '../core/photos';
 import { ThemeMode, ThemeService } from '../core/theme.service';
+import { AlertPanel } from '../shared/alert-panel';
 import { Avatar } from '../shared/avatar';
 import { BackToTop } from '../shared/back-to-top';
 import { CommandPalette, PaletteCommand } from '../shared/command-palette';
@@ -74,6 +75,7 @@ const THEME_ITEMS: { mode: ThemeMode; text: string }[] = [
     BackToTop,
     CommandPalette,
     Avatar,
+    AlertPanel,
   ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
@@ -144,6 +146,7 @@ export class Shell {
           { path: '/devices', label: 'อุปกรณ์', icon: 'e-icons e-box' },
           { path: '/scan', label: 'สถานีสแกน', icon: 'e-icons e-zoom-in' },
           { path: '/transactions', label: 'ความเคลื่อนไหวสต็อก', icon: 'e-icons e-changes-track' },
+          { path: '/repairs', label: 'ใบงานซ่อม', icon: 'e-icons e-settings' },
         ],
       },
       {

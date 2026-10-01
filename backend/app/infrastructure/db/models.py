@@ -157,6 +157,46 @@ class PhotoORM(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class RepairOrderORM(Base):
+    __tablename__ = "repair_orders"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    tenant_id: Mapped[UUID | None] = mapped_column(ForeignKey("tenants.id"))
+    device_id: Mapped[UUID] = mapped_column(ForeignKey("devices.id"))
+    supplier_id: Mapped[UUID | None] = mapped_column(ForeignKey("suppliers.id"))
+    opened_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    opened_tx_id: Mapped[UUID | None] = mapped_column(ForeignKey("inventory_transactions.id"))
+    closed_tx_id: Mapped[UUID | None] = mapped_column(ForeignKey("inventory_transactions.id"))
+    status: Mapped[str] = mapped_column(String)
+    defect_note: Mapped[str]
+    parts: Mapped[str | None]
+    labor_cost: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    parts_cost: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    due_date: Mapped[date | None] = mapped_column(Date)
+    assignee_name: Mapped[str | None]
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    qc_note: Mapped[str | None]
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class DocumentORM(Base):
+    __tablename__ = "documents"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    tenant_id: Mapped[UUID | None] = mapped_column(ForeignKey("tenants.id"))
+    owner_type: Mapped[str] = mapped_column(String)
+    owner_id: Mapped[UUID]
+    file_name: Mapped[str]
+    content_type: Mapped[str]
+    size_bytes: Mapped[int]
+    caption: Mapped[str | None]
+    uploaded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class AuditLogORM(Base):
     __tablename__ = "audit_logs"
 

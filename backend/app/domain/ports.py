@@ -8,14 +8,16 @@ from app.domain.entities import (
     Customer,
     Device,
     DeviceModel,
+    Document,
     Installation,
     InventoryTransaction,
     Photo,
+    RepairOrder,
     Supplier,
     Tenant,
     User,
 )
-from app.domain.enums import AuditEntity, DeviceStatus, PhotoOwner, TransactionType
+from app.domain.enums import AuditEntity, DeviceStatus, DocumentOwner, PhotoOwner, RepairOrderStatus, TransactionType
 from app.domain.read_models import (
     AuditView,
     CountItem,
@@ -23,6 +25,7 @@ from app.domain.read_models import (
     DailyCount,
     DeviceView,
     InstallationView,
+    RepairOrderView,
     StockBalanceRow,
     TransactionView,
 )
@@ -101,13 +104,24 @@ class TransactionRepository(Protocol):
         self,
         *,
         device_id: UUID | None = None,
-        limit: int = 500,
+        skip: int = 0,
+        limit: int | None = 500,
         since: datetime | None = None,
         until: datetime | None = None,
         tx_types: list[TransactionType] | None = None,
         user_id: UUID | None = None,
         customer_id: UUID | None = None,
     ) -> list[TransactionView]: ...
+    async def count_views(
+        self,
+        *,
+        device_id: UUID | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
+        tx_types: list[TransactionType] | None = None,
+        user_id: UUID | None = None,
+        customer_id: UUID | None = None,
+    ) -> int: ...
     async def daily_counts(self, since: datetime, tz: str) -> list[DailyCount]: ...
 
 
@@ -118,6 +132,7 @@ class CustomerRepository(Protocol):
     async def update(self, customer: Customer) -> None: ...
     async def has_active_installations(self, customer_id: UUID) -> bool: ...
     async def summary(self, customer_id: UUID, today: date) -> CustomerSummary: ...
+    async def retenant_related(self, customer_id: UUID, tenant_id: UUID) -> None: ...
 
 
 class InstallationRepository(Protocol):
@@ -139,6 +154,35 @@ class PhotoRepository(Protocol):
     async def retenant(self, owner_type: PhotoOwner, owner_id: UUID, tenant_id: UUID | None) -> None: ...
 
 
+class RepairOrderRepository(Protocol):
+    async def get(self, order_id: UUID) -> RepairOrder | None: ...
+    async def get_open_for_device(self, device_id: UUID) -> RepairOrder | None: ...
+    async def get_view(self, order_id: UUID) -> RepairOrderView | None: ...
+    async def list_views(
+        self,
+        *,
+        status: RepairOrderStatus | None = None,
+        device_id: UUID | None = None,
+        skip: int = 0,
+        take: int | None = None,
+    ) -> list[RepairOrderView]: ...
+    async def count_views(
+        self,
+        *,
+        status: RepairOrderStatus | None = None,
+        device_id: UUID | None = None,
+    ) -> int: ...
+    async def add(self, order: RepairOrder) -> None: ...
+    async def update(self, order: RepairOrder) -> None: ...
+
+
+class DocumentRepository(Protocol):
+    async def get(self, document_id: UUID) -> Document | None: ...
+    async def list(self, owner_type: DocumentOwner, owner_ids: list[UUID] | None = None) -> list[Document]: ...
+    async def add(self, document: Document) -> None: ...
+    async def delete(self, document_id: UUID) -> None: ...
+
+
 class AuditRepository(Protocol):
     async def add(self, entry: AuditLog) -> None: ...
     async def list_views(
@@ -149,8 +193,18 @@ class AuditRepository(Protocol):
         user_id: UUID | None = None,
         since: datetime | None = None,
         until: datetime | None = None,
-        limit: int = 500,
+        skip: int = 0,
+        limit: int | None = 500,
     ) -> list[AuditView]: ...
+    async def count_views(
+        self,
+        *,
+        entity_type: AuditEntity | None = None,
+        entity_id: UUID | None = None,
+        user_id: UUID | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
+    ) -> int: ...
 
 
 class UnitOfWork(Protocol):
@@ -163,6 +217,8 @@ class UnitOfWork(Protocol):
     customers: CustomerRepository
     installations: InstallationRepository
     photos: PhotoRepository
+    repair_orders: RepairOrderRepository
+    documents: DocumentRepository
     audit: AuditRepository
 
     async def flush(self) -> None: ...
@@ -186,6 +242,13 @@ class PhotoStorage(Protocol):
     async def delete(self, photo_id: UUID) -> None: ...
 
 
+class DocumentStorage(Protocol):
+    """Stores raw document bytes (PDF/Office) under MEDIA_ROOT/docs/{id[:2]}/{id}."""
+
+    async def save(self, document_id: UUID, data: bytes) -> None: ...
+    async def delete(self, document_id: UUID) -> None: ...
+
+
 class PasswordHasher(Protocol):
     def hash(self, password: str) -> str: ...
     def verify(self, password_hash: str, password: str) -> bool: ...
@@ -197,11 +260,13 @@ class TokenService(Protocol):
     def decode(self, token: str, *, expected_type: str) -> dict[str, Any]: ...
 
 
-# Extension points for phase 2; no implementation yet.
+# Extension points for later phases.
 class TelemetryPort(Protocol):
     async def record(self, device_id: UUID, metrics: dict[str, float]) -> None: ...
     async def mark_offline(self, device_id: UUID) -> None: ...
 
 
 class IssueSummarizerPort(Protocol):
+    """Maps free-text repair/QC notes to a category label (and optional metadata)."""
+
     async def summarize(self, issue_text: str) -> dict[str, Any]: ...

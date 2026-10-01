@@ -1,6 +1,15 @@
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { SliderModule } from '@syncfusion/ej2-angular-inputs';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
@@ -20,6 +29,7 @@ import {
 import { PhotoGallery } from '../../shared/photo-gallery';
 import { RecordField, RecordView } from '../../shared/record-view';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
+import { InstallationImport } from './installation-import';
 
 interface NearbyQuery {
   lat: number;
@@ -40,6 +50,7 @@ interface NearbyQuery {
     RecordView,
     PhotoGallery,
     AuditHistory,
+    InstallationImport,
   ],
   templateUrl: './installations.html',
   styleUrl: './installations.scss',
@@ -49,6 +60,10 @@ export class InstallationsPage {
   protected readonly auth = inject(AuthStore);
   private readonly api = inject(ApiService);
   private readonly notify = inject(NotifyService);
+  private readonly router = inject(Router);
+
+  /** `?action=import` opens the import dialog. */
+  readonly action = input<string>();
 
   protected readonly animation = DIALOG_ANIMATION;
 
@@ -151,6 +166,7 @@ export class InstallationsPage {
 
   protected readonly selected = signal<Installation | null>(null);
   protected readonly busy = signal(false);
+  protected readonly importOpen = signal(false);
   protected readonly editOpen = signal(false);
   protected readonly editDate = signal<Date | null>(null);
   protected readonly editLat = signal<number | null>(null);
@@ -192,6 +208,25 @@ export class InstallationsPage {
   /** Re-runs an active nearby search after the centre or radius changes. */
   protected refreshNearby(): void {
     if (this.nearbyQuery()) this.searchNearby();
+  }
+
+  constructor() {
+    effect(() => {
+      if (this.action() !== 'import') return;
+      untracked(() => {
+        if (this.auth.canWrite()) this.importOpen.set(true);
+        void this.router.navigate([], {
+          queryParams: { action: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+      });
+    });
+  }
+
+  protected onImported(count: number): void {
+    this.notify.success(`นำเข้าจุดติดตั้งแล้ว ${count} จุด`);
+    this.installations.reload();
   }
 
   protected readonly rowActions = computed<GridRowActionId[]>(() =>

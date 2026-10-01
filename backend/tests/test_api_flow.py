@@ -44,6 +44,10 @@ async def _cleanup(tenant_ids: list[str], model_id: str, tag: str) -> None:
             "OR entity_id = ANY(CAST(:tenants AS uuid[])) OR entity_id = CAST(:model AS uuid) "
             "OR entity_label LIKE :supplier "
             "OR user_id IN (SELECT id FROM users WHERE tenant_id = ANY(CAST(:tenants AS uuid[])))",
+            "DELETE FROM documents WHERE tenant_id = ANY(CAST(:tenants AS uuid[])) "
+            f"OR owner_id IN ({device_filter})",
+            f"DELETE FROM repair_orders WHERE device_id IN ({device_filter}) "
+            "OR tenant_id = ANY(CAST(:tenants AS uuid[]))",
             "DELETE FROM photos WHERE tenant_id = ANY(CAST(:tenants AS uuid[])) OR owner_id = CAST(:model AS uuid) "
             f"OR owner_id IN ({device_filter})",
             f"DELETE FROM installations WHERE device_id IN ({device_filter})",
@@ -230,7 +234,7 @@ async def test_repair_flow(client: httpx.AsyncClient, world: dict) -> None:
 
 
 async def test_edit_audit_customer_deactivate_and_tx_filters(client: httpx.AsyncClient, world: dict) -> None:
-    a, b = world["a"], world["b"]
+    a, b, su = world["a"], world["b"], world["su"]
     res = await client.post("/inventory/check-in", headers=a, json={"serial_number": f"E-{world['tag']}", "model_id": world["model"]["id"]})
     assert res.status_code == 201, res.text
     device_id = res.json()["id"]
@@ -276,6 +280,32 @@ async def test_edit_audit_customer_deactivate_and_tx_filters(client: httpx.Async
     assert (await client.post("/installations", headers=a, json=install_body)).status_code == 422
     res = await client.patch(f"/customers/{customer['id']}", headers=a, json={"is_active": True})
     assert res.status_code == 200 and res.json()["is_active"] is True
+
+    # Superadmin can reassign tenant; tenant admins cannot. Active installs block the move.
+    mover = (await client.post("/customers", headers=a, json={"company_name": f"Move {world['tag']}"})).json()
+    assert (await client.patch(f"/customers/{mover['id']}", headers=a, json={"tenant_id": world["tenant_b"]["id"]})).status_code == 403
+    parked = (await client.post("/inventory/check-in", headers=a, json={"serial_number": f"MV-{world['tag']}", "model_id": world["model"]["id"]})).json()
+    assert (await client.post("/inventory/check-out", headers=a, json={"device_id": parked["id"]})).status_code == 200
+    assert (
+        await client.post(
+            "/installations",
+            headers=a,
+            json={
+                "device_id": parked["id"],
+                "customer_id": mover["id"],
+                "install_date": "2026-09-01",
+                "latitude": 13.7,
+                "longitude": 100.5,
+            },
+        )
+    ).status_code == 201
+    blocked = await client.patch(f"/customers/{mover['id']}", headers=su, json={"tenant_id": world["tenant_b"]["id"]})
+    assert blocked.status_code == 409
+    assert (await client.post("/inventory/return", headers=a, json={"device_id": parked["id"]})).status_code == 200
+    moved = await client.patch(f"/customers/{mover['id']}", headers=su, json={"tenant_id": world["tenant_b"]["id"]})
+    assert moved.status_code == 200 and moved.json()["tenant_id"] == world["tenant_b"]["id"]
+    assert (await client.get(f"/customers/{mover['id']}", headers=a)).status_code == 404
+    assert (await client.get(f"/customers/{mover['id']}", headers=b)).status_code == 200
 
 
 async def test_loan_and_qc_flow(client: httpx.AsyncClient, world: dict) -> None:

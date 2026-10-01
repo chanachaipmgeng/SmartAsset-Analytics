@@ -9,6 +9,7 @@
       [disabled]="!!nearbyQuery()"
     ></ejs-checkbox>
     @if (auth.canWrite()) {
+      <button ejs-button iconCss="e-icons e-upload-1" (click)="importOpen.set(true)">นำเข้า</button>
       <button
         ejs-button
         iconCss="e-icons e-edit"
@@ -205,3 +206,5 @@
     </button>
   </ng-template>
 </ejs-dialog>
+
+<app-installation-import [(open)]="importOpen" (imported)="onImported($event)" />

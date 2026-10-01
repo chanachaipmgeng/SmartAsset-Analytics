@@ -4,13 +4,18 @@ import { firstValueFrom } from 'rxjs';
 import {
   BulkResult,
   Customer,
+  CustomerImportResult,
   Device,
   DeviceModel,
+  Document,
+  DocumentOwner,
   ImportResult,
   Installation,
+  InstallationImportResult,
   InventoryTransaction,
   Photo,
   PhotoOwner,
+  RepairOrder,
   Supplier,
   Tenant,
   User,
@@ -95,6 +100,48 @@ export class ApiService {
     return firstValueFrom(
       this.http.get(`${API}/inventory/import/template`, { responseType: 'blob' }),
     );
+  }
+  importCustomers(file: File, dryRun: boolean) {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.post<CustomerImportResult>(`/customers/import?dry_run=${dryRun}`, form);
+  }
+  customerImportTemplate() {
+    return firstValueFrom(
+      this.http.get(`${API}/customers/import/template`, { responseType: 'blob' }),
+    );
+  }
+  importInstallations(file: File, dryRun: boolean) {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.post<InstallationImportResult>(`/installations/import?dry_run=${dryRun}`, form);
+  }
+  installationImportTemplate() {
+    return firstValueFrom(
+      this.http.get(`${API}/installations/import/template`, { responseType: 'blob' }),
+    );
+  }
+
+  listRepairOrders(params: Record<string, string>) {
+    return firstValueFrom(this.http.get<RepairOrder[]>(`${API}/repair-orders`, { params }));
+  }
+  updateRepairOrder(id: string, body: Record<string, unknown>) {
+    return this.patch<RepairOrder>(`/repair-orders/${id}`, body);
+  }
+  cancelRepairOrder(id: string) {
+    return this.post<RepairOrder>(`/repair-orders/${id}/cancel`, {});
+  }
+
+  uploadDocument(ownerType: DocumentOwner, ownerId: string, file: File, caption?: string | null) {
+    const form = new FormData();
+    form.append('owner_type', ownerType);
+    form.append('owner_id', ownerId);
+    if (caption) form.append('caption', caption);
+    form.append('file', file, file.name);
+    return this.post<Document>(`/documents`, form);
+  }
+  deleteDocument(id: string) {
+    return this.delete<void>(`/documents/${id}`);
   }
 
   sendRepair(deviceId: string, note?: string | null, supplierId?: string | null) {

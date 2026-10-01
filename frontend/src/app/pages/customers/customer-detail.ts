@@ -18,6 +18,7 @@ import { PhotoSrcPipe } from '../../core/photos';
 import { AssetTimeline } from '../../shared/asset-timeline';
 import { AuditHistory } from '../../shared/audit-history';
 import { DataGrid, GridCell, GridColumn, GridRowAction } from '../../shared/data-grid';
+import { DocumentList } from '../../shared/document-list';
 import { EmptyState } from '../../shared/empty-state';
 import { ErrorState } from '../../shared/error-state';
 import { InstallationMap, fitPoints } from '../../shared/installation-map';
@@ -82,6 +83,7 @@ const INSTALL_COLUMNS: GridColumn[] = [
     ErrorState,
     SkeletonBlock,
     PhotoSrcPipe,
+    DocumentList,
   ],
   templateUrl: './customer-detail.html',
   styleUrl: './customer-detail.scss',

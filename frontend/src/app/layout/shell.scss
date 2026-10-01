@@ -13,6 +13,7 @@
   gap: 4px;
   height: 64px;
   padding: 0 12px;
+  overflow: visible;
   background: $glass-bg;
   backdrop-filter: blur($glass-blur);
   -webkit-backdrop-filter: blur($glass-blur);
@@ -118,6 +119,10 @@
 }
 
 :host ::ng-deep {
+  .e-appbar.app-bar {
+    overflow: visible;
+  }
+
   .app-bar .e-breadcrumb {
     background: transparent;
   }

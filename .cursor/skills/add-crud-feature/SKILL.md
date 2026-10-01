@@ -17,7 +17,8 @@ Backend
 - [ ] alembic/versions/000N_<xs>.py: table, indexes, ENABLE ROW LEVEL SECURITY + tenant policy (copy from 0001_initial.py)
 - [ ] application/<xs>.py: list/create/update/delete with require_write/require_admin, actor.resolve_tenant()
 - [ ] presentation/schemas.py: <X>In / <X>Update / <X>Out; routers.py: GET/POST/PATCH/DELETE /<xs>
-- [ ] tests/test_api_flow.py: create, list, cross-tenant invisibility (tenant B must not see tenant A rows)
+- [ ] tests/test_api_flow.py: create, list, cross-tenant invisibility (tenant B must not see tenant A rows). If the entity can move tenants (like customers), assert superadmin-only + block while related live rows exist.
+- [ ] If the entity is imported from spreadsheets: follow `customer_import.py` / `device_import.py` (template + dry_run)
 Frontend
 - [ ] core/models.ts interface; core/api.service.ts create/update/delete
 - [ ] pages/<xs>/<xs>.ts page (copy device-models.ts pattern)

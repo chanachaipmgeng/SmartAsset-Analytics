@@ -23,11 +23,19 @@ import {
   commonBulkActions,
   isBulkAction,
 } from '../../core/device-actions';
-import { STATUS_LABELS, SERVICE_LEVEL_LABELS, toDate, toIsoDate } from '../../core/labels';
+import {
+  RISK_LEVEL_LABELS,
+  RISK_LEVEL_TONES,
+  SERVICE_LEVEL_LABELS,
+  STATUS_LABELS,
+  toDate,
+  toIsoDate,
+} from '../../core/labels';
 import {
   CountItem,
   Device,
   DeviceModel,
+  DeviceRisk,
   DeviceStatus,
   Installation,
   InventoryTransaction,
@@ -46,6 +54,7 @@ import {
   GridRowActionId,
 } from '../../shared/data-grid';
 import { DeviceActionDialogs } from '../../shared/device-action-dialogs';
+import { DocumentList } from '../../shared/document-list';
 import { FilterChips } from '../../shared/filter-chips';
 import { InstallationMap } from '../../shared/installation-map';
 import { LabelPrintDialog } from '../../shared/label-print-dialog';
@@ -146,6 +155,7 @@ const DAY_MS = 86_400_000;
     FilterChips,
     LabelPrintDialog,
     PhotoGallery,
+    DocumentList,
   ],
   templateUrl: './devices.html',
   styleUrl: './devices.scss',
@@ -300,6 +310,22 @@ export class DevicesPage {
     if (days < 0) return { tone: 'error', text: 'หมดประกันแล้ว' };
     if (days <= WARRANTY_SOON_DAYS) return { tone: 'warning', text: `เหลือ ${days} วัน` };
     return { tone: 'success', text: 'อยู่ในประกัน' };
+  });
+
+  private readonly riskResource = httpResource<DeviceRisk>(() =>
+    this.id() ? `/api/v1/devices/${this.id()}/risk` : undefined,
+  );
+  protected readonly risk = computed(() =>
+    this.riskResource.hasValue() ? this.riskResource.value() : null,
+  );
+  protected readonly riskChip = computed(() => {
+    const r = this.risk();
+    if (!r) return null;
+    return {
+      tone: RISK_LEVEL_TONES[r.level],
+      text: `${RISK_LEVEL_LABELS[r.level]} · ${r.score}`,
+      factors: r.factors,
+    };
   });
 
   protected readonly loanDue = computed(() => {

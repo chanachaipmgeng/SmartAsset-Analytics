@@ -1,0 +1,225 @@
+<div class="page">
+  <app-page-header
+    title="ใบงานซ่อม"
+    subtitle="ติดตามใบงานซ่อม อะไหล่ ค่าใช้จ่าย และเอกสารแนบ"
+  >
+    @if (auth.canWrite()) {
+      <button
+        ejs-button
+        iconCss="e-icons e-edit"
+        [disabled]="!canEditSelected()"
+        (click)="openEdit()"
+      >
+        แก้ไข
+      </button>
+      <button
+        ejs-button
+        cssClass="e-danger"
+        iconCss="e-icons e-close"
+        [disabled]="!canEditSelected() || busy()"
+        (click)="cancelOrder()"
+      >
+        ยกเลิกใบงาน
+      </button>
+    }
+  </app-page-header>
+
+  <app-filter-chips
+    [options]="filters()"
+    [value]="statusFilter()"
+    (valueChange)="onStatusFilter($event)"
+    label="กรองตามสถานะใบงาน"
+  />
+
+  <div class="panel">
+    <app-data-grid
+      [data]="rows()"
+      [columns]="columns"
+      [serverPaging]="true"
+      [total]="total()"
+      [exportAll]="exportAll"
+      (query)="onQuery($event)"
+      perspectiveKey="repair-orders"
+      exportName="repair-orders"
+      [loading]="orders.isLoading()"
+      [error]="orders.error()"
+      emptyTitle="ยังไม่มีใบงานซ่อม"
+      emptyMessage="ใบงานถูกสร้างเมื่อส่งอุปกรณ์ซ่อม"
+      (selectionChange)="onRowSelected($event)"
+      [rowActions]="rowActions()"
+      (rowAction)="onRowAction($event)"
+      (rowDoubleClick)="onRowSelected($event); openView()"
+      (retry)="orders.reload()"
+    >
+      <ng-template gridCell="serial_number" let-row>
+        <a
+          class="serial-link"
+          [routerLink]="['/devices', row.device_id]"
+          (click)="$event.stopPropagation()"
+          >{{ row.serial_number }}</a
+        >
+      </ng-template>
+      <ng-template gridCell="status_label" let-row>
+        <app-status-chip [tone]="row.status_tone" [text]="row.status_label" />
+      </ng-template>
+    </app-data-grid>
+  </div>
+</div>
+
+<ejs-dialog
+  [visible]="viewOpen()"
+  (close)="viewOpen.set(false)"
+  [header]="'ใบงานซ่อม · ' + (selected()?.serial_number ?? '')"
+  [isModal]="true"
+  [showCloseIcon]="true"
+  [animationSettings]="animation"
+  width="min(640px, 96vw)"
+  target="body"
+>
+  <ng-template #content>
+    @if (selected(); as o) {
+      <div class="view-body">
+        <div class="status-row">
+          <app-status-chip
+            [tone]="statusTones[o.status]"
+            [text]="statusLabels[o.status]"
+          />
+          <a class="serial-link" [routerLink]="['/devices', o.device_id]">{{ o.serial_number }}</a>
+        </div>
+        <dl class="facts">
+          <div class="wide">
+            <dt>อาการเสีย</dt>
+            <dd class="whitespace-pre-line">{{ o.defect_note }}</dd>
+          </div>
+          <div>
+            <dt>ผู้ซ่อม</dt>
+            <dd>{{ o.supplier_name || '-' }}</dd>
+          </div>
+          <div>
+            <dt>ผู้รับผิดชอบ</dt>
+            <dd>{{ o.assignee_name || '-' }}</dd>
+          </div>
+          <div>
+            <dt>ครบกำหนด</dt>
+            <dd>{{ o.due_date ? (o.due_date | date: 'd MMM y') : '-' }}</dd>
+          </div>
+          <div>
+            <dt>เปิดโดย</dt>
+            <dd>{{ o.opened_by_name }}</dd>
+          </div>
+          <div>
+            <dt>ค่าแรง</dt>
+            <dd>
+              {{ o.labor_cost != null ? (o.labor_cost | number: '1.2-2') + ' บาท' : '-' }}
+            </dd>
+          </div>
+          <div>
+            <dt>ค่าอะไหล่</dt>
+            <dd>
+              {{ o.parts_cost != null ? (o.parts_cost | number: '1.2-2') + ' บาท' : '-' }}
+            </dd>
+          </div>
+          <div class="wide">
+            <dt>อะไหล่</dt>
+            <dd class="whitespace-pre-line">{{ o.parts || '-' }}</dd>
+          </div>
+          @if (o.qc_note) {
+            <div class="wide">
+              <dt>บันทึก QC</dt>
+              <dd class="whitespace-pre-line">{{ o.qc_note }}</dd>
+            </div>
+          }
+        </dl>
+        <section>
+          <h4>เอกสารแนบ</h4>
+          <app-document-list
+            ownerType="repair_order"
+            [ownerId]="o.id"
+            [editable]="auth.canWrite() && o.status === 'OPEN'"
+          />
+        </section>
+      </div>
+    }
+  </ng-template>
+  <ng-template #footerTemplate>
+    @if (canEditSelected()) {
+      <button ejs-button iconCss="e-icons e-edit" (click)="viewOpen.set(false); openEdit()">
+        แก้ไข
+      </button>
+      <button
+        ejs-button
+        cssClass="e-danger"
+        iconCss="e-icons e-close"
+        [disabled]="busy()"
+        (click)="cancelOrder()"
+      >
+        ยกเลิกใบงาน
+      </button>
+    }
+    <button ejs-button [isPrimary]="true" (click)="viewOpen.set(false)">ปิด</button>
+  </ng-template>
+</ejs-dialog>
+
+<ejs-dialog
+  [visible]="editOpen()"
+  (close)="editOpen.set(false)"
+  header="แก้ไขใบงานซ่อม"
+  [isModal]="true"
+  [showCloseIcon]="true"
+  [animationSettings]="animation"
+  width="560px"
+  target="body"
+>
+  <ng-template #content>
+    <div class="form-grid">
+      <div class="full">
+        ซีเรียล: <b>{{ selected()?.serial_number }}</b>
+      </div>
+      <div class="full">
+        <label>อะไหล่</label>
+        <ejs-textarea [(value)]="parts" [liveValue]="parts" rows="3"></ejs-textarea>
+      </div>
+      <div>
+        <label>ค่าแรง (บาท)</label>
+        <ejs-numerictextbox
+          [(value)]="laborCost"
+          [min]="0"
+          format="N2"
+          [decimals]="2"
+        ></ejs-numerictextbox>
+      </div>
+      <div>
+        <label>ค่าอะไหล่ (บาท)</label>
+        <ejs-numerictextbox
+          [(value)]="partsCost"
+          [min]="0"
+          format="N2"
+          [decimals]="2"
+        ></ejs-numerictextbox>
+      </div>
+      <div>
+        <label>ครบกำหนด</label>
+        <ejs-datepicker [(value)]="dueDate" format="dd/MM/yyyy"></ejs-datepicker>
+      </div>
+      <div>
+        <label>ผู้รับผิดชอบ</label>
+        <ejs-textbox [(value)]="assigneeName" [liveValue]="assigneeName"></ejs-textbox>
+      </div>
+      <div class="full">
+        <label>ผู้ซ่อม</label>
+        <ejs-dropdownlist
+          [(value)]="supplierId"
+          [dataSource]="supplierOptions()"
+          [fields]="{ text: 'text', value: 'value' }"
+          [allowFiltering]="true"
+          placeholder="เลือกผู้ซ่อม"
+          [showClearButton]="true"
+        ></ejs-dropdownlist>
+      </div>
+    </div>
+  </ng-template>
+  <ng-template #footerTemplate>
+    <button ejs-button (click)="editOpen.set(false)">ยกเลิก</button>
+    <button ejs-button [isPrimary]="true" [disabled]="busy()" (click)="save()">บันทึก</button>
+  </ng-template>
+</ejs-dialog>

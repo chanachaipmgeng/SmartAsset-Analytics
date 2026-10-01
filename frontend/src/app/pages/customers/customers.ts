@@ -1,5 +1,14 @@
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
@@ -17,6 +26,7 @@ import {
 } from '../../shared/data-grid';
 import { FilterChip, FilterChips } from '../../shared/filter-chips';
 import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
+import { CustomerImport } from './customer-import';
 
 type ActiveFilter = 'ACTIVE' | 'INACTIVE' | 'ALL';
 
@@ -24,7 +34,7 @@ const TAX_ID_RE = /^\d{13}$/;
 
 @Component({
   selector: 'app-customers',
-  imports: [...FORM_IMPORTS, RouterLink, PageHeader, DataGrid, GridCell, FilterChips],
+  imports: [...FORM_IMPORTS, RouterLink, PageHeader, DataGrid, GridCell, FilterChips, CustomerImport],
   templateUrl: './customers.html',
   styleUrl: './customers.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,6 +45,9 @@ export class CustomersPage {
   private readonly notify = inject(NotifyService);
   private readonly confirm = inject(ConfirmService);
   private readonly router = inject(Router);
+
+  /** `?action=import` opens the import dialog. */
+  readonly action = input<string>();
 
   protected readonly animation = DIALOG_ANIMATION;
   protected readonly columns = computed<GridColumn[]>(() => [
@@ -93,6 +106,8 @@ export class CustomersPage {
   protected readonly formOpen = signal(false);
   protected readonly editingId = signal<string | null>(null);
 
+  protected readonly importOpen = signal(false);
+
   protected readonly companyName = signal('');
   protected readonly contactPerson = signal('');
   protected readonly phone = signal('');
@@ -109,8 +124,27 @@ export class CustomersPage {
     () =>
       !!this.companyName().trim() &&
       !this.taxIdInvalid() &&
-      (this.editingId() !== null || !this.auth.isSuperadmin() || !!this.tenantId()),
+      (!this.auth.isSuperadmin() || !!this.tenantId()),
   );
+
+  constructor() {
+    effect(() => {
+      if (this.action() !== 'import') return;
+      untracked(() => {
+        if (this.auth.canWrite()) this.importOpen.set(true);
+        void this.router.navigate([], {
+          queryParams: { action: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+      });
+    });
+  }
+
+  protected onImported(count: number): void {
+    this.notify.success(`นำเข้าลูกค้าแล้ว ${count} ราย`);
+    this.customers.reload();
+  }
 
   protected readonly rowActions = computed<GridRowActionId[]>(() =>
     this.auth.canWrite() ? ['view', 'edit'] : ['view'],
@@ -154,6 +188,7 @@ export class CustomersPage {
     this.phone.set(c.phone ?? '');
     this.email.set(c.email ?? '');
     this.serviceLevel.set(c.service_level);
+    this.tenantId.set(c.tenant_id);
     this.taxId.set(c.tax_id ?? '');
     this.address.set(c.address ?? '');
     this.notes.set(c.notes ?? '');
@@ -172,15 +207,13 @@ export class CustomersPage {
       address: this.address().trim() || null,
       notes: this.notes().trim() || null,
     };
+    if (this.auth.isSuperadmin()) body['tenant_id'] = this.tenantId();
     const id = this.editingId();
     await this.run(async () => {
       if (id) {
         await this.api.updateCustomer(id, body);
       } else {
-        await this.api.createCustomer({
-          ...body,
-          tenant_id: this.auth.isSuperadmin() ? this.tenantId() : undefined,
-        });
+        await this.api.createCustomer(body);
       }
       this.notify.success('บันทึกข้อมูลลูกค้าแล้ว');
       this.formOpen.set(false);

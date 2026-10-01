@@ -18,7 +18,7 @@ from uuid import UUID
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application import admin, customers, inventory, photos
+from app.application import admin, customers, inventory, photos, repairs
 from app.application.context import Actor
 from app.application.dashboard import BUSINESS_OFFSET
 from app.core.config import get_settings
@@ -520,6 +520,41 @@ class DemoLoader:
             at = _moment(span - span * (i + 1) / (len(ids) + 1), self.now)
             await self.session.execute(text("UPDATE audit_logs SET occurred_at = :at WHERE id = :id"), {"at": at, "id": audit_id})
 
+    async def backfill_repair_orders(self, su: Actor) -> int:
+        """Open work orders for IN_REPAIR devices created before repair_orders existed."""
+        rows = (
+            await self.session.execute(
+                text(
+                    """
+                    SELECT d.id, d.tenant_id, t.id AS tx_id, COALESCE(t.note, '') AS note, t.supplier_id
+                    FROM devices d
+                    JOIN LATERAL (
+                        SELECT id, note, supplier_id
+                        FROM inventory_transactions
+                        WHERE device_id = d.id AND transaction_type IN ('SEND_REPAIR', 'QC_FAIL')
+                        ORDER BY occurred_at DESC
+                        LIMIT 1
+                    ) t ON true
+                    WHERE d.status = 'IN_REPAIR'
+                      AND NOT EXISTS (
+                        SELECT 1 FROM repair_orders r WHERE r.device_id = d.id AND r.status = 'OPEN'
+                      )
+                    """
+                )
+            )
+        ).mappings().all()
+        for row in rows:
+            await repairs.open_order(
+                self.uow,
+                su,
+                device_id=row["id"],
+                defect_note=row["note"] or "ส่งซ่อม",
+                supplier_id=row["supplier_id"],
+                opened_tx_id=row["tx_id"],
+                tenant_id=row["tenant_id"],
+            )
+        return len(rows)
+
 
 async def load_demo() -> None:
     settings = get_settings()
@@ -534,13 +569,14 @@ async def load_demo() -> None:
             started = (await session.execute(text("SELECT clock_timestamp()"))).scalar_one()
             loader = DemoLoader(session, storage, rng, settings.seed_admin_password)
             uow = loader.uow
-            if await uow.users.get_by_email(MARKER_EMAIL):
-                print("demo_data: already loaded, skipping")
-                return
             root: User | None = await uow.users.get_by_email(settings.seed_admin_email)
             if root is None:
                 raise SystemExit("demo_data: seed superadmin not found")
             su = Actor(user_id=root.id, role=Role.SUPERADMIN, tenant_id=None)
+            if await uow.users.get_by_email(MARKER_EMAIL):
+                n = await loader.backfill_repair_orders(su)
+                print(f"demo_data: already loaded, backfilled {n} open repair orders")
+                return
 
             tenants = await loader.tenants(su)
             actors = await loader.users(su, tenants)
@@ -556,6 +592,7 @@ async def load_demo() -> None:
                 await loader.device(plan, models, suppliers, tenants, actors, sites, site_cursor)
             await loader.extras(su, sites, suppliers)
             await loader.finish_times(started)
+            await loader.backfill_repair_orders(su)
             counts = await uow.devices.count_by_status()
             summary = ", ".join(f"{c.key}={c.count}" for c in counts)
             print(f"demo_data: loaded {len(plans)} devices ({summary}); users share the seed admin password")

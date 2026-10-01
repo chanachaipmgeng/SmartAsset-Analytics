@@ -10,7 +10,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from app.application import audit
+from app.application import audit, repairs
 from app.application.context import Actor
 from app.application.dashboard import BUSINESS_OFFSET
 from app.domain.entities import Device, Installation, InventoryTransaction
@@ -50,22 +50,22 @@ async def _record(
     customer_id: UUID | None = None,
     supplier_id: UUID | None = None,
     note: str | None = None,
-) -> None:
-    await uow.transactions.add(
-        InventoryTransaction(
-            device_id=device.id,
-            transaction_type=tx_type,
-            from_status=from_status,
-            to_status=device.status,
-            tenant_id=device.tenant_id,
-            from_tenant_id=from_tenant_id,
-            customer_id=customer_id,
-            supplier_id=supplier_id,
-            user_id=actor.user_id,
-            note=note,
-        )
+) -> UUID:
+    tx = InventoryTransaction(
+        device_id=device.id,
+        transaction_type=tx_type,
+        from_status=from_status,
+        to_status=device.status,
+        tenant_id=device.tenant_id,
+        from_tenant_id=from_tenant_id,
+        customer_id=customer_id,
+        supplier_id=supplier_id,
+        user_id=actor.user_id,
+        note=note,
     )
+    await uow.transactions.add(tx)
     await uow.flush()
+    return tx.id
 
 
 async def list_devices(
@@ -273,7 +273,7 @@ async def send_repair(
             replace(active, removed_at=datetime.now(UTC), removal_reason="ส่งซ่อม" + (f": {note}" if note else ""))
         )
     await uow.devices.update(device)
-    await _record(
+    tx_id = await _record(
         uow,
         actor,
         device,
@@ -282,6 +282,15 @@ async def send_repair(
         customer_id=customer_id,
         supplier_id=supplier_id,
         note=note,
+    )
+    await repairs.open_order(
+        uow,
+        actor,
+        device_id=device.id,
+        defect_note=note or "",
+        supplier_id=supplier_id,
+        opened_tx_id=tx_id,
+        tenant_id=device.tenant_id,
     )
     return await _view(uow, device.id)
 
@@ -295,7 +304,8 @@ async def repair_done(uow: UnitOfWork, actor: Actor, device_id: UUID, qc_note: s
     from_status = device.status
     device = replace(device, status=next_status(device, TransactionType.REPAIR_DONE))
     await uow.devices.update(device)
-    await _record(uow, actor, device, TransactionType.REPAIR_DONE, from_status, note=qc_note.strip())
+    tx_id = await _record(uow, actor, device, TransactionType.REPAIR_DONE, from_status, note=qc_note.strip())
+    await repairs.close_order(uow, device_id=device.id, closed_tx_id=tx_id, qc_note=qc_note)
     return await _view(uow, device.id)
 
 
@@ -318,7 +328,16 @@ async def qc_fail(uow: UnitOfWork, actor: Actor, device_id: UUID, note: str) -> 
     from_status = device.status
     device = replace(device, status=next_status(device, TransactionType.QC_FAIL))
     await uow.devices.update(device)
-    await _record(uow, actor, device, TransactionType.QC_FAIL, from_status, note=note.strip())
+    tx_id = await _record(uow, actor, device, TransactionType.QC_FAIL, from_status, note=note.strip())
+    await repairs.open_order(
+        uow,
+        actor,
+        device_id=device.id,
+        defect_note=note,
+        supplier_id=None,
+        opened_tx_id=tx_id,
+        tenant_id=device.tenant_id,
+    )
     return await _view(uow, device.id)
 
 
@@ -337,27 +356,31 @@ async def list_transactions(
     actor: Actor,
     *,
     device_id: UUID | None = None,
+    skip: int = 0,
     limit: int = 500,
     date_from: date | None = None,
     date_to: date | None = None,
     tx_types: list[TransactionType] | None = None,
     user_id: UUID | None = None,
     customer_id: UUID | None = None,
-) -> list[TransactionView]:
+) -> tuple[list[TransactionView], int]:
     """`date_from`/`date_to` are inclusive business-calendar days (Asia/Bangkok)."""
     if date_from and date_to and date_to < date_from:
         raise ValidationError("วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มต้น")
     since = datetime.combine(date_from, time.min, tzinfo=BUSINESS_OFFSET) if date_from else None
     until = datetime.combine(date_to + timedelta(days=1), time.min, tzinfo=BUSINESS_OFFSET) if date_to else None
-    return await uow.transactions.list_views(
-        device_id=device_id,
-        limit=limit,
-        since=since,
-        until=until,
-        tx_types=tx_types,
-        user_id=user_id,
-        customer_id=customer_id,
-    )
+    filters = {
+        "device_id": device_id,
+        "since": since,
+        "until": until,
+        "tx_types": tx_types,
+        "user_id": user_id,
+        "customer_id": customer_id,
+    }
+    items = await uow.transactions.list_views(**filters, skip=skip, limit=limit)
+    if skip == 0 and len(items) < limit:
+        return items, len(items)
+    return items, await uow.transactions.count_views(**filters)
 
 
 async def stock_summary(uow: UnitOfWork, actor: Actor) -> dict[str, list[CountItem]]:
