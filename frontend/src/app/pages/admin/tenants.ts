@@ -4,6 +4,7 @@ import { ApiService } from '../../core/api.service';
 import { Tenant } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { AuditHistory } from '../../shared/audit-history';
+import { ConfirmService } from '../../shared/confirm.service';
 import { PageHeader } from '../../shared/page-header';
 import {
   DataGrid,
@@ -36,6 +37,21 @@ const COLUMNS: GridColumn[] = [
         <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">
           แก้ไข
         </button>
+        @if (selected()?.is_active === false) {
+          <button ejs-button iconCss="e-icons e-check" [disabled]="busy()" (click)="toggleActive()">
+            เปิดใช้งาน
+          </button>
+        } @else {
+          <button
+            ejs-button
+            cssClass="e-danger"
+            iconCss="e-icons e-trash"
+            [disabled]="!selected() || busy()"
+            (click)="toggleActive()"
+          >
+            ระงับ
+          </button>
+        }
       </app-page-header>
       <div class="panel">
         <app-data-grid
@@ -111,6 +127,7 @@ const COLUMNS: GridColumn[] = [
 export class TenantsPage {
   private readonly api = inject(ApiService);
   private readonly notify = inject(NotifyService);
+  private readonly confirm = inject(ConfirmService);
 
   protected readonly columns = COLUMNS;
   protected readonly animation = DIALOG_ANIMATION;
@@ -132,7 +149,7 @@ export class TenantsPage {
     () => !!this.name().trim() && /^[A-Za-z0-9_-]{2,20}$/.test(this.code().trim()),
   );
 
-  protected readonly rowActions: GridRowActionId[] = ['view', 'edit'];
+  protected readonly rowActions: GridRowActionId[] = ['view', 'edit', 'delete'];
   protected readonly viewOpen = signal(false);
   protected readonly viewFields = computed<RecordField[]>(() => {
     const t = this.selected();
@@ -151,6 +168,7 @@ export class TenantsPage {
   protected onRowAction({ action, row }: GridRowAction<{ id: string }>): void {
     this.onRowSelected(row);
     if (action === 'edit') this.openEdit();
+    else if (action === 'delete') void this.toggleActive();
     else this.viewOpen.set(true);
   }
 
@@ -170,6 +188,31 @@ export class TenantsPage {
     this.code.set(t.code);
     this.isActive.set(t.is_active);
     this.formOpen.set(true);
+  }
+
+  protected async toggleActive(): Promise<void> {
+    const t = this.selected();
+    if (!t) return;
+    if (t.is_active) {
+      const ok = await this.confirm.ask({
+        title: 'ยืนยันการระงับกลุ่มลูกค้า',
+        message: `ระงับ "${t.name}" แล้วผู้ใช้ในกลุ่มนี้จะเข้าสู่ระบบไม่ได้`,
+        okText: 'ระงับ',
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    this.busy.set(true);
+    try {
+      await this.api.updateTenant(t.id, { is_active: !t.is_active });
+      this.notify.success(t.is_active ? 'ระงับกลุ่มลูกค้าแล้ว' : 'เปิดใช้งานกลุ่มลูกค้าแล้ว');
+      this.selected.set(null);
+      this.tenants.reload();
+    } catch (err) {
+      this.notify.error(err);
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   protected async save(): Promise<void> {

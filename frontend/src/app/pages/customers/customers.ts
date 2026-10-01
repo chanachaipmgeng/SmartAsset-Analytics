@@ -146,9 +146,11 @@ export class CustomersPage {
     this.customers.reload();
   }
 
-  protected readonly rowActions = computed<GridRowActionId[]>(() =>
-    this.auth.canWrite() ? ['view', 'edit'] : ['view'],
-  );
+  protected readonly rowActions = computed<GridRowActionId[]>(() => {
+    if (this.auth.isAdmin()) return ['view', 'edit', 'delete'];
+    if (this.auth.canWrite()) return ['view', 'edit'];
+    return ['view'];
+  });
 
   protected onRowSelected(row: { id: string } | null): void {
     this.selected.set(row ? (this.customers.value().find((c) => c.id === row.id) ?? null) : null);
@@ -157,6 +159,7 @@ export class CustomersPage {
   protected onRowAction({ action, row }: GridRowAction<{ id: string }>): void {
     this.onRowSelected(row);
     if (action === 'edit') this.openEdit();
+    else if (action === 'delete') void this.toggleActive();
     else void this.router.navigate(['/customers', row.id]);
   }
 

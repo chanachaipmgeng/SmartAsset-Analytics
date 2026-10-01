@@ -7,6 +7,7 @@ import { Photo, Role, Tenant, User } from '../../core/models';
 import { NotifyService } from '../../core/notify.service';
 import { Avatar } from '../../shared/avatar';
 import { AuditHistory } from '../../shared/audit-history';
+import { ConfirmService } from '../../shared/confirm.service';
 import { PageHeader } from '../../shared/page-header';
 import {
   DataGrid,
@@ -35,18 +36,35 @@ import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
           เพิ่มผู้ใช้
         </button>
         <button ejs-button iconCss="e-icons e-edit" [disabled]="!selected()" (click)="openEdit()">
-          แก้ไข
-        </button>
-        <button
-          ejs-button
-          cssClass="e-outline"
-          iconCss="e-icons e-lock"
-          [disabled]="!selected()"
-          (click)="openResetPassword()"
-        >
-          ตั้งรหัสผ่านใหม่
-        </button>
-      </app-page-header>
+        แก้ไข
+      </button>
+      @if (auth.isAdmin()) {
+        @if (selected()?.is_active === false) {
+          <button ejs-button iconCss="e-icons e-check" [disabled]="busy()" (click)="toggleActive()">
+            เปิดใช้งาน
+          </button>
+        } @else {
+          <button
+            ejs-button
+            cssClass="e-danger"
+            iconCss="e-icons e-trash"
+            [disabled]="!selected() || busy()"
+            (click)="toggleActive()"
+          >
+            ระงับ
+          </button>
+        }
+      }
+      <button
+        ejs-button
+        cssClass="e-outline"
+        iconCss="e-icons e-lock"
+        [disabled]="!selected()"
+        (click)="openResetPassword()"
+      >
+        ตั้งรหัสผ่านใหม่
+      </button>
+    </app-page-header>
       <div class="panel">
         <app-data-grid
           [data]="rows()"
@@ -58,7 +76,7 @@ import { DIALOG_ANIMATION, FORM_IMPORTS } from '../../shared/syncfusion';
           emptyTitle="ยังไม่มีผู้ใช้"
           (selectionChange)="onRowSelected($event)"
           (rowDoubleClick)="onRowSelected($event); openEdit()"
-          [rowActions]="rowActions"
+          [rowActions]="rowActions()"
           (rowAction)="onRowAction($event)"
           (retry)="users.reload()"
         >
@@ -211,6 +229,7 @@ export class UsersPage {
   protected readonly auth = inject(AuthStore);
   private readonly api = inject(ApiService);
   private readonly notify = inject(NotifyService);
+  private readonly confirm = inject(ConfirmService);
 
   protected readonly animation = DIALOG_ANIMATION;
   protected readonly roleTone: Record<string, string | null> = {
@@ -279,7 +298,9 @@ export class UsersPage {
     return !!this.fullName().trim() && !!this.email().trim() && pwOk && tenantOk;
   });
 
-  protected readonly rowActions: GridRowActionId[] = ['view', 'edit'];
+  protected readonly rowActions = computed<GridRowActionId[]>(() =>
+    this.auth.isAdmin() ? ['view', 'edit', 'delete'] : ['view', 'edit'],
+  );
   protected readonly viewOpen = signal(false);
   protected readonly viewFields = computed<RecordField[]>(() => {
     const u = this.selected();
@@ -308,7 +329,37 @@ export class UsersPage {
   protected onRowAction({ action, row }: GridRowAction<{ id: string }>): void {
     this.onRowSelected(row);
     if (action === 'edit') this.openEdit();
+    else if (action === 'delete') void this.toggleActive();
     else this.viewOpen.set(true);
+  }
+
+  protected async toggleActive(): Promise<void> {
+    const u = this.selected();
+    if (!u) return;
+    if (u.id === this.auth.user()?.id && u.is_active) {
+      this.notify.warning('ไม่สามารถระงับบัญชีของตนเองได้');
+      return;
+    }
+    if (u.is_active) {
+      const ok = await this.confirm.ask({
+        title: 'ยืนยันการระงับผู้ใช้',
+        message: `ระงับ "${u.full_name}" แล้วจะเข้าสู่ระบบไม่ได้`,
+        okText: 'ระงับ',
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    this.busy.set(true);
+    try {
+      await this.api.updateUser(u.id, { is_active: !u.is_active });
+      this.notify.success(u.is_active ? 'ระงับผู้ใช้แล้ว' : 'เปิดใช้งานผู้ใช้แล้ว');
+      this.selected.set(null);
+      this.users.reload();
+    } catch (err) {
+      this.notify.error(err);
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   protected openCreate(): void {

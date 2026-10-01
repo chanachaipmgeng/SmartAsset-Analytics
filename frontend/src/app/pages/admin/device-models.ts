@@ -218,7 +218,7 @@ export class DeviceModelsPage {
   );
 
   protected readonly rowActions = computed<GridRowActionId[]>(() =>
-    this.auth.isSuperadmin() ? ['view', 'edit'] : ['view'],
+    this.auth.isSuperadmin() ? ['view', 'edit', 'delete'] : ['view'],
   );
   protected readonly viewOpen = signal(false);
   protected readonly viewFields = computed<RecordField[]>(() => {
@@ -240,6 +240,7 @@ export class DeviceModelsPage {
   protected onRowAction({ action, row }: GridRowAction<DeviceModel>): void {
     this.selected.set(row);
     if (action === 'edit') this.openEdit();
+    else if (action === 'delete') void this.remove();
     else this.viewOpen.set(true);
   }
 

@@ -1,8 +1,9 @@
 import { DatePipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from '@syncfusion/ej2-angular-buttons';
+import { ApiService } from '../../core/api.service';
 import { AuthStore } from '../../core/auth.store';
 import { SERVICE_LEVEL_LABELS, STATUS_TONES, toDate } from '../../core/labels';
 import {
@@ -14,9 +15,11 @@ import {
   Photo,
   Tenant,
 } from '../../core/models';
+import { NotifyService } from '../../core/notify.service';
 import { PhotoSrcPipe } from '../../core/photos';
 import { AssetTimeline } from '../../shared/asset-timeline';
 import { AuditHistory } from '../../shared/audit-history';
+import { ConfirmService } from '../../shared/confirm.service';
 import { DataGrid, GridCell, GridColumn, GridRowAction } from '../../shared/data-grid';
 import { DocumentList } from '../../shared/document-list';
 import { EmptyState } from '../../shared/empty-state';
@@ -91,12 +94,16 @@ const INSTALL_COLUMNS: GridColumn[] = [
 })
 export class CustomerDetailPage {
   protected readonly auth = inject(AuthStore);
+  private readonly api = inject(ApiService);
+  private readonly notify = inject(NotifyService);
+  private readonly confirm = inject(ConfirmService);
   private readonly router = inject(Router);
 
   readonly id = input.required<string>();
 
   protected readonly columns = INSTALL_COLUMNS;
   protected readonly levelLabels = SERVICE_LEVEL_LABELS;
+  protected readonly busy = signal(false);
 
   protected readonly customer = httpResource<CustomerDetail>(
     () => `/api/v1/customers/${this.id()}`,
@@ -184,5 +191,29 @@ export class CustomerDetailPage {
 
   protected onInstallAction({ row }: GridRowAction<{ device_id: string }>): void {
     void this.router.navigate(['/devices', row.device_id]);
+  }
+
+  protected async toggleActive(): Promise<void> {
+    const c = this.customer.value();
+    if (!c) return;
+    if (c.is_active) {
+      const ok = await this.confirm.ask({
+        title: 'ยืนยันการระงับลูกค้า',
+        message: `ระงับลูกค้า "${c.company_name}" แล้วจะเลือกลูกค้ารายนี้ตอนบันทึกการติดตั้งไม่ได้ ประวัติเดิมยังอยู่ครบ`,
+        okText: 'ระงับ',
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    this.busy.set(true);
+    try {
+      await this.api.setCustomerActive(c.id, !c.is_active);
+      this.notify.success(c.is_active ? 'ระงับลูกค้าแล้ว' : 'เปิดใช้งานลูกค้าแล้ว');
+      this.customer.reload();
+    } catch (err) {
+      this.notify.error(err);
+    } finally {
+      this.busy.set(false);
+    }
   }
 }

@@ -13,6 +13,23 @@
       <a ejs-button cssClass="e-outline" iconCss="e-icons e-arrow-left" routerLink="/customers"
         >กลับไปรายชื่อลูกค้า</a
       >
+      @if (auth.isAdmin()) {
+        @if (!c.is_active) {
+          <button ejs-button iconCss="e-icons e-check" [disabled]="busy()" (click)="toggleActive()">
+            เปิดใช้งาน
+          </button>
+        } @else {
+          <button
+            ejs-button
+            cssClass="e-danger"
+            iconCss="e-icons e-trash"
+            [disabled]="busy()"
+            (click)="toggleActive()"
+          >
+            ระงับ
+          </button>
+        }
+      }
     </app-page-header>
 
     <section class="panel profile">

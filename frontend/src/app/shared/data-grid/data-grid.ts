@@ -58,7 +58,7 @@ export interface GridQuery {
   search: string;
 }
 
-export type GridRowActionId = 'view' | 'edit';
+export type GridRowActionId = 'view' | 'edit' | 'delete';
 
 export interface GridRowAction<T> {
   action: GridRowActionId;
@@ -68,6 +68,7 @@ export interface GridRowAction<T> {
 const ROW_ACTIONS: Record<GridRowActionId, { label: string; iconCss: string }> = {
   view: { label: 'ดูรายละเอียด', iconCss: 'e-icons e-eye' },
   edit: { label: 'แก้ไข', iconCss: 'e-icons e-edit' },
+  delete: { label: 'ลบ', iconCss: 'e-icons e-trash' },
 };
 
 export interface GridAggregate {

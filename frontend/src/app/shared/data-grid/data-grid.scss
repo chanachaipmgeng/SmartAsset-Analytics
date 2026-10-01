@@ -170,6 +170,16 @@
       color: rgb(var(--app-tertiary));
     }
 
+    &[data-action='delete'] {
+      color: rgb(var(--app-error));
+    }
+
+    &[data-action='delete']:hover {
+      border-color: rgba(var(--app-error), 0.4);
+      background: rgba(var(--app-error), 0.12);
+      color: rgb(var(--app-error));
+    }
+
     &:active {
       transform: scale(0.92);
     }
