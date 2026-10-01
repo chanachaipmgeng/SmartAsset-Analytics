@@ -10,7 +10,8 @@
 2. [ติดตั้ง Docker](#2-ติดตั้ง-docker)
 3. [ดึงโค้ดและตั้งค่า `.env`](#3-ดึงโค้ดและตั้งค่า-env)
 4. [เริ่มระบบ](#4-เริ่มระบบ)
-5. [เปิด HTTPS ด้วยโดเมน](#5-เปิด-https-ด้วยโดเมน)
+4a. [ล้างข้อมูลทั้งระบบ (เหลือแค่ผู้ดูแลแพลตฟอร์ม)](#4a-ล้างข้อมูลทั้งระบบ-เหลือแค่ผู้ดูแลแพลตฟอร์ม)
+5. [เปิดผ่าน reverse proxy / HTTPS](#5-เปิดผ่าน-reverse-proxy--https)
 6. [สำรองและกู้คืนข้อมูล](#6-สำรองและกู้คืนข้อมูล)
 7. [อัปเดตเวอร์ชัน](#7-อัปเดตเวอร์ชัน)
 8. [แก้ปัญหาที่พบบ่อย](#8-แก้ปัญหาที่พบบ่อย)
@@ -186,7 +187,42 @@ docker compose down                       # หยุดทั้งหมด (�
 docker compose exec api python -m app.infrastructure.check_integrity   # ตรวจความถูกต้องของข้อมูล
 ```
 
-> ห้ามใช้ `docker compose down -v` เพราะ `-v` จะลบ volume `pgdata` (ฐานข้อมูล) และ `media` (รูปภาพ) ทิ้ง
+> ห้ามใช้ `docker compose down -v` ในงานประจำ เพราะ `-v` จะลบ volume `pgdata` (ฐานข้อมูล) และ `media` (รูปภาพ) ทิ้ง ใช้เฉพาะตอน [ล้างข้อมูลทั้งระบบ](#4a-ล้างข้อมูลทั้งระบบ-เหลือแค่ผู้ดูแลแพลตฟอร์ม) ด้านล่าง
+
+### 4a. ล้างข้อมูลทั้งระบบ (เหลือแค่ผู้ดูแลแพลตฟอร์ม)
+
+ใช้เมื่อจะเปิดใช้งานจริงหลังทดลอง หรือต้องการเริ่มใหม่โดยไม่เก็บอุปกรณ์/ลูกค้า/กลุ่มลูกค้าเดิม **ลบทุกอย่างในฐานข้อมูลและรูปที่อัปโหลด** แล้วสร้างใหม่เหลือบัญชีผู้ดูแลแพลตฟอร์มคนเดียว
+
+```bash
+cd /opt/smartasset
+
+# 1) สำรองก่อนถ้ายังต้องการข้อมูลเก่า (ข้ามได้ถ้าแน่ใจว่าทิ้ง)
+# scripts/backup.sh
+
+# 2) ตั้งให้ seed สร้างแค่ผู้ดูแล ไม่สร้างกลุ่มลูกค้า/อุปกรณ์ตัวอย่าง
+sed -i 's/^SEED_SAMPLE_DATA=.*/SEED_SAMPLE_DATA=false/' .env
+grep -E '^(SEED_ON_START|SEED_ADMIN_EMAIL|SEED_ADMIN_PASSWORD|SEED_SAMPLE_DATA)=' .env
+# ตรวจ SEED_ADMIN_* ให้เป็นอีเมล/รหัสผ่านที่ต้องการใช้หลังล้าง (อย่างน้อย 8 ตัว ตัวอักษรและตัวเลข)
+
+# 3) หยุดแล้วลบ volume ฐานข้อมูล + รูปภาพ
+docker compose down -v
+
+# 4) เริ่มใหม่ — migration + seed สร้างเฉพาะผู้ดูแลแพลตฟอร์ม
+docker compose up -d
+docker compose logs api --tail 30
+# ต้องเห็นประมาณ: seed: done. superadmin=... (no sample data)
+```
+
+ตรวจหลังล้าง
+
+```bash
+docker compose exec -T db psql -U inventory_owner -d inventory -c \
+  "SELECT email, role FROM users; SELECT count(*) AS tenants FROM tenants; SELECT count(*) AS devices FROM devices;"
+```
+
+ควรเห็นผู้ใช้ 1 คน (บทบาท `superadmin`) และ `tenants` / `devices` เป็น 0 จากนั้นเข้าสู่ระบบด้วย `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` แล้วเปลี่ยนรหัสผ่านทันที
+
+> ถ้าเคย seed ไปแล้วด้วย `SEED_SAMPLE_DATA=true` การแก้ `.env` อย่างเดียว**ไม่พอ** เพราะ seed เจอบัญชีแอดมินแล้วจะข้าม ต้อง `down -v` ตามขั้นด้านบนเท่านั้น
 
 ## 5. เปิดผ่าน reverse proxy / HTTPS
 
